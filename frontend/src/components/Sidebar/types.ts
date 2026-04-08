@@ -1,12 +1,30 @@
 import type { LucideIcon } from "lucide-react"
 
-export type Item = {
-  section?: string
+export const sidebarSectionOrder = [
+  "Overview",
+  "Workspace",
+  "Commerce",
+  "Finance",
+  "Account",
+  "System",
+] as const
+
+export type SidebarSectionKey = (typeof sidebarSectionOrder)[number]
+
+export type SidebarChildItem = {
   icon: LucideIcon
   title: string
   description?: string
   path: string
-  children?: Item[]
+}
+
+export type Item = SidebarChildItem & {
+  children?: SidebarChildItem[]
+}
+
+export type SidebarNavSection = {
+  key: SidebarSectionKey
+  items: Item[]
 }
 
 export interface SidebarItemContext {

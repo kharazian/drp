@@ -12,12 +12,12 @@ import {
 } from "@/components/ui/sidebar"
 import useAuth from "@/hooks/useAuth"
 import { Main } from "./Main"
-import { getSidebarItems } from "./navigation"
+import { getSidebarSections } from "./navigation"
 import { User } from "./User"
 
 export function AppSidebar() {
   const { user: currentUser } = useAuth()
-  const items = getSidebarItems(currentUser)
+  const sections = getSidebarSections(currentUser)
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border/80">
@@ -25,7 +25,7 @@ export function AppSidebar() {
         <Logo variant="responsive" />
       </SidebarHeader>
       <SidebarContent className="px-3 py-4 group-data-[collapsible=icon]:px-2">
-        <Main items={items} showSectionDivider />
+        <Main sections={sections} showSectionDivider />
         <div className="my-3 border-t border-sidebar-border/80" />
         <SidebarMenu className="gap-0.5 group-data-[collapsible=icon]:items-center">
           <SidebarMenuItem className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">

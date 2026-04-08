@@ -14,22 +14,20 @@ import { menuItemShellClass } from "./menu-styles"
 import { SidebarFlyoutItem } from "./SidebarFlyoutItem"
 import { SidebarLeafItem } from "./SidebarLeafItem"
 import { SidebarParentItem } from "./SidebarParentItem"
-import type { Item, SidebarItemContext } from "./types"
+import type { Item, SidebarItemContext, SidebarNavSection } from "./types"
 
 interface MainProps {
-  items: Item[]
+  sections: SidebarNavSection[]
   showSectionDivider?: boolean
 }
 
 function SidebarSection({
   section,
-  sectionItems,
   index,
   showSectionDivider,
   context,
 }: {
-  section: string
-  sectionItems: Item[]
+  section: SidebarNavSection
   index: number
   showSectionDivider: boolean
   context: SidebarItemContext
@@ -45,11 +43,11 @@ function SidebarSection({
       ].join(" ")}
     >
       <SidebarGroupLabel className="px-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-sidebar-foreground/35">
-        {section}
+        {section.key}
       </SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu className="mt-1 gap-1.5 group-data-[collapsible=icon]:items-center">
-          {sectionItems.map((item) => (
+          {section.items.map((item) => (
             <SidebarItemRow key={item.title} item={item} context={context} />
           ))}
         </SidebarMenu>
@@ -143,28 +141,23 @@ function SidebarItemRow({
   )
 }
 
-export function Main({ items, showSectionDivider = false }: MainProps) {
+export function Main({ sections, showSectionDivider = false }: MainProps) {
   const { isMobile, open, setOpenMobile } = useSidebar()
   const { preferences } = useTheme()
   const router = useRouterState()
   const currentPath = router.location.pathname
   const closeTimeoutRef = useRef<number | null>(null)
-  const groupedItems = items.reduce<Record<string, Item[]>>((acc, item) => {
-    const section = item.section ?? "Workspace"
-    acc[section] ??= []
-    acc[section].push(item)
-    return acc
-  }, {})
   const defaultExpanded = useMemo(() => {
     return Object.fromEntries(
-      items
+      sections
+        .flatMap((section) => section.items)
         .filter(
           (item) =>
             item.children?.some((child) => currentPath === child.path) ?? false,
         )
         .map((item) => [item.title, true]),
-    ) as Record<string, boolean>
-  }, [items, currentPath])
+    )
+  }, [sections, currentPath])
   const [expandedItems, setExpandedItems] =
     useState<Record<string, boolean>>(defaultExpanded)
   const [hoveredFlyout, setHoveredFlyout] = useState<string | null>(null)
@@ -232,11 +225,10 @@ export function Main({ items, showSectionDivider = false }: MainProps) {
 
   return (
     <>
-      {Object.entries(groupedItems).map(([section, sectionItems], index) => (
+      {sections.map((section, index) => (
         <SidebarSection
-          key={section}
+          key={section.key}
           section={section}
-          sectionItems={sectionItems}
           index={index}
           showSectionDivider={showSectionDivider}
           context={context}
