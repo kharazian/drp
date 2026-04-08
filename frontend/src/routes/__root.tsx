@@ -4,13 +4,15 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools"
 import ErrorComponent from "@/components/Common/ErrorComponent"
 import NotFound from "@/components/Common/NotFound"
 
+const showDevtools = import.meta.env.DEV
+
 export const Route = createRootRoute({
   component: () => (
     <>
       <HeadContent />
       <Outlet />
-      <TanStackRouterDevtools position="bottom-right" />
-      <ReactQueryDevtools initialIsOpen={false} />
+      {showDevtools ? <TanStackRouterDevtools position="bottom-right" /> : null}
+      {showDevtools ? <ReactQueryDevtools initialIsOpen={false} /> : null}
     </>
   ),
   notFoundComponent: () => <NotFound />,
