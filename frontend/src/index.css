@@ -74,6 +74,7 @@
   --sidebar-accent-foreground: oklch(0.205 0.018 255.4);
   --sidebar-border: oklch(0.87 0.018 245.8);
   --sidebar-ring: oklch(0.72 0.06 223.4);
+  --content-density: 1;
 }
 
 .dark {
@@ -110,6 +111,39 @@
   --sidebar-ring: oklch(0.75 0.05 223.4);
 }
 
+:root[data-preset="blue"] {
+  --primary: oklch(0.62 0.16 252);
+  --sidebar-primary: oklch(0.62 0.16 252);
+}
+
+:root[data-preset="violet"] {
+  --primary: oklch(0.64 0.18 302);
+  --sidebar-primary: oklch(0.64 0.18 302);
+}
+
+:root[data-preset="rose"] {
+  --primary: oklch(0.66 0.19 11);
+  --sidebar-primary: oklch(0.66 0.19 11);
+}
+
+:root[data-preset="orange"] {
+  --primary: oklch(0.72 0.16 55);
+  --sidebar-primary: oklch(0.72 0.16 55);
+}
+
+:root[data-preset="slate"] {
+  --primary: oklch(0.5 0.03 255);
+  --sidebar-primary: oklch(0.5 0.03 255);
+}
+
+:root[data-density="compact"] {
+  --content-density: 0.92;
+}
+
+:root[data-density="spacious"] {
+  --content-density: 1.08;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -141,6 +175,7 @@
         color-mix(in oklab, var(--background) 92%, white) 0%,
         var(--background) 100%
       );
+    font-size: calc(1rem * var(--content-density));
     min-height: 100vh;
   }
 
