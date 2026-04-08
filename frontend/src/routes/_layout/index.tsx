@@ -11,12 +11,15 @@ import {
 } from "lucide-react"
 
 import { ItemsService, UsersService } from "@/client"
+import {
+  DashboardCard,
+  dashboardPanelClass,
+} from "@/components/Common/dashboard-surface"
 import { PageHeader } from "@/components/Common/PageHeader"
 import { StatCard } from "@/components/Dashboard/StatCard"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
@@ -104,7 +107,7 @@ function Dashboard() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.4fr_0.9fr]">
-        <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+        <DashboardCard>
           <CardHeader>
             <CardTitle>What is already in this codebase</CardTitle>
             <CardDescription>
@@ -120,7 +123,7 @@ function Dashboard() {
             ].map((feature) => (
               <div
                 key={feature}
-                className="rounded-2xl border border-border/70 bg-background/70 p-4 text-sm text-muted-foreground"
+                className={`${dashboardPanelClass} text-sm text-muted-foreground`}
               >
                 <div className="mb-2 flex items-center gap-2 font-medium text-foreground">
                   <span className="size-2 rounded-full bg-primary" />
@@ -133,9 +136,9 @@ function Dashboard() {
               </div>
             ))}
           </CardContent>
-        </Card>
+        </DashboardCard>
 
-        <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+        <DashboardCard>
           <CardHeader>
             <CardTitle>Next Actions</CardTitle>
             <CardDescription>
@@ -228,7 +231,7 @@ function Dashboard() {
               </p>
             </div>
           </CardContent>
-        </Card>
+        </DashboardCard>
       </div>
     </div>
   )

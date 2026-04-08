@@ -1,5 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { Activity, BarChart3, DollarSign, Users } from "lucide-react"
+import {
+  DashboardCard,
+  dashboardPanelClass,
+} from "@/components/Common/dashboard-surface"
 import { PageHeader } from "@/components/Common/PageHeader"
 import {
   analyticsChannels,
@@ -9,7 +13,6 @@ import {
 import { StatCard } from "@/components/Dashboard/StatCard"
 import { Badge } from "@/components/ui/badge"
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
@@ -58,7 +61,7 @@ function AnalyticsPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+        <DashboardCard>
           <CardHeader>
             <CardTitle>Acquisition Channels</CardTitle>
             <CardDescription>
@@ -89,9 +92,9 @@ function AnalyticsPage() {
               </TableBody>
             </Table>
           </CardContent>
-        </Card>
+        </DashboardCard>
 
-        <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+        <DashboardCard>
           <CardHeader>
             <CardTitle>Reporting Blocks</CardTitle>
             <CardDescription>
@@ -101,10 +104,7 @@ function AnalyticsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {roadmapCards.map((card) => (
-              <div
-                key={card.title}
-                className="rounded-2xl border border-border/70 bg-background/70 p-4"
-              >
+              <div key={card.title} className={dashboardPanelClass}>
                 <div className="mb-2 flex items-center gap-2">
                   <Badge variant="outline">{card.title}</Badge>
                 </div>
@@ -114,7 +114,7 @@ function AnalyticsPage() {
               </div>
             ))}
           </CardContent>
-        </Card>
+        </DashboardCard>
       </div>
     </div>
   )

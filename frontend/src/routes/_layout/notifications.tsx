@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { BellRing, CheckCircle2, TriangleAlert } from "lucide-react"
 
+import { DashboardCard } from "@/components/Common/dashboard-surface"
 import { PageHeader } from "@/components/Common/PageHeader"
 import { Badge } from "@/components/ui/badge"
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
@@ -49,7 +49,7 @@ function NotificationsPage() {
         description="Keep track of important updates, approval requests, and workflow alerts."
       />
 
-      <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+      <DashboardCard>
         <CardHeader>
           <CardTitle>Recent Notifications</CardTitle>
           <CardDescription>
@@ -81,7 +81,7 @@ function NotificationsPage() {
             )
           })}
         </CardContent>
-      </Card>
+      </DashboardCard>
     </div>
   )
 }

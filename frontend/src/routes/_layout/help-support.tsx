@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { BookOpenText, LifeBuoy, MessageSquareText } from "lucide-react"
 
+import {
+  DashboardCard,
+  dashboardPanelClass,
+} from "@/components/Common/dashboard-surface"
 import { PageHeader } from "@/components/Common/PageHeader"
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
@@ -51,10 +54,7 @@ function HelpSupportPage() {
         {supportCards.map((card) => {
           const Icon = card.icon
           return (
-            <Card
-              key={card.title}
-              className="rounded-[28px] border-border/70 bg-card/90 shadow-sm"
-            >
+            <DashboardCard key={card.title}>
               <CardHeader>
                 <div className="mb-3 rounded-2xl border border-primary/15 bg-primary/10 p-3 text-primary w-fit">
                   <Icon className="size-5" />
@@ -62,12 +62,12 @@ function HelpSupportPage() {
                 <CardTitle>{card.title}</CardTitle>
                 <CardDescription>{card.description}</CardDescription>
               </CardHeader>
-            </Card>
+            </DashboardCard>
           )
         })}
       </div>
 
-      <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+      <DashboardCard>
         <CardHeader>
           <CardTitle>Support Workflow</CardTitle>
           <CardDescription>
@@ -80,10 +80,7 @@ function HelpSupportPage() {
             "Escalate operational blockers to the support queue with context.",
             "Loop in product or finance owners when the issue crosses teams.",
           ].map((step, index) => (
-            <div
-              key={step}
-              className="rounded-2xl border border-border/70 bg-background/70 p-4"
-            >
+            <div key={step} className={dashboardPanelClass}>
               <p className="mb-2 text-sm font-semibold text-primary">
                 Step {index + 1}
               </p>
@@ -91,7 +88,7 @@ function HelpSupportPage() {
             </div>
           ))}
         </CardContent>
-      </Card>
+      </DashboardCard>
     </div>
   )
 }
