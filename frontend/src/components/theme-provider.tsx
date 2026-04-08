@@ -51,6 +51,21 @@ type ThemeProviderState = {
 const isBrowser = () =>
   typeof window !== "undefined" && typeof document !== "undefined"
 
+const THEME_VALUES = ["dark", "light", "system"] as const
+const PRESET_VALUES = [
+  "emerald",
+  "blue",
+  "violet",
+  "rose",
+  "orange",
+  "slate",
+] as const
+const DENSITY_VALUES = ["compact", "comfortable", "spacious"] as const
+const LAYOUT_VALUES = ["sidebar", "top-nav"] as const
+const CONTAINER_VALUES = ["fluid", "boxed"] as const
+const DIRECTION_VALUES = ["ltr", "rtl"] as const
+const SUBMENU_VALUES = ["click", "hover"] as const
+
 const DEFAULT_PREFERENCES: DashboardPreferences = {
   preset: "emerald",
   density: "comfortable",
@@ -64,35 +79,78 @@ const ThemeProviderContext = createContext<ThemeProviderState | undefined>(
   undefined,
 )
 
-function readStoredTheme(storageKey: string, defaultTheme: Theme) {
+function isOneOf<T extends string>(
+  value: unknown,
+  allowedValues: readonly T[],
+): value is T {
+  return typeof value === "string" && allowedValues.includes(value as T)
+}
+
+function safeGetStorageItem(key: string) {
   if (!isBrowser()) {
-    return defaultTheme
+    return null
   }
 
-  const storedTheme = window.localStorage.getItem(storageKey)
-  return storedTheme === "light" ||
-    storedTheme === "dark" ||
-    storedTheme === "system"
-    ? storedTheme
-    : defaultTheme
+  try {
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeSetStorageItem(key: string, value: string) {
+  if (!isBrowser()) {
+    return
+  }
+
+  try {
+    window.localStorage.setItem(key, value)
+  } catch {
+    // Ignore restricted storage environments and keep in-memory state working.
+  }
+}
+
+function sanitizePreferences(
+  value: Partial<DashboardPreferences> | null | undefined,
+): DashboardPreferences {
+  return {
+    preset: isOneOf(value?.preset, PRESET_VALUES)
+      ? value.preset
+      : DEFAULT_PREFERENCES.preset,
+    density: isOneOf(value?.density, DENSITY_VALUES)
+      ? value.density
+      : DEFAULT_PREFERENCES.density,
+    layout: isOneOf(value?.layout, LAYOUT_VALUES)
+      ? value.layout
+      : DEFAULT_PREFERENCES.layout,
+    container: isOneOf(value?.container, CONTAINER_VALUES)
+      ? value.container
+      : DEFAULT_PREFERENCES.container,
+    direction: isOneOf(value?.direction, DIRECTION_VALUES)
+      ? value.direction
+      : DEFAULT_PREFERENCES.direction,
+    submenuMode: isOneOf(value?.submenuMode, SUBMENU_VALUES)
+      ? value.submenuMode
+      : DEFAULT_PREFERENCES.submenuMode,
+  }
+}
+
+function readStoredTheme(storageKey: string, defaultTheme: Theme) {
+  const storedTheme = safeGetStorageItem(storageKey)
+  return isOneOf(storedTheme, THEME_VALUES) ? storedTheme : defaultTheme
 }
 
 function getStoredPreferences(storageKey: string) {
-  if (!isBrowser()) {
-    return DEFAULT_PREFERENCES
-  }
-
-  const stored = window.localStorage.getItem(`${storageKey}-prefs`)
+  const stored = safeGetStorageItem(`${storageKey}-prefs`)
 
   if (!stored) {
     return DEFAULT_PREFERENCES
   }
 
   try {
-    return {
-      ...DEFAULT_PREFERENCES,
-      ...(JSON.parse(stored) as Partial<DashboardPreferences>),
-    }
+    return sanitizePreferences(
+      JSON.parse(stored) as Partial<DashboardPreferences>,
+    )
   } catch {
     return DEFAULT_PREFERENCES
   }
@@ -200,30 +258,21 @@ export function ThemeProvider({
       resolvedTheme,
       preferences,
       setTheme: (theme) => {
-        if (isBrowser()) {
-          window.localStorage.setItem(storageKey, theme)
-        }
+        safeSetStorageItem(storageKey, theme)
         setTheme(theme)
       },
       updatePreference: (key, value) => {
         setPreferences((current) => {
-          const next = { ...current, [key]: value }
-          if (isBrowser()) {
-            window.localStorage.setItem(
-              `${storageKey}-prefs`,
-              JSON.stringify(next),
-            )
-          }
+          const next = sanitizePreferences({ ...current, [key]: value })
+          safeSetStorageItem(`${storageKey}-prefs`, JSON.stringify(next))
           return next
         })
       },
       resetPreferences: () => {
-        if (isBrowser()) {
-          window.localStorage.setItem(
-            `${storageKey}-prefs`,
-            JSON.stringify(DEFAULT_PREFERENCES),
-          )
-        }
+        safeSetStorageItem(
+          `${storageKey}-prefs`,
+          JSON.stringify(DEFAULT_PREFERENCES),
+        )
         setPreferences(DEFAULT_PREFERENCES)
       },
     }),
