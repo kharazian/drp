@@ -25,6 +25,7 @@ import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
 import { Route as LayoutInvoicesRouteImport } from './routes/_layout/invoices'
 import { Route as LayoutHelpSupportRouteImport } from './routes/_layout/help-support'
 import { Route as LayoutCustomersRouteImport } from './routes/_layout/customers'
+import { Route as LayoutChatRouteImport } from './routes/_layout/chat'
 import { Route as LayoutChartsRouteImport } from './routes/_layout/charts'
 import { Route as LayoutCalendarRouteImport } from './routes/_layout/calendar'
 import { Route as LayoutAnalyticsRouteImport } from './routes/_layout/analytics'
@@ -109,6 +110,11 @@ const LayoutCustomersRoute = LayoutCustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutChatRoute = LayoutChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutChartsRoute = LayoutChartsRouteImport.update({
   id: '/charts',
   path: '/charts',
@@ -140,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof LayoutAnalyticsRoute
   '/calendar': typeof LayoutCalendarRoute
   '/charts': typeof LayoutChartsRoute
+  '/chat': typeof LayoutChatRoute
   '/customers': typeof LayoutCustomersRoute
   '/help-support': typeof LayoutHelpSupportRoute
   '/invoices': typeof LayoutInvoicesRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof LayoutAnalyticsRoute
   '/calendar': typeof LayoutCalendarRoute
   '/charts': typeof LayoutChartsRoute
+  '/chat': typeof LayoutChatRoute
   '/customers': typeof LayoutCustomersRoute
   '/help-support': typeof LayoutHelpSupportRoute
   '/invoices': typeof LayoutInvoicesRoute
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/_layout/analytics': typeof LayoutAnalyticsRoute
   '/_layout/calendar': typeof LayoutCalendarRoute
   '/_layout/charts': typeof LayoutChartsRoute
+  '/_layout/chat': typeof LayoutChatRoute
   '/_layout/customers': typeof LayoutCustomersRoute
   '/_layout/help-support': typeof LayoutHelpSupportRoute
   '/_layout/invoices': typeof LayoutInvoicesRoute
@@ -207,6 +216,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/calendar'
     | '/charts'
+    | '/chat'
     | '/customers'
     | '/help-support'
     | '/invoices'
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/calendar'
     | '/charts'
+    | '/chat'
     | '/customers'
     | '/help-support'
     | '/invoices'
@@ -249,6 +260,7 @@ export interface FileRouteTypes {
     | '/_layout/analytics'
     | '/_layout/calendar'
     | '/_layout/charts'
+    | '/_layout/chat'
     | '/_layout/customers'
     | '/_layout/help-support'
     | '/_layout/invoices'
@@ -384,6 +396,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutCustomersRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/chat': {
+      id: '/_layout/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof LayoutChatRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/charts': {
       id: '/_layout/charts'
       path: '/charts'
@@ -420,6 +439,7 @@ interface LayoutRouteChildren {
   LayoutAnalyticsRoute: typeof LayoutAnalyticsRoute
   LayoutCalendarRoute: typeof LayoutCalendarRoute
   LayoutChartsRoute: typeof LayoutChartsRoute
+  LayoutChatRoute: typeof LayoutChatRoute
   LayoutCustomersRoute: typeof LayoutCustomersRoute
   LayoutHelpSupportRoute: typeof LayoutHelpSupportRoute
   LayoutInvoicesRoute: typeof LayoutInvoicesRoute
@@ -438,6 +458,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAnalyticsRoute: LayoutAnalyticsRoute,
   LayoutCalendarRoute: LayoutCalendarRoute,
   LayoutChartsRoute: LayoutChartsRoute,
+  LayoutChatRoute: LayoutChatRoute,
   LayoutCustomersRoute: LayoutCustomersRoute,
   LayoutHelpSupportRoute: LayoutHelpSupportRoute,
   LayoutInvoicesRoute: LayoutInvoicesRoute,

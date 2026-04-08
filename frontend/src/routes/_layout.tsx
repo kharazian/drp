@@ -62,6 +62,10 @@ const PAGE_META: Record<string, { title: string; description: string }> = {
     title: "Mail",
     description: "Browse operational inbox threads and message activity.",
   },
+  "/chat": {
+    title: "Chat",
+    description: "Coordinate with teams and customers in message threads.",
+  },
   "/kanban": {
     title: "Kanban",
     description:
