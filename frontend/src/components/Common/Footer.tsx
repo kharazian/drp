@@ -19,10 +19,10 @@ export function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="border-t py-4 px-6">
+    <footer className="border-t border-border/70 px-6 py-5">
       <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-        <p className="text-muted-foreground text-sm">
-          Full Stack FastAPI Template - {currentYear}
+        <p className="text-sm text-muted-foreground">
+          DRP Operations Console · {currentYear}
         </p>
         <div className="flex items-center gap-4">
           {socialLinks.map(({ icon: Icon, href, label }) => (
@@ -32,7 +32,7 @@ export function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={label}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground transition-colors hover:text-foreground"
             >
               <Icon className="h-5 w-5" />
             </a>

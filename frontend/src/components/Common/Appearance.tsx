@@ -28,12 +28,18 @@ export const SidebarAppearance = () => {
   const Icon = ICON_MAP[theme]
 
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
-          <SidebarMenuButton tooltip="Appearance" data-testid="theme-button">
+          <SidebarMenuButton
+            tooltip="Appearance"
+            data-testid="theme-button"
+            className="group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center"
+          >
             <Icon className="size-4 text-muted-foreground" />
-            <span>Appearance</span>
+            <span className="group-data-[collapsible=icon]:hidden">
+              Appearance
+            </span>
             <span className="sr-only">Toggle theme</span>
           </SidebarMenuButton>
         </DropdownMenuTrigger>
