@@ -1,20 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router"
-
-import { PageHeader } from "@/components/Common/PageHeader"
-import ChangePassword from "@/components/UserSettings/ChangePassword"
-import DeleteAccount from "@/components/UserSettings/DeleteAccount"
-import UserInformation from "@/components/UserSettings/UserInformation"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import useAuth from "@/hooks/useAuth"
-
-const tabsConfig = [
-  { value: "my-profile", title: "My profile", component: UserInformation },
-  { value: "password", title: "Password", component: ChangePassword },
-  { value: "danger-zone", title: "Danger zone", component: DeleteAccount },
-]
+import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/_layout/settings")({
-  component: UserSettings,
+  component: lazyRouteComponent(
+    () => import("@/route-pages/settings-page"),
+    "UserSettingsPage",
+  ),
   head: () => ({
     meta: [
       {
@@ -23,43 +13,3 @@ export const Route = createFileRoute("/_layout/settings")({
     ],
   }),
 })
-
-function UserSettings() {
-  const { user: currentUser } = useAuth()
-  const finalTabs = currentUser?.is_superuser
-    ? tabsConfig.slice(0, 3)
-    : tabsConfig
-
-  if (!currentUser) {
-    return null
-  }
-
-  return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        badge="Workspace"
-        title="User Settings"
-        description="Manage your account details, password, and workspace preferences from one place."
-      />
-
-      <Tabs defaultValue="my-profile" className="gap-6">
-        <TabsList className="h-auto flex-wrap rounded-2xl border border-border/70 bg-card/85 p-1">
-          {finalTabs.map((tab) => (
-            <TabsTrigger
-              key={tab.value}
-              value={tab.value}
-              className="rounded-xl"
-            >
-              {tab.title}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        {finalTabs.map((tab) => (
-          <TabsContent key={tab.value} value={tab.value}>
-            <tab.component />
-          </TabsContent>
-        ))}
-      </Tabs>
-    </div>
-  )
-}
