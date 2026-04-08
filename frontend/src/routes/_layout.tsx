@@ -89,6 +89,10 @@ const PAGE_META: Record<string, { title: string; description: string }> = {
     title: "Invoices",
     description: "Track invoice balances, due dates, and collection status.",
   },
+  "/billing": {
+    title: "Billing",
+    description: "Manage subscription plans, payment methods, and usage.",
+  },
   "/profile": {
     title: "Profile",
     description:

@@ -4,6 +4,7 @@ import {
   CalendarDays,
   ChartColumn,
   ContactRound,
+  CreditCard,
   FolderKanban,
   Home,
   KanbanSquare,
@@ -114,6 +115,13 @@ const baseItems: Item[] = [
     title: "Invoices",
     description: "Track billing and collection status",
     path: "/invoices",
+  },
+  {
+    section: "Finance",
+    icon: CreditCard,
+    title: "Billing",
+    description: "Manage plans and payment methods",
+    path: "/billing",
   },
   {
     section: "Account",
