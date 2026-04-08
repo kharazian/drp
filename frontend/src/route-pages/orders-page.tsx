@@ -1,6 +1,7 @@
 import { Clock3, PackageCheck, Truck } from "lucide-react"
 
 import { DashboardCard } from "@/components/Common/dashboard-surface"
+import { IconBadge } from "@/components/Common/icon-badge"
 import { PageHeader } from "@/components/Common/PageHeader"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -20,22 +21,22 @@ import {
 
 const orderStats = [
   {
-    label: "Open Orders",
+    label: "Routes Awaiting Dispatch",
     value: "124",
     icon: Clock3,
-    hint: "Awaiting review or fulfillment",
+    hint: "Orders still waiting for vehicle assignment",
   },
   {
-    label: "Ready to Ship",
+    label: "Loaded and Ready",
     value: "38",
     icon: PackageCheck,
-    hint: "Prepared for dispatch today",
+    hint: "Stops packed and cleared for departure today",
   },
   {
-    label: "In Transit",
+    label: "Out for Delivery",
     value: "57",
     icon: Truck,
-    hint: "Currently moving through carriers",
+    hint: "Currently running through active routes",
   },
 ] as const
 
@@ -43,30 +44,30 @@ const orders = [
   {
     id: "#10482",
     customer: "Northstar Labs",
-    status: "Processing",
+    status: "Awaiting dispatch",
     total: "$2,480",
-    channel: "Direct",
+    channel: "Urban Core",
   },
   {
     id: "#10481",
     customer: "Aether Health",
-    status: "Packed",
+    status: "Loaded",
     total: "$1,190",
-    channel: "Partner",
+    channel: "Partner Carrier",
   },
   {
     id: "#10480",
     customer: "Crest Retail",
-    status: "Shipped",
+    status: "In transit",
     total: "$6,740",
-    channel: "Marketplace",
+    channel: "Suburban Loop",
   },
   {
     id: "#10479",
     customer: "Nova Foods",
     status: "Delivered",
     total: "$890",
-    channel: "Direct",
+    channel: "Rush Delivery",
   },
 ] as const
 
@@ -76,7 +77,7 @@ export function OrdersPage() {
       <PageHeader
         badge="Commerce"
         title="Orders"
-        description="Track fulfillment activity, shipping readiness, and order flow across your workspace."
+        description="Track dispatch readiness, route assignment, and live delivery flow across active customer orders."
       />
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -89,9 +90,16 @@ export function OrdersPage() {
                   <CardDescription>{stat.label}</CardDescription>
                   <CardTitle className="mt-1 text-3xl">{stat.value}</CardTitle>
                 </div>
-                <div className="rounded-2xl border border-primary/15 bg-primary/10 p-3 text-primary">
-                  <Icon className="size-5" />
-                </div>
+                <IconBadge
+                  icon={Icon}
+                  tone={
+                    stat.label === "Routes Awaiting Dispatch"
+                      ? "amber"
+                      : stat.label === "Loaded and Ready"
+                        ? "emerald"
+                        : "blue"
+                  }
+                />
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">{stat.hint}</p>
@@ -103,10 +111,10 @@ export function OrdersPage() {
 
       <DashboardCard>
         <CardHeader>
-          <CardTitle>Recent Orders</CardTitle>
+          <CardTitle>Dispatch Queue</CardTitle>
           <CardDescription>
-            Monitor the latest order activity by customer, channel, and shipment
-            status.
+            Monitor the latest order flow by customer, route family, and
+            dispatch status.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -116,7 +124,7 @@ export function OrdersPage() {
                 <TableHead>Order</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Channel</TableHead>
+                <TableHead>Route Family</TableHead>
                 <TableHead>Total</TableHead>
               </TableRow>
             </TableHeader>

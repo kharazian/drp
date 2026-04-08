@@ -1,42 +1,69 @@
 export const analyticsMetrics = [
-  { label: "Revenue", value: "$128.4K", hint: "+14.8% from last month" },
   {
-    label: "Active Users",
+    label: "On-Time Delivery",
+    value: "96.4%",
+    hint: "+1.8 pts after route-window tuning",
+  },
+  {
+    label: "Stops Completed",
     value: "8,942",
-    hint: "Stable engagement across the last 7 days",
+    hint: "Stable field throughput across the last 7 days",
   },
   {
-    label: "Conversion",
+    label: "Exceptions Rate",
     value: "4.82%",
-    hint: "+0.6% after onboarding improvements",
+    hint: "-0.6 pts after proof-of-delivery checks",
   },
   {
-    label: "Avg. Session",
+    label: "Dispatch Response",
     value: "12m 24s",
-    hint: "Longer sessions on admin and reports pages",
+    hint: "Average time to resolve route escalations",
   },
 ] as const
 
 export const analyticsChannels = [
-  { channel: "Organic Search", users: "3,420", share: "38%", trend: "+12%" },
-  { channel: "Paid Social", users: "1,955", share: "22%", trend: "+7%" },
-  { channel: "Referral", users: "1,404", share: "16%", trend: "+4%" },
-  { channel: "Direct", users: "1,233", share: "14%", trend: "-2%" },
-  { channel: "Email", users: "930", share: "10%", trend: "+9%" },
+  {
+    channel: "Urban Core Routes",
+    users: "3,420",
+    share: "38%",
+    trend: "+12%",
+  },
+  {
+    channel: "Suburban Loops",
+    users: "1,955",
+    share: "22%",
+    trend: "+7%",
+  },
+  {
+    channel: "Partner Carriers",
+    users: "1,404",
+    share: "16%",
+    trend: "+4%",
+  },
+  { channel: "Rush Deliveries", users: "1,233", share: "14%", trend: "-2%" },
+  {
+    channel: "Returns Pickup",
+    users: "930",
+    share: "10%",
+    trend: "+9%",
+  },
 ] as const
 
 export const roadmapCards = [
   {
-    title: "Executive Snapshot",
-    description: "High-level KPIs for leadership with export-friendly layout.",
+    title: "Hub Performance",
+    description:
+      "Monitor throughput, dock readiness, and route backlog by depot.",
   },
   {
-    title: "Funnel Insights",
-    description: "Acquisition, activation, and retention summary by segment.",
+    title: "Exception Watch",
+    description:
+      "Track failed deliveries, redelivery attempts, and SLA-risk stops.",
   },
   {
-    title: "Campaign Watch",
-    description: "Performance trends by channel, region, and release window.",
+    title: "Carrier Scorecard",
+    description:
+      "Compare partner carriers by on-time rate, scan quality, and cost.",
   },
 ] as const
 
@@ -46,25 +73,25 @@ export const kanbanColumns = [
     count: 4,
     tasks: [
       {
-        title: "Design partner-facing reports",
-        tag: "Design",
+        title: "Design depot exception dashboard",
+        tag: "Reporting",
         priority: "High",
         owner: "SC",
       },
       {
-        title: "Audit settings permission matrix",
+        title: "Audit dispatcher permission matrix",
         tag: "Security",
         priority: "Medium",
         owner: "PP",
       },
       {
-        title: "Create reusable chart module",
+        title: "Create route-variance chart pack",
         tag: "Frontend",
         priority: "Medium",
         owner: "AR",
       },
       {
-        title: "Draft launch checklist for ops team",
+        title: "Draft field rollout checklist for new hub",
         tag: "Ops",
         priority: "Low",
         owner: "JW",
@@ -76,19 +103,19 @@ export const kanbanColumns = [
     count: 3,
     tasks: [
       {
-        title: "Ship analytics overview page",
+        title: "Ship driver proof-of-delivery summary",
         tag: "Product",
         priority: "High",
         owner: "AR",
       },
       {
-        title: "Refresh dashboard shell styles",
+        title: "Refresh dispatch control board visuals",
         tag: "Frontend",
         priority: "Medium",
         owner: "SC",
       },
       {
-        title: "Map profile permissions by role",
+        title: "Map route-manager permissions by role",
         tag: "Admin",
         priority: "Medium",
         owner: "PP",
@@ -100,13 +127,13 @@ export const kanbanColumns = [
     count: 2,
     tasks: [
       {
-        title: "Refine collapsed sidebar behavior",
+        title: "Refine mobile handoff workflow",
         tag: "UX",
         priority: "High",
         owner: "JW",
       },
       {
-        title: "Standardize page header component",
+        title: "Standardize exception summary header",
         tag: "UI",
         priority: "Low",
         owner: "SC",
@@ -118,19 +145,19 @@ export const kanbanColumns = [
     count: 3,
     tasks: [
       {
-        title: "Add richer dashboard entry page",
+        title: "Add morning dispatch command center",
         tag: "Dashboard",
         priority: "High",
         owner: "AR",
       },
       {
-        title: "Rebrand auth and footer screens",
+        title: "Rebrand field login and footer screens",
         tag: "Brand",
         priority: "Low",
         owner: "PP",
       },
       {
-        title: "Tighten card styling and spacing",
+        title: "Tighten route card styling and spacing",
         tag: "Design",
         priority: "Low",
         owner: "SC",
@@ -140,23 +167,23 @@ export const kanbanColumns = [
 ] as const
 
 export const profileHighlights = [
-  { label: "Role", value: "Product Administrator" },
-  { label: "Team", value: "Operations" },
-  { label: "Region", value: "North America" },
-  { label: "Status", value: "Available" },
+  { label: "Role", value: "Dispatch Supervisor" },
+  { label: "Hub", value: "Toronto Central" },
+  { label: "Coverage", value: "Ontario East" },
+  { label: "Shift", value: "Morning Watch" },
 ] as const
 
 export const profileActivity = [
-  "Reviewed dashboard shell refresh for the admin workspace.",
-  "Approved access updates for two internal accounts.",
-  "Shared product KPI summary with operations leadership.",
-  "Updated profile and notification preferences.",
+  "Approved reroute coverage for two delayed suburban loops.",
+  "Reviewed proof-of-delivery exceptions from the morning shift.",
+  "Shared depot performance summary with regional operations leadership.",
+  "Updated dispatch alerts and escalation preferences.",
 ] as const
 
 export const profilePermissions = [
-  { area: "Dashboard", access: "Full access" },
-  { area: "Analytics", access: "View and export" },
-  { area: "Kanban", access: "Edit and move tasks" },
-  { area: "Administration", access: "Manage users" },
-  { area: "Billing", access: "Restricted" },
+  { area: "Control Tower", access: "Full access" },
+  { area: "Route Analytics", access: "View and export" },
+  { area: "Dispatch Board", access: "Edit and assign" },
+  { area: "Driver Accounts", access: "Manage access" },
+  { area: "Billing", access: "Read only" },
 ] as const

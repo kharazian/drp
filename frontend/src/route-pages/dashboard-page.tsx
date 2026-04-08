@@ -48,15 +48,15 @@ export function DashboardPage() {
       <PageHeader
         badge="Overview"
         title={`Welcome back, ${displayName}`}
-        description="This workspace already has the right foundation in place. The next step is making the day-to-day experience feel faster, clearer, and more production-ready."
+        description="Start the shift with route health, depot readiness, and the exception queues that need attention before vehicles roll out."
         actions={
           <>
             <Button variant="outline" asChild>
-              <Link to="/settings">Update profile</Link>
+              <Link to="/settings">Update shift prefs</Link>
             </Button>
             <Button asChild>
               <Link to="/items">
-                Open items
+                Open route board
                 <ArrowRight className="size-4" />
               </Link>
             </Button>
@@ -66,33 +66,33 @@ export function DashboardPage() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="My Items"
+          label="Open Routes"
           value={String(itemCount)}
-          hint="Records currently available in your workspace."
+          hint="Active route records currently in the control board."
           icon={Briefcase}
           tone="emerald"
         />
         <StatCard
-          label="Account Type"
-          value={currentUser?.is_superuser ? "Admin" : "Member"}
-          hint="Access level currently assigned to this session."
+          label="Control Access"
+          value={currentUser?.is_superuser ? "Supervisor" : "Dispatcher"}
+          hint="Current console permissions for this shift."
           icon={ShieldCheck}
           tone="blue"
         />
         <StatCard
-          label="Profile"
-          value={currentUser?.full_name ? "Complete" : "Basic"}
-          hint="Add your full name to make collaboration clearer."
+          label="Operator Profile"
+          value={currentUser?.full_name ? "Verified" : "Needs update"}
+          hint="Keep supervisor and escalation details current."
           icon={UserRound}
           tone="violet"
         />
         <StatCard
-          label="Users"
+          label="Driver Accounts"
           value={currentUser?.is_superuser ? String(userCount) : "Private"}
           hint={
             currentUser?.is_superuser
-              ? "Visible because this account has administrator access."
-              : "User directory is only available to administrators."
+              ? "Visible because this console can manage driver access."
+              : "Driver directory is only available to supervisors."
           }
           icon={Users}
           tone="amber"
@@ -102,17 +102,18 @@ export function DashboardPage() {
       <div className="grid gap-6 xl:grid-cols-[1.4fr_0.9fr]">
         <DashboardCard>
           <CardHeader>
-            <CardTitle>What is already in this codebase</CardTitle>
+            <CardTitle>What the control stack already supports</CardTitle>
             <CardDescription>
-              The app already covers the key admin foundations we need.
+              The platform foundation is already in place for DRP’s operations
+              workflows.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             {[
-              "Authenticated app shell with protected routes",
-              "Item management with CRUD dialogs and tables",
-              "Admin user management for superusers",
-              "Account settings, password change, and deletion flow",
+              "Protected control-tower shell for dispatch and supervisor roles",
+              "Route board records with CRUD dialogs and table workflows",
+              "Driver and staff access management for supervisor accounts",
+              "Operator settings, password controls, and session maintenance",
             ].map((feature) => (
               <div
                 key={feature}
@@ -123,8 +124,9 @@ export function DashboardPage() {
                   {feature}
                 </div>
                 <p className="leading-6">
-                  This means we can focus the redesign on UX and presentation
-                  instead of rebuilding the underlying flows.
+                  That means the next product work can focus on routing clarity,
+                  depot visibility, and dispatch speed instead of rebuilding
+                  core admin plumbing.
                 </p>
               </div>
             ))}
@@ -133,9 +135,9 @@ export function DashboardPage() {
 
         <DashboardCard>
           <CardHeader>
-            <CardTitle>Next Actions</CardTitle>
+            <CardTitle>Shift Priorities</CardTitle>
             <CardDescription>
-              Quick paths that match the current structure of the app.
+              Fast paths for the workflows dispatch leads reach for most.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -146,9 +148,9 @@ export function DashboardPage() {
               <div className="flex items-start gap-3">
                 <BarChart3 className="mt-0.5 size-4 text-muted-foreground" />
                 <div>
-                  <p className="font-medium">Open analytics</p>
+                  <p className="font-medium">Review route health</p>
                   <p className="text-sm text-muted-foreground">
-                    Review KPIs and acquisition channel performance.
+                    Check on-time delivery, exceptions, and depot trends.
                   </p>
                 </div>
               </div>
@@ -161,9 +163,9 @@ export function DashboardPage() {
               <div className="flex items-start gap-3">
                 <Briefcase className="mt-0.5 size-4 text-muted-foreground" />
                 <div>
-                  <p className="font-medium">Review items</p>
+                  <p className="font-medium">Open route board</p>
                   <p className="text-sm text-muted-foreground">
-                    Browse, create, and update records.
+                    Browse, create, and update active route records.
                   </p>
                 </div>
               </div>
@@ -176,9 +178,9 @@ export function DashboardPage() {
               <div className="flex items-start gap-3">
                 <KanbanSquare className="mt-0.5 size-4 text-muted-foreground" />
                 <div>
-                  <p className="font-medium">Plan with kanban</p>
+                  <p className="font-medium">Plan service rollout</p>
                   <p className="text-sm text-muted-foreground">
-                    Use a board view for broader product-work coverage.
+                    Track hub launches, field changes, and exception fixes.
                   </p>
                 </div>
               </div>
@@ -190,9 +192,9 @@ export function DashboardPage() {
                 className={`flex items-center justify-between ${dashboardPanelClass} transition-colors hover:bg-accent/50`}
               >
                 <div>
-                  <p className="font-medium">Manage users</p>
+                  <p className="font-medium">Manage driver access</p>
                   <p className="text-sm text-muted-foreground">
-                    Adjust access and keep the directory tidy.
+                    Keep driver, dispatcher, and supervisor accounts current.
                   </p>
                 </div>
                 <ArrowRight className="size-4 text-muted-foreground" />
@@ -203,9 +205,10 @@ export function DashboardPage() {
               className={`flex items-center justify-between ${dashboardPanelClass} transition-colors hover:bg-accent/50`}
             >
               <div>
-                <p className="font-medium">Review profile workspace</p>
+                <p className="font-medium">Review operator profile</p>
                 <p className="text-sm text-muted-foreground">
-                  See highlights, permissions, and activity in one view.
+                  See shift coverage, permissions, and recent actions in one
+                  view.
                 </p>
               </div>
               <ArrowRight className="size-4 text-muted-foreground" />
@@ -215,12 +218,11 @@ export function DashboardPage() {
                 variant="outline"
                 className="mb-3 border-primary/20 text-primary"
               >
-                Apex Direction
+                DRP Command Center
               </Badge>
               <p className="text-sm leading-6 text-muted-foreground">
-                This first pass brings the app closer to a polished admin
-                dashboard aesthetic while keeping your existing API-driven flows
-                intact.
+                This workspace is now moving toward a real operations control
+                surface for dispatch, exception response, and field readiness.
               </p>
             </div>
           </CardContent>

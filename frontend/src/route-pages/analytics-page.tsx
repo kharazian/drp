@@ -35,7 +35,7 @@ export function AnalyticsPage() {
       <PageHeader
         badge="Insights"
         title="Analytics"
-        description="A broader analytics surface with KPI cards, channel breakdowns, and reporting blocks that make the app feel closer to a fuller admin product."
+        description="Track service reliability, route throughput, and depot-level exception trends across DRP operations."
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -57,9 +57,10 @@ export function AnalyticsPage() {
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <DashboardCard>
           <CardHeader>
-            <CardTitle>Acquisition Channels</CardTitle>
+            <CardTitle>Route Mix</CardTitle>
             <CardDescription>
-              A table-style breakdown for channel performance.
+              Delivery volume by route family, partner coverage, and service
+              mode.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -90,10 +91,10 @@ export function AnalyticsPage() {
 
         <DashboardCard>
           <CardHeader>
-            <CardTitle>Reporting Blocks</CardTitle>
+            <CardTitle>Ops Reporting Blocks</CardTitle>
             <CardDescription>
-              Suggested modules for expanding the suite beyond the base
-              template.
+              Suggested modules for turning the analytics workspace into a
+              dispatch-ready command center.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

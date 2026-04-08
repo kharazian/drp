@@ -1,6 +1,7 @@
 import { Building2, Globe2, UsersRound } from "lucide-react"
 
 import { DashboardCard } from "@/components/Common/dashboard-surface"
+import { IconBadge } from "@/components/Common/icon-badge"
 import { PageHeader } from "@/components/Common/PageHeader"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -20,22 +21,22 @@ import {
 
 const customerStats = [
   {
-    label: "Active Accounts",
+    label: "Active Delivery Accounts",
     value: "248",
     icon: UsersRound,
-    hint: "Customers with activity in the last 30 days",
+    hint: "Accounts with completed stops in the last 30 days",
   },
   {
-    label: "Enterprise",
+    label: "High-Volume Contracts",
     value: "42",
     icon: Building2,
-    hint: "High-value accounts with annual contracts",
+    hint: "Accounts with dedicated route capacity",
   },
   {
-    label: "Regions",
+    label: "Coverage Regions",
     value: "16",
     icon: Globe2,
-    hint: "Active customer footprint across markets",
+    hint: "Markets currently supported by DRP operations",
   },
 ] as const
 
@@ -45,14 +46,14 @@ const customers = [
     segment: "Enterprise",
     manager: "A. Rivera",
     region: "USA",
-    health: "Healthy",
+    health: "On Track",
   },
   {
     name: "Aether Health",
     segment: "Mid-Market",
     manager: "S. Cole",
     region: "Canada",
-    health: "Growing",
+    health: "Ramp Up",
   },
   {
     name: "Crest Retail",
@@ -66,7 +67,7 @@ const customers = [
     segment: "SMB",
     manager: "J. Walker",
     region: "France",
-    health: "Healthy",
+    health: "On Track",
   },
 ] as const
 
@@ -76,7 +77,7 @@ export function CustomersPage() {
       <PageHeader
         badge="Commerce"
         title="Customers"
-        description="Review account health, ownership, and regional coverage across your customer base."
+        description="Review service health, ownership, and delivery coverage across DRP customer accounts."
       />
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -89,9 +90,16 @@ export function CustomersPage() {
                   <CardDescription>{stat.label}</CardDescription>
                   <CardTitle className="mt-1 text-3xl">{stat.value}</CardTitle>
                 </div>
-                <div className="rounded-2xl border border-primary/15 bg-primary/10 p-3 text-primary">
-                  <Icon className="size-5" />
-                </div>
+                <IconBadge
+                  icon={Icon}
+                  tone={
+                    stat.label === "Active Delivery Accounts"
+                      ? "blue"
+                      : stat.label === "High-Volume Contracts"
+                        ? "violet"
+                        : "emerald"
+                  }
+                />
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">{stat.hint}</p>
@@ -103,10 +111,9 @@ export function CustomersPage() {
 
       <DashboardCard>
         <CardHeader>
-          <CardTitle>Customer Directory</CardTitle>
+          <CardTitle>Service Accounts</CardTitle>
           <CardDescription>
-            Monitor account segment, owner, geography, and overall account
-            health.
+            Monitor account segment, owner, geography, and service health.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -117,7 +124,7 @@ export function CustomersPage() {
                 <TableHead>Segment</TableHead>
                 <TableHead>Owner</TableHead>
                 <TableHead>Region</TableHead>
-                <TableHead>Health</TableHead>
+                <TableHead>Service Health</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
