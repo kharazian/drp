@@ -9,6 +9,7 @@ import { Bell, Search, Sparkles } from "lucide-react"
 
 import { Appearance } from "@/components/Common/Appearance"
 import { Footer } from "@/components/Common/Footer"
+import { HeaderUserMenu } from "@/components/Common/HeaderUserMenu"
 import { ThemeCustomizer } from "@/components/Common/ThemeCustomizer"
 import AppSidebar from "@/components/Sidebar/AppSidebar"
 import { useTheme } from "@/components/theme-provider"
@@ -20,7 +21,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { isLoggedIn } from "@/hooks/useAuth"
+import useAuth, { isLoggedIn } from "@/hooks/useAuth"
 
 export const Route = createFileRoute("/_layout")({
   component: Layout,
@@ -69,6 +70,11 @@ const PAGE_META: Record<string, { title: string; description: string }> = {
     description:
       "Update profile details, security controls, and day-to-day workspace preferences.",
   },
+  "/notifications": {
+    title: "Notifications",
+    description:
+      "Review recent alerts, approvals, and important workspace updates.",
+  },
 }
 
 const TOP_NAV_ITEMS = [
@@ -84,6 +90,7 @@ function Layout() {
     select: (state) => state.location.pathname,
   })
   const { preferences } = useTheme()
+  const { user } = useAuth()
   const currentPage = PAGE_META[pathname] ?? PAGE_META["/"]
   const isTopNav = preferences.layout === "top-nav"
   const contentWidth =
@@ -165,12 +172,16 @@ function Layout() {
                 className="rounded-full border-border/70 bg-card"
                 asChild
               >
-                <RouterLink to="/settings" aria-label="Open settings">
+                <RouterLink to="/notifications" aria-label="Open notifications">
                   <Bell className="size-4" />
                 </RouterLink>
               </Button>
               <ThemeCustomizer />
               <Appearance />
+              <HeaderUserMenu
+                fullName={user?.full_name}
+                email={user?.email ?? undefined}
+              />
             </div>
           </div>
         </header>
