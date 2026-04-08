@@ -27,10 +27,10 @@ export function HeaderUserMenu({ fullName, email }: HeaderUserMenuProps) {
         <button
           type="button"
           aria-label="Open user menu"
-          className="flex size-10 items-center justify-center rounded-full border border-border/70 bg-card transition-colors hover:bg-accent"
+          className="flex size-10 items-center justify-center rounded-full border border-border/70 bg-card/90 transition-colors hover:bg-accent/70"
         >
           <Avatar className="size-8">
-            <AvatarFallback className="bg-emerald-100 font-semibold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200">
+            <AvatarFallback className="border border-primary/12 bg-primary/10 font-semibold text-primary">
               {getInitials(fullName || email || "User")}
             </AvatarFallback>
           </Avatar>
@@ -44,7 +44,7 @@ export function HeaderUserMenu({ fullName, email }: HeaderUserMenuProps) {
         <DropdownMenuLabel className="px-4 py-4 font-normal">
           <div className="flex items-center gap-3">
             <Avatar className="size-10">
-              <AvatarFallback className="bg-emerald-100 font-semibold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200">
+              <AvatarFallback className="border border-primary/12 bg-primary/10 font-semibold text-primary">
                 {getInitials(fullName || email || "User")}
               </AvatarFallback>
             </Avatar>
@@ -67,7 +67,7 @@ export function HeaderUserMenu({ fullName, email }: HeaderUserMenuProps) {
           <DropdownMenuItem className="px-4 py-3">
             <Bell className="size-4" />
             Notifications
-            <span className="ml-auto inline-flex size-5 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200">
+            <span className="ml-auto inline-flex size-5 items-center justify-center rounded-full border border-primary/12 bg-primary/10 text-[11px] font-semibold text-primary">
               4
             </span>
           </DropdownMenuItem>

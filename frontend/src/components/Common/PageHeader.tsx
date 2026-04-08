@@ -16,12 +16,12 @@ export function PageHeader({
   actions,
 }: PageHeaderProps) {
   return (
-    <div className="flex flex-col gap-[var(--density-page-header-gap)] rounded-[28px] border border-border/70 bg-card/85 p-[var(--density-page-header-pad)] shadow-sm backdrop-blur md:flex-row md:items-end md:justify-between">
+    <div className="motion-surface-enter flex flex-col gap-[var(--density-page-header-gap)] rounded-[28px] border border-border/65 bg-card/92 p-[var(--density-page-header-pad)] shadow-[0_18px_38px_-28px_color-mix(in_oklab,var(--foreground)_18%,transparent),0_1px_0_0_color-mix(in_oklab,white_78%,transparent)_inset] backdrop-blur md:flex-row md:items-end md:justify-between">
       <div className="space-y-[calc(var(--density-page-header-gap)*0.75)]">
         {badge ? (
           <Badge
             variant="outline"
-            className="border-primary/20 bg-primary/8 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-primary"
+            className="border-primary/18 bg-primary/7 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-primary"
           >
             {badge}
           </Badge>
@@ -36,7 +36,7 @@ export function PageHeader({
         </div>
       </div>
       {actions ? (
-        <div className="flex items-center gap-[calc(var(--density-page-header-gap)*0.75)]">
+        <div className="motion-fade-rise flex items-center gap-[calc(var(--density-page-header-gap)*0.75)]">
           {actions}
         </div>
       ) : null}

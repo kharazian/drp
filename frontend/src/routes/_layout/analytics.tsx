@@ -36,6 +36,7 @@ export const Route = createFileRoute("/_layout/analytics")({
 
 function AnalyticsPage() {
   const icons = [DollarSign, Users, Activity, BarChart3]
+  const tones = ["amber", "blue", "emerald", "violet"] as const
 
   return (
     <div className="flex flex-col gap-6">
@@ -55,6 +56,7 @@ function AnalyticsPage() {
               value={metric.value}
               hint={metric.hint}
               icon={Icon}
+              tone={tones[index]}
             />
           )
         })}

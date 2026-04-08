@@ -55,7 +55,7 @@ export function SidebarParentItem({
         <ItemLabel title={item.title} description={item.description} />
         <ChevronRight
           className={[
-            "ml-auto size-4 text-sidebar-foreground/65 transition-transform group-data-[collapsible=icon]:hidden",
+            "ml-auto size-4 text-sidebar-foreground/65 transition-transform duration-300 ease-out group-data-[collapsible=icon]:hidden",
             isExpanded ? "rotate-90" : "",
           ].join(" ")}
         />
@@ -68,7 +68,12 @@ export function SidebarParentItem({
             : "grid-rows-[0fr] opacity-0",
         ].join(" ")}
       >
-        <div className="overflow-hidden">
+        <div
+          className={[
+            "overflow-hidden transition-transform duration-300 ease-out",
+            isExpanded ? "translate-y-0" : "-translate-y-1",
+          ].join(" ")}
+        >
           <SidebarMenu className="submenu-shell gap-1 border-l border-sidebar-border/70 pl-3">
             {item.children?.map((child) => (
               <SidebarMenuItem key={child.title}>
@@ -79,7 +84,7 @@ export function SidebarParentItem({
                   className={cn(
                     childButtonClass,
                     currentPath === child.path
-                      ? "bg-sidebar-accent/55 text-sidebar-primary shadow-sm"
+                      ? "border-sidebar-border/70 bg-sidebar-accent/34 text-sidebar-primary shadow-[0_10px_18px_-18px_color-mix(in_oklab,var(--sidebar-primary)_70%,transparent)]"
                       : "bg-transparent",
                   )}
                 >

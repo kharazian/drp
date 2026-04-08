@@ -47,14 +47,51 @@ const themeOptions: Array<{
 const colorOptions: Array<{
   value: ColorPreset
   label: string
-  swatch: string
+  previewClassName: string
+  accentClassName: string
 }> = [
-  { value: "emerald", label: "Emerald", swatch: "bg-emerald-500" },
-  { value: "blue", label: "Blue", swatch: "bg-blue-500" },
-  { value: "violet", label: "Violet", swatch: "bg-violet-500" },
-  { value: "rose", label: "Rose", swatch: "bg-rose-500" },
-  { value: "orange", label: "Orange", swatch: "bg-orange-500" },
-  { value: "slate", label: "Slate", swatch: "bg-slate-500" },
+  {
+    value: "emerald",
+    label: "Emerald",
+    previewClassName:
+      "border-emerald-200/80 bg-[linear-gradient(180deg,rgba(244,253,247,1)_0%,rgba(234,250,239,1)_100%)]",
+    accentClassName: "bg-emerald-500",
+  },
+  {
+    value: "blue",
+    label: "Blue",
+    previewClassName:
+      "border-blue-200/80 bg-[linear-gradient(180deg,rgba(243,248,255,1)_0%,rgba(233,242,255,1)_100%)]",
+    accentClassName: "bg-blue-500",
+  },
+  {
+    value: "violet",
+    label: "Violet",
+    previewClassName:
+      "border-violet-200/80 bg-[linear-gradient(180deg,rgba(248,245,255,1)_0%,rgba(238,233,255,1)_100%)]",
+    accentClassName: "bg-violet-500",
+  },
+  {
+    value: "rose",
+    label: "Rose",
+    previewClassName:
+      "border-rose-200/80 bg-[linear-gradient(180deg,rgba(255,246,247,1)_0%,rgba(255,237,240,1)_100%)]",
+    accentClassName: "bg-rose-500",
+  },
+  {
+    value: "orange",
+    label: "Orange",
+    previewClassName:
+      "border-orange-200/80 bg-[linear-gradient(180deg,rgba(255,249,241,1)_0%,rgba(255,240,222,1)_100%)]",
+    accentClassName: "bg-orange-500",
+  },
+  {
+    value: "slate",
+    label: "Slate",
+    previewClassName:
+      "border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,1)_0%,rgba(239,244,249,1)_100%)]",
+    accentClassName: "bg-slate-500",
+  },
 ]
 
 const densityOptions: Array<{
@@ -106,6 +143,7 @@ interface OptionCardProps {
   onClick: () => void
   icon?: ComponentType<SVGProps<SVGSVGElement>>
   swatchClassName?: string
+  previewClassName?: string
 }
 
 function OptionCard({
@@ -114,17 +152,37 @@ function OptionCard({
   onClick,
   icon: Icon,
   swatchClassName,
+  previewClassName,
 }: OptionCardProps) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "flex min-h-14 flex-col items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 py-3 text-center text-xs font-medium text-foreground transition-colors hover:border-primary/40",
+        "motion-control flex min-h-14 flex-col items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 py-3 text-center text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:shadow-[0_10px_24px_-18px_color-mix(in_oklab,var(--foreground)_22%,transparent)]",
         active && "border-primary bg-primary/6 text-primary shadow-sm",
       )}
     >
-      {swatchClassName ? (
+      {previewClassName ? (
+        <span
+          className={cn(
+            "relative flex h-8 w-full items-stretch overflow-hidden rounded-lg border bg-background shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]",
+            previewClassName,
+          )}
+        >
+          <span className="w-2.5 border-r border-black/6 bg-black/6" />
+          <span className="flex flex-1 items-center gap-1.5 px-2">
+            <span
+              className={cn(
+                "size-2 rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.7)]",
+                swatchClassName,
+              )}
+            />
+            <span className="h-1.5 w-8 rounded-full bg-black/12" />
+            <span className="ml-auto h-4 w-4 rounded-md bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]" />
+          </span>
+        </span>
+      ) : swatchClassName ? (
         <span
           className={cn(
             "inline-flex size-5 rounded-full ring-1 ring-black/6 ring-offset-2",
@@ -152,7 +210,7 @@ export function ThemeCustomizer() {
         <Button
           variant="outline"
           size="icon"
-          className="rounded-full border-border/70 bg-card"
+          className="motion-control rounded-full border-border/70 bg-card"
           aria-label="Open customizer"
         >
           <SlidersHorizontal className="size-4" />
@@ -160,7 +218,7 @@ export function ThemeCustomizer() {
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="w-[92vw] border-l border-border/70 p-0 sm:max-w-md"
+        className="motion-fade-rise w-[92vw] border-l border-border/70 p-0 sm:max-w-md"
       >
         <SheetHeader className="border-b border-border/70 px-6 py-5">
           <div className="flex items-start justify-between gap-4">
@@ -191,13 +249,14 @@ export function ThemeCustomizer() {
           </section>
 
           <section className="space-y-3 border-t border-border/70 pt-5">
-            <p className="text-sm font-medium">Color</p>
+            <p className="text-sm font-medium">Theme Preset</p>
             <div className="grid grid-cols-3 gap-3">
               {colorOptions.map((option) => (
                 <OptionCard
                   key={option.value}
                   label={option.label}
-                  swatchClassName={option.swatch}
+                  previewClassName={option.previewClassName}
+                  swatchClassName={option.accentClassName}
                   active={preferences.preset === option.value}
                   onClick={() => updatePreference("preset", option.value)}
                 />

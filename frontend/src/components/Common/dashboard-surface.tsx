@@ -4,15 +4,15 @@ import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
 export const dashboardCardClass =
-  "rounded-[28px] border-border/70 bg-card/90 shadow-sm"
+  "motion-card-hover motion-surface-enter rounded-[28px] border-border/65 bg-card/97 shadow-[0_16px_40px_-26px_color-mix(in_oklab,var(--foreground)_18%,transparent),0_1px_0_0_color-mix(in_oklab,white_80%,transparent)_inset] backdrop-blur"
 export const dashboardPanelClass =
-  "rounded-2xl border border-border/70 bg-background/70 p-[var(--density-panel-pad)]"
+  "motion-card-hover motion-fade-rise rounded-2xl border border-border/55 bg-card/84 p-[var(--density-panel-pad)] shadow-[0_10px_24px_-24px_color-mix(in_oklab,var(--foreground)_24%,transparent),0_1px_0_0_color-mix(in_oklab,white_72%,transparent)_inset]"
 export const dashboardPanelDenseClass =
-  "rounded-2xl border border-border/70 bg-background/70 p-[var(--density-panel-pad-dense)]"
+  "motion-card-hover motion-fade-rise rounded-2xl border border-border/55 bg-card/84 p-[var(--density-panel-pad-dense)] shadow-[0_10px_24px_-24px_color-mix(in_oklab,var(--foreground)_24%,transparent),0_1px_0_0_color-mix(in_oklab,white_72%,transparent)_inset]"
 export const dashboardPanelCompactClass =
-  "rounded-2xl border border-border/70 bg-background/70 px-[var(--density-panel-pad-compact-x)] py-[var(--density-panel-pad-compact-y)]"
+  "motion-card-hover motion-fade-rise rounded-2xl border border-border/55 bg-card/84 px-[var(--density-panel-pad-compact-x)] py-[var(--density-panel-pad-compact-y)] shadow-[0_10px_24px_-24px_color-mix(in_oklab,var(--foreground)_24%,transparent),0_1px_0_0_color-mix(in_oklab,white_72%,transparent)_inset]"
 export const dashboardPanelSpaciousClass =
-  "rounded-2xl border border-border/70 bg-background/70 p-[var(--density-panel-pad-spacious)]"
+  "motion-card-hover motion-fade-rise rounded-2xl border border-border/55 bg-card/84 p-[var(--density-panel-pad-spacious)] shadow-[0_10px_24px_-24px_color-mix(in_oklab,var(--foreground)_24%,transparent),0_1px_0_0_color-mix(in_oklab,white_72%,transparent)_inset]"
 
 export function DashboardCard({
   className,

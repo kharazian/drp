@@ -141,7 +141,7 @@ function Layout() {
   return (
     <SidebarProvider>
       {!isTopNav ? <AppSidebar /> : null}
-      <SidebarInset className="min-h-svh bg-transparent">
+      <SidebarInset className="motion-surface-enter min-h-svh bg-transparent">
         <header className="sticky top-0 z-20 border-b border-border/60 bg-background/75 px-4 backdrop-blur-xl">
           <div
             className={[
@@ -173,10 +173,10 @@ function Layout() {
                       key={item.path}
                       to={item.path}
                       className={[
-                        "rounded-full px-3 py-2 text-sm transition-colors",
+                        "motion-control rounded-full px-3 py-2 text-sm transition-colors",
                         isActive
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                          ? "border border-primary/16 bg-primary/9 text-primary shadow-[0_12px_20px_-18px_color-mix(in_oklab,var(--primary)_62%,transparent)]"
+                          : "text-muted-foreground hover:bg-accent/72 hover:text-foreground",
                       ].join(" ")}
                     >
                       {item.label}
@@ -192,12 +192,12 @@ function Layout() {
                 <Input
                   aria-label="Search"
                   placeholder="Search users, items, or settings"
-                  className="h-[var(--density-control-height-lg)] rounded-full border-border/70 bg-card pl-9 shadow-none"
+                  className="motion-control h-[var(--density-control-height-lg)] rounded-full border-border/70 bg-card/88 pl-9 shadow-[0_8px_20px_-18px_color-mix(in_oklab,var(--foreground)_22%,transparent),0_1px_0_0_color-mix(in_oklab,white_72%,transparent)_inset]"
                 />
               </div>
               <Badge
                 variant="outline"
-                className="hidden rounded-full border-primary/20 bg-primary/8 px-3 py-1 text-primary md:inline-flex"
+                className="hidden rounded-full border-emerald-500/14 bg-emerald-500/10 px-3 py-1 text-emerald-700 shadow-[0_10px_20px_-18px_rgba(16,185,129,0.55)] md:inline-flex motion-fade-rise dark:text-emerald-300"
               >
                 <Sparkles className="size-3.5" />
                 Ready
@@ -205,7 +205,7 @@ function Layout() {
               <Button
                 variant="outline"
                 size="icon"
-                className="rounded-full border-border/70 bg-card"
+                className="motion-control rounded-full border-border/70 bg-card"
                 asChild
               >
                 <RouterLink to="/notifications" aria-label="Open notifications">

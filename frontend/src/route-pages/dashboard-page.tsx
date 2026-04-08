@@ -70,18 +70,21 @@ export function DashboardPage() {
           value={String(itemCount)}
           hint="Records currently available in your workspace."
           icon={Briefcase}
+          tone="emerald"
         />
         <StatCard
           label="Account Type"
           value={currentUser?.is_superuser ? "Admin" : "Member"}
           hint="Access level currently assigned to this session."
           icon={ShieldCheck}
+          tone="blue"
         />
         <StatCard
           label="Profile"
           value={currentUser?.full_name ? "Complete" : "Basic"}
           hint="Add your full name to make collaboration clearer."
           icon={UserRound}
+          tone="violet"
         />
         <StatCard
           label="Users"
@@ -92,6 +95,7 @@ export function DashboardPage() {
               : "User directory is only available to administrators."
           }
           icon={Users}
+          tone="amber"
         />
       </div>
 
