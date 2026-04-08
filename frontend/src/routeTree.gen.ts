@@ -19,6 +19,7 @@ import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutProfileRouteImport } from './routes/_layout/profile'
 import { Route as LayoutOrdersRouteImport } from './routes/_layout/orders'
 import { Route as LayoutNotificationsRouteImport } from './routes/_layout/notifications'
+import { Route as LayoutMailRouteImport } from './routes/_layout/mail'
 import { Route as LayoutKanbanRouteImport } from './routes/_layout/kanban'
 import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
 import { Route as LayoutInvoicesRouteImport } from './routes/_layout/invoices'
@@ -76,6 +77,11 @@ const LayoutOrdersRoute = LayoutOrdersRouteImport.update({
 const LayoutNotificationsRoute = LayoutNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutMailRoute = LayoutMailRouteImport.update({
+  id: '/mail',
+  path: '/mail',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutKanbanRoute = LayoutKanbanRouteImport.update({
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/invoices': typeof LayoutInvoicesRoute
   '/items': typeof LayoutItemsRoute
   '/kanban': typeof LayoutKanbanRoute
+  '/mail': typeof LayoutMailRoute
   '/notifications': typeof LayoutNotificationsRoute
   '/orders': typeof LayoutOrdersRoute
   '/profile': typeof LayoutProfileRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/invoices': typeof LayoutInvoicesRoute
   '/items': typeof LayoutItemsRoute
   '/kanban': typeof LayoutKanbanRoute
+  '/mail': typeof LayoutMailRoute
   '/notifications': typeof LayoutNotificationsRoute
   '/orders': typeof LayoutOrdersRoute
   '/profile': typeof LayoutProfileRoute
@@ -180,6 +188,7 @@ export interface FileRoutesById {
   '/_layout/invoices': typeof LayoutInvoicesRoute
   '/_layout/items': typeof LayoutItemsRoute
   '/_layout/kanban': typeof LayoutKanbanRoute
+  '/_layout/mail': typeof LayoutMailRoute
   '/_layout/notifications': typeof LayoutNotificationsRoute
   '/_layout/orders': typeof LayoutOrdersRoute
   '/_layout/profile': typeof LayoutProfileRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
     | '/invoices'
     | '/items'
     | '/kanban'
+    | '/mail'
     | '/notifications'
     | '/orders'
     | '/profile'
@@ -222,6 +232,7 @@ export interface FileRouteTypes {
     | '/invoices'
     | '/items'
     | '/kanban'
+    | '/mail'
     | '/notifications'
     | '/orders'
     | '/profile'
@@ -243,6 +254,7 @@ export interface FileRouteTypes {
     | '/_layout/invoices'
     | '/_layout/items'
     | '/_layout/kanban'
+    | '/_layout/mail'
     | '/_layout/notifications'
     | '/_layout/orders'
     | '/_layout/profile'
@@ -330,6 +342,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutNotificationsRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/mail': {
+      id: '/_layout/mail'
+      path: '/mail'
+      fullPath: '/mail'
+      preLoaderRoute: typeof LayoutMailRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/kanban': {
       id: '/_layout/kanban'
       path: '/kanban'
@@ -406,6 +425,7 @@ interface LayoutRouteChildren {
   LayoutInvoicesRoute: typeof LayoutInvoicesRoute
   LayoutItemsRoute: typeof LayoutItemsRoute
   LayoutKanbanRoute: typeof LayoutKanbanRoute
+  LayoutMailRoute: typeof LayoutMailRoute
   LayoutNotificationsRoute: typeof LayoutNotificationsRoute
   LayoutOrdersRoute: typeof LayoutOrdersRoute
   LayoutProfileRoute: typeof LayoutProfileRoute
@@ -423,6 +443,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutInvoicesRoute: LayoutInvoicesRoute,
   LayoutItemsRoute: LayoutItemsRoute,
   LayoutKanbanRoute: LayoutKanbanRoute,
+  LayoutMailRoute: LayoutMailRoute,
   LayoutNotificationsRoute: LayoutNotificationsRoute,
   LayoutOrdersRoute: LayoutOrdersRoute,
   LayoutProfileRoute: LayoutProfileRoute,

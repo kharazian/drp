@@ -58,6 +58,10 @@ const PAGE_META: Record<string, { title: string; description: string }> = {
     title: "Calendar",
     description: "Review shared schedules, checkpoints, and upcoming meetings.",
   },
+  "/mail": {
+    title: "Mail",
+    description: "Browse operational inbox threads and message activity.",
+  },
   "/kanban": {
     title: "Kanban",
     description:

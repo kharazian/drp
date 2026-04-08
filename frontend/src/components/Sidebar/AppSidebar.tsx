@@ -7,6 +7,7 @@ import {
   Home,
   KanbanSquare,
   LifeBuoy,
+  Mail,
   Receipt,
   ReceiptText,
   Settings,
@@ -69,6 +70,13 @@ const baseItems: Item[] = [
     title: "Calendar",
     description: "Plan meetings and team schedules",
     path: "/calendar",
+  },
+  {
+    section: "Apps",
+    icon: Mail,
+    title: "Mail",
+    description: "Review inbox threads and updates",
+    path: "/mail",
   },
   {
     section: "Commerce",
