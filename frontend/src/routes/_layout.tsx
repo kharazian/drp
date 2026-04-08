@@ -50,6 +50,10 @@ const PAGE_META: Record<string, { title: string; description: string }> = {
     description:
       "Track KPIs, traffic mix, and reporting modules across the workspace.",
   },
+  "/charts": {
+    title: "Charts",
+    description: "Preview chart-oriented modules and reporting visualizations.",
+  },
   "/kanban": {
     title: "Kanban",
     description:

@@ -1,6 +1,7 @@
 import {
   BarChart3,
   Briefcase,
+  ChartColumn,
   ContactRound,
   Home,
   KanbanSquare,
@@ -38,6 +39,13 @@ const baseItems: Item[] = [
     title: "Analytics",
     description: "KPIs, channels, and reporting blocks",
     path: "/analytics",
+  },
+  {
+    section: "Overview",
+    icon: ChartColumn,
+    title: "Charts",
+    description: "Showcase visual reporting blocks",
+    path: "/charts",
   },
   {
     section: "Manage",
