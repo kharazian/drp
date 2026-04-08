@@ -1,5 +1,4 @@
 import {
-  Globe,
   LayoutDashboard,
   Monitor,
   Moon,
@@ -18,7 +17,6 @@ import {
   type ContainerMode,
   type Density,
   type DirectionMode,
-  type Language,
   type LayoutMode,
   type SubmenuMode,
   type Theme,
@@ -100,15 +98,6 @@ const submenuOptions: Array<{
 }> = [
   { value: "click", label: "Click", icon: MousePointerClick },
   { value: "hover", label: "Hover", icon: SquareMousePointer },
-]
-
-const languageOptions: Array<{
-  value: Language
-  label: string
-}> = [
-  { value: "english", label: "English" },
-  { value: "deutsch", label: "Deutsch" },
-  { value: "francais", label: "Français" },
 ]
 
 interface OptionCardProps {
@@ -283,24 +272,6 @@ export function ThemeCustomizer() {
                   icon={option.icon}
                   active={preferences.submenuMode === option.value}
                   onClick={() => updatePreference("submenuMode", option.value)}
-                />
-              ))}
-            </div>
-          </section>
-
-          <section className="space-y-3 border-t border-border/70 pt-5">
-            <div className="flex items-center gap-2">
-              <Globe className="size-4 text-muted-foreground" />
-              <p className="text-sm font-medium">Language</p>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              {languageOptions.map((option) => (
-                <OptionCard
-                  key={option.value}
-                  label={option.label}
-                  icon={Globe}
-                  active={preferences.language === option.value}
-                  onClick={() => updatePreference("language", option.value)}
                 />
               ))}
             </div>
