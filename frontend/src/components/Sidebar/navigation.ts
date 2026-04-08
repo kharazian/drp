@@ -20,7 +20,7 @@ import {
 } from "lucide-react"
 
 import type { UserPublic } from "@/client"
-import type { Item } from "./Main"
+import type { Item } from "./types"
 
 const baseItems: Item[] = [
   {
