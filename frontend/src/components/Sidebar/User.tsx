@@ -1,41 +1,33 @@
 import { Link as RouterLink } from "@tanstack/react-router"
-import { ChevronsUpDown, LogOut, Settings } from "lucide-react"
+import { LogOut } from "lucide-react"
 
 import type { UserPublic } from "@/client"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar"
+import { useSidebar } from "@/components/ui/sidebar"
 import useAuth from "@/hooks/useAuth"
 import { getInitials } from "@/utils"
 
 interface UserInfoProps {
   fullName?: string
   email?: string
+  roleLabel?: string
 }
 
-function UserInfo({ fullName, email }: UserInfoProps) {
+function UserInfo({ fullName, email, roleLabel }: UserInfoProps) {
   return (
     <div className="flex w-full min-w-0 items-center gap-2.5 group-data-[collapsible=icon]:justify-center">
-      <Avatar className="size-8">
-        <AvatarFallback className="bg-zinc-600 text-white">
+      <Avatar className="size-9">
+        <AvatarFallback className="bg-primary text-primary-foreground">
           {getInitials(fullName || "User")}
         </AvatarFallback>
       </Avatar>
       <div className="flex min-w-0 flex-col items-start group-data-[collapsible=icon]:hidden">
-        <p className="text-sm font-medium truncate w-full">{fullName}</p>
-        <p className="text-xs text-muted-foreground truncate w-full">{email}</p>
+        <p className="w-full truncate text-sm font-semibold text-sidebar-foreground">
+          {fullName}
+        </p>
+        <p className="w-full truncate text-xs text-sidebar-foreground/65">
+          {roleLabel ?? email}
+        </p>
       </div>
     </div>
   )
@@ -43,62 +35,44 @@ function UserInfo({ fullName, email }: UserInfoProps) {
 
 export function User({ user }: { user?: UserPublic | null }) {
   const { logout } = useAuth()
-  const { isMobile, setOpenMobile } = useSidebar()
-
-  if (!user) return null
+  const { setOpenMobile } = useSidebar()
 
   const handleMenuClick = () => {
-    if (isMobile) {
-      setOpenMobile(false)
-    }
+    setOpenMobile(false)
   }
   const handleLogout = async () => {
     logout()
   }
+  const fullName = user?.full_name ?? "Account"
+  const email = user?.email ?? undefined
+  const roleLabel = user ? (user.is_superuser ? "Admin" : "Member") : "Profile"
 
   return (
-    <SidebarMenu className="group-data-[collapsible=icon]:items-center">
-      <SidebarMenuItem className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center"
-              data-testid="user-menu"
-            >
-              <UserInfo
-                fullName={user?.full_name ?? undefined}
-                email={user?.email ?? undefined}
-              />
-              <ChevronsUpDown className="ml-auto size-4 text-muted-foreground group-data-[collapsible=icon]:hidden" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
-            align="end"
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <UserInfo
-                fullName={user?.full_name ?? undefined}
-                email={user?.email ?? undefined}
-              />
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <RouterLink to="/settings" onClick={handleMenuClick}>
-              <DropdownMenuItem>
-                <Settings />
-                User Settings
-              </DropdownMenuItem>
-            </RouterLink>
-            <DropdownMenuItem onClick={handleLogout}>
-              <LogOut />
-              Log Out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
+    <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+      <RouterLink
+        to="/profile"
+        onClick={handleMenuClick}
+        data-testid="user-menu"
+        className="flex min-w-0 flex-1 items-center rounded-lg px-1.5 py-1.5 text-sidebar-foreground/85 transition-colors hover:bg-sidebar-accent/40 hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden"
+      >
+        <UserInfo fullName={fullName} email={email} roleLabel={roleLabel} />
+      </RouterLink>
+      <button
+        type="button"
+        className="flex size-8 items-center justify-center rounded-md text-sidebar-foreground/40 transition-colors hover:bg-sidebar-accent/45 hover:text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden"
+        onClick={handleLogout}
+      >
+        <LogOut className="size-4" />
+        <span className="sr-only">Log out</span>
+      </button>
+      <button
+        type="button"
+        className="hidden size-11 items-center justify-center rounded-lg text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent/45 hover:text-sidebar-foreground group-data-[collapsible=icon]:flex"
+        onClick={handleLogout}
+      >
+        <LogOut className="size-4" />
+        <span className="sr-only">Log out</span>
+      </button>
+    </div>
   )
 }

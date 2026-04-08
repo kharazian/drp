@@ -1,5 +1,8 @@
+import { Link as RouterLink } from "@tanstack/react-router"
 import {
   BarChart3,
+  Bell,
+  BookOpen,
   Briefcase,
   CalendarDays,
   ChartColumn,
@@ -14,18 +17,18 @@ import {
   Receipt,
   ReceiptText,
   Settings,
-  ShieldCheck,
   UserRound,
   Users,
 } from "lucide-react"
-
-import { SidebarAppearance } from "@/components/Common/Appearance"
 import { Logo } from "@/components/Common/Logo"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import useAuth from "@/hooks/useAuth"
 import { type Item, Main } from "./Main"
@@ -36,119 +39,89 @@ const baseItems: Item[] = [
     section: "Overview",
     icon: Home,
     title: "Dashboard",
-    description: "Health, activity, and quick actions",
     path: "/",
   },
   {
     section: "Overview",
     icon: BarChart3,
     title: "Analytics",
-    description: "KPIs, channels, and reporting blocks",
     path: "/analytics",
   },
   {
     section: "Overview",
     icon: ChartColumn,
     title: "Charts",
-    description: "Showcase visual reporting blocks",
     path: "/charts",
   },
   {
     section: "Workspace",
     icon: Briefcase,
     title: "Operations",
-    description: "Daily workflows and execution tools",
+    description: "Items, kanban, and scheduling",
     path: "/items",
     children: [
-      {
-        icon: Briefcase,
-        title: "Items",
-        path: "/items",
-      },
-      {
-        icon: KanbanSquare,
-        title: "Kanban",
-        path: "/kanban",
-      },
-      {
-        icon: CalendarDays,
-        title: "Calendar",
-        path: "/calendar",
-      },
+      { icon: Briefcase, title: "Items", path: "/items" },
+      { icon: KanbanSquare, title: "Kanban", path: "/kanban" },
+      { icon: CalendarDays, title: "Calendar", path: "/calendar" },
     ],
   },
   {
     section: "Workspace",
-    icon: Mail,
+    icon: FolderKanban,
     title: "Apps",
-    description: "Inbox, chat, and file collaboration",
-    path: "/mail",
+    description: "Files, mail, and chat",
+    path: "/files",
     children: [
-      {
-        icon: Mail,
-        title: "Mail",
-        path: "/mail",
-      },
-      {
-        icon: MessagesSquare,
-        title: "Chat",
-        path: "/chat",
-      },
-      {
-        icon: FolderKanban,
-        title: "Files",
-        path: "/files",
-      },
+      { icon: FolderKanban, title: "Files", path: "/files" },
+      { icon: Mail, title: "Mail", path: "/mail" },
+      { icon: MessagesSquare, title: "Chat", path: "/chat" },
     ],
   },
   {
-    section: "Business",
+    section: "Commerce",
     icon: ReceiptText,
     title: "Commerce",
-    description: "Orders, customers, invoices, and billing",
+    description: "Orders, customers, and invoices",
     path: "/orders",
     children: [
-      {
-        icon: ReceiptText,
-        title: "Orders",
-        path: "/orders",
-      },
-      {
-        icon: ContactRound,
-        title: "Customers",
-        path: "/customers",
-      },
-      {
-        icon: Receipt,
-        title: "Invoices",
-        path: "/invoices",
-      },
-      {
-        icon: CreditCard,
-        title: "Billing",
-        path: "/billing",
-      },
+      { icon: ReceiptText, title: "Orders", path: "/orders" },
+      { icon: ContactRound, title: "Customers", path: "/customers" },
+      { icon: Receipt, title: "Invoices", path: "/invoices" },
     ],
+  },
+  {
+    section: "Finance",
+    icon: CreditCard,
+    title: "Billing",
+    description: "Plans, usage, and payment methods",
+    path: "/billing",
   },
   {
     section: "Account",
     icon: UserRound,
     title: "Profile",
-    description: "Highlights, activity, and permissions",
+    description: "Personal account summary",
     path: "/profile",
   },
   {
-    section: "Account",
+    section: "System",
+    icon: Bell,
+    title: "Notifications",
+    description: "Alerts and approvals",
+    path: "/notifications",
+  },
+  {
+    section: "System",
     icon: Settings,
     title: "Settings",
-    description: "Profile, security, and preferences",
+    description: "Workspace preferences",
     path: "/settings",
   },
   {
     section: "System",
     icon: LifeBuoy,
     title: "Help & Support",
-    description: "Docs, tickets, and escalation paths",
+    description: "Docs and support links",
     path: "/help-support",
   },
 ]
@@ -162,35 +135,40 @@ export function AppSidebar() {
         {
           section: "System",
           icon: Users,
-          title: "Admin",
-          description: "Users, permissions, and access",
+          title: "Users",
+          description: "Access and administration",
           path: "/admin",
         },
       ]
     : baseItems
 
   return (
-    <Sidebar
-      collapsible="icon"
-      className="p-3 group-data-[collapsible=icon]:p-2"
-    >
-      <SidebarHeader className="gap-4 rounded-[28px] border border-sidebar-border/70 bg-sidebar px-4 py-5 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-3">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border/80">
+      <SidebarHeader className="h-16 border-b border-sidebar-border/80 px-4 group-data-[collapsible=icon]:px-2">
         <Logo variant="responsive" />
-        <div className="rounded-2xl border border-primary/12 bg-primary/8 p-3 text-sm group-data-[collapsible=icon]:hidden">
-          <div className="mb-1 flex items-center gap-2 font-medium text-sidebar-foreground">
-            <ShieldCheck className="size-4 text-primary" />
-            Control Center
-          </div>
-          <p className="text-xs leading-5 text-sidebar-foreground/70">
-            Operational views for users, inventory, and account controls.
-          </p>
-        </div>
       </SidebarHeader>
-      <SidebarContent className="mt-4 rounded-[28px] border border-sidebar-border/70 bg-sidebar px-2 py-4 group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:py-3">
-        <Main items={items} />
+      <SidebarContent className="px-3 py-4 pb-28 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:pb-24">
+        <Main items={items} showSectionDivider />
+        <div className="my-3 border-t border-sidebar-border/80" />
+        <SidebarMenu className="gap-0.5 group-data-[collapsible=icon]:items-center">
+          <SidebarMenuItem className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+            <SidebarMenuButton
+              asChild
+              tooltip="Documentation"
+              size="lg"
+              className="h-auto min-h-11 rounded-lg px-3 py-2 text-sidebar-foreground/72 transition-all duration-200 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+            >
+              <RouterLink to="/help-support" aria-label="Open documentation">
+                <BookOpen className="size-[18px] shrink-0 text-sidebar-foreground/50" />
+                <span className="flex-1 group-data-[collapsible=icon]:hidden">
+                  Documentation
+                </span>
+              </RouterLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="mt-4 rounded-[28px] border border-sidebar-border/70 bg-sidebar p-3 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:p-2">
-        <SidebarAppearance />
+      <SidebarFooter className="absolute right-0 bottom-0 left-0 z-20 border-t border-sidebar-border/80 bg-sidebar/95 p-3 backdrop-blur-sm group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:p-2">
         <User user={currentUser} />
       </SidebarFooter>
     </Sidebar>

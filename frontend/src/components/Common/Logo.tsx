@@ -21,16 +21,16 @@ export function Logo({
         className,
       )}
     >
-      <div className="flex size-10 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/25">
+      <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground">
         DR
       </div>
       {variant !== "icon" ? (
-        <div className="flex flex-col leading-none">
-          <span className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        <div className="flex flex-col">
+          <span className="text-sm font-bold tracking-tight text-sidebar-foreground">
             DRP
           </span>
-          <span className="text-base font-semibold tracking-tight">
-            Operations Console
+          <span className="text-[10px] font-medium uppercase tracking-[0.28em] text-sidebar-foreground/40">
+            Operations
           </span>
         </div>
       ) : null}

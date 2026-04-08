@@ -1,7 +1,14 @@
 import { Link } from "@tanstack/react-router"
 import { Button } from "@/components/ui/button"
 
-const ErrorComponent = () => {
+const ErrorComponent = ({ error }: { error?: unknown }) => {
+  const errorMessage =
+    error instanceof Error
+      ? error.message
+      : typeof error === "string"
+        ? error
+        : null
+
   return (
     <div
       className="flex min-h-screen items-center justify-center flex-col p-4"
@@ -19,6 +26,11 @@ const ErrorComponent = () => {
       <p className="text-lg text-muted-foreground mb-4 text-center z-10">
         Something went wrong. Please try again.
       </p>
+      {errorMessage ? (
+        <pre className="mb-4 max-w-3xl overflow-auto rounded-lg border border-border bg-muted/40 p-4 text-sm text-foreground">
+          {errorMessage}
+        </pre>
+      ) : null}
       <Link to="/">
         <Button>Go Home</Button>
       </Link>

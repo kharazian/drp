@@ -32,9 +32,10 @@ export type Item = {
 
 interface MainProps {
   items: Item[]
+  showSectionDivider?: boolean
 }
 
-export function Main({ items }: MainProps) {
+export function Main({ items, showSectionDivider = false }: MainProps) {
   const { isMobile, open, setOpenMobile } = useSidebar()
   const { preferences } = useTheme()
   const router = useRouterState()
@@ -93,21 +94,38 @@ export function Main({ items }: MainProps) {
   }
 
   const toggleItem = (title: string) => {
-    setExpandedItems((current) => ({
-      ...current,
-      [title]: !current[title],
-    }))
+    setExpandedItems((current) => {
+      const nextValue = !current[title]
+      const resetState = Object.fromEntries(
+        Object.keys(current).map((key) => [key, false]),
+      ) as Record<string, boolean>
+
+      return {
+        ...resetState,
+        ...defaultExpanded,
+        [title]: nextValue,
+      }
+    })
   }
 
   return (
     <>
-      {Object.entries(groupedItems).map(([section, sectionItems]) => (
-        <SidebarGroup key={section} className="mb-4">
-          <SidebarGroupLabel className="px-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-sidebar-foreground/55">
+      {Object.entries(groupedItems).map(([section, sectionItems], index) => (
+        <SidebarGroup
+          key={section}
+          className={[
+            "px-0",
+            index > 0 && showSectionDivider
+              ? "border-t border-sidebar-border/80 pt-3"
+              : "",
+            index > 0 ? "mt-3" : "",
+          ].join(" ")}
+        >
+          <SidebarGroupLabel className="px-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-sidebar-foreground/35">
             {section}
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-2 group-data-[collapsible=icon]:items-center">
+            <SidebarMenu className="mt-1 gap-1.5 group-data-[collapsible=icon]:items-center">
               {sectionItems.map((item) => {
                 const hasChildren = Boolean(item.children?.length)
                 const isChildActive =
@@ -165,11 +183,11 @@ export function Main({ items }: MainProps) {
                             tooltip={shouldHideTooltip ? undefined : item.title}
                             isActive={isActive}
                             size="lg"
-                            className="h-auto min-h-12 px-3 py-3 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center"
+                            className="h-auto min-h-11 rounded-xl border border-transparent bg-sidebar-accent/25 px-3 py-2 text-sidebar-foreground/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-lg group-data-[collapsible=icon]:px-0"
                           >
-                            <item.icon />
+                            <item.icon className="size-[18px] text-sidebar-foreground/70" />
                             <div className="flex min-w-0 flex-1 flex-col items-start group-data-[collapsible=icon]:hidden">
-                              <span>{item.title}</span>
+                              <span className="font-medium">{item.title}</span>
                               {item.description ? (
                                 <span className="text-xs text-sidebar-foreground/65">
                                   {item.description}
@@ -182,7 +200,7 @@ export function Main({ items }: MainProps) {
                           side="right"
                           align="start"
                           sideOffset={12}
-                          className="min-w-64 rounded-2xl p-2"
+                          className="min-w-64 rounded-2xl border border-border/70 p-2 shadow-xl"
                           onMouseEnter={() => {
                             if (preferences.submenuMode === "hover") {
                               clearCloseTimeout()
@@ -206,7 +224,7 @@ export function Main({ items }: MainProps) {
                               <RouterLink key={child.title} to={child.path}>
                                 <DropdownMenuItem
                                   className={[
-                                    "rounded-xl px-3 py-2.5",
+                                    "rounded-xl px-3 py-2.5 text-sm",
                                     isChildRouteActive
                                       ? "bg-accent text-accent-foreground"
                                       : "",
@@ -227,7 +245,7 @@ export function Main({ items }: MainProps) {
                           tooltip={shouldHideTooltip ? undefined : item.title}
                           isActive={isActive}
                           size="lg"
-                          className="h-auto min-h-12 px-3 py-3 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center"
+                          className="h-auto min-h-11 rounded-xl border border-transparent bg-sidebar-accent/25 px-3 py-2 text-sidebar-foreground/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-lg group-data-[collapsible=icon]:px-0"
                           onClick={() => {
                             if (!open && !isMobile) {
                               return
@@ -235,9 +253,9 @@ export function Main({ items }: MainProps) {
                             toggleItem(item.title)
                           }}
                         >
-                          <item.icon />
+                          <item.icon className="size-[18px] text-sidebar-foreground/70" />
                           <div className="flex min-w-0 flex-1 flex-col items-start group-data-[collapsible=icon]:hidden">
-                            <span>{item.title}</span>
+                            <span className="font-medium">{item.title}</span>
                             {item.description ? (
                               <span className="text-xs text-sidebar-foreground/65">
                                 {item.description}
@@ -251,33 +269,50 @@ export function Main({ items }: MainProps) {
                             ].join(" ")}
                           />
                         </SidebarMenuButton>
-                        {open && isExpanded ? (
-                          <SidebarMenu className="mt-2 gap-1 border-l border-sidebar-border/70 pl-3 group-data-[collapsible=icon]:hidden">
-                            {item.children?.map((child) => {
-                              const isChildRouteActive =
-                                currentPath === child.path
+                        <div
+                          className={[
+                            "grid transition-all duration-300 ease-out group-data-[collapsible=icon]:hidden",
+                            isExpanded
+                              ? "mt-2 grid-rows-[1fr] opacity-100"
+                              : "grid-rows-[0fr] opacity-0",
+                          ].join(" ")}
+                        >
+                          <div className="overflow-hidden">
+                            <SidebarMenu className="submenu-shell gap-1 border-l border-sidebar-border/70 pl-3">
+                              {item.children?.map((child) => {
+                                const isChildRouteActive =
+                                  currentPath === child.path
 
-                              return (
-                                <SidebarMenuItem key={child.title}>
-                                  <SidebarMenuButton
-                                    tooltip={child.title}
-                                    isActive={isChildRouteActive}
-                                    asChild
-                                    className="h-auto min-h-10 px-3 py-2"
-                                  >
-                                    <RouterLink
-                                      to={child.path}
-                                      onClick={handleMenuClick}
+                                return (
+                                  <SidebarMenuItem key={child.title}>
+                                    <SidebarMenuButton
+                                      tooltip={child.title}
+                                      isActive={isChildRouteActive}
+                                      asChild
+                                      className={[
+                                        "h-auto min-h-9 rounded-lg px-3 py-2 text-[13px] text-sidebar-foreground/68 transition-all duration-200",
+                                        "hover:translate-x-0.5 hover:bg-sidebar-accent/35 hover:text-sidebar-foreground",
+                                        isChildRouteActive
+                                          ? "bg-sidebar-accent/55 text-sidebar-primary shadow-sm"
+                                          : "bg-transparent",
+                                      ].join(" ")}
                                     >
-                                      <child.icon />
-                                      <span>{child.title}</span>
-                                    </RouterLink>
-                                  </SidebarMenuButton>
-                                </SidebarMenuItem>
-                              )
-                            })}
-                          </SidebarMenu>
-                        ) : null}
+                                      <RouterLink
+                                        to={child.path}
+                                        onClick={handleMenuClick}
+                                      >
+                                        <child.icon className="size-4 text-sidebar-foreground/55" />
+                                        <span className="font-medium">
+                                          {child.title}
+                                        </span>
+                                      </RouterLink>
+                                    </SidebarMenuButton>
+                                  </SidebarMenuItem>
+                                )
+                              })}
+                            </SidebarMenu>
+                          </div>
+                        </div>
                       </>
                     ) : (
                       <SidebarMenuButton
@@ -285,12 +320,12 @@ export function Main({ items }: MainProps) {
                         isActive={isActive}
                         asChild
                         size="lg"
-                        className="h-auto min-h-12 px-3 py-3 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center"
+                        className="h-auto min-h-10 rounded-lg px-3 py-2 text-sidebar-foreground/72 transition-all duration-200 hover:bg-sidebar-accent/45 hover:text-sidebar-foreground group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
                       >
                         <RouterLink to={item.path} onClick={handleMenuClick}>
-                          <item.icon />
+                          <item.icon className="size-[18px] text-sidebar-foreground/55" />
                           <div className="flex min-w-0 flex-col items-start group-data-[collapsible=icon]:hidden">
-                            <span>{item.title}</span>
+                            <span className="font-medium">{item.title}</span>
                             {item.description ? (
                               <span className="text-xs text-sidebar-foreground/65">
                                 {item.description}
