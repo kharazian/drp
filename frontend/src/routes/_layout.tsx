@@ -7,7 +7,6 @@ import {
 } from "@tanstack/react-router"
 import { Bell, Search, Sparkles } from "lucide-react"
 
-import { Appearance } from "@/components/Common/Appearance"
 import { Footer } from "@/components/Common/Footer"
 import { HeaderUserMenu } from "@/components/Common/HeaderUserMenu"
 import { ThemeCustomizer } from "@/components/Common/ThemeCustomizer"
@@ -214,7 +213,6 @@ function Layout() {
                 </RouterLink>
               </Button>
               <ThemeCustomizer />
-              <Appearance />
               <HeaderUserMenu
                 fullName={user?.full_name}
                 email={user?.email ?? undefined}
