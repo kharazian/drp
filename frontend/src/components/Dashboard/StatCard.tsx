@@ -27,7 +27,7 @@ export function StatCard({ label, value, hint, icon: Icon }: StatCardProps) {
             {value}
           </CardTitle>
         </div>
-        <div className="rounded-2xl border border-primary/15 bg-primary/10 p-3 text-primary">
+        <div className="rounded-2xl border border-primary/15 bg-primary/10 p-[var(--density-stat-icon-pad)] text-primary">
           <Icon className="size-5" />
         </div>
       </CardHeader>

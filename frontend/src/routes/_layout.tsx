@@ -138,12 +138,6 @@ function Layout() {
   const isTopNav = preferences.layout === "top-nav"
   const contentWidth =
     preferences.container === "boxed" ? "max-w-6xl" : "max-w-[88rem]"
-  const contentPadding =
-    preferences.density === "compact"
-      ? "px-4 py-4 md:px-5 md:py-5"
-      : preferences.density === "spacious"
-        ? "px-5 py-8 md:px-8 md:py-10"
-        : "px-4 py-6 md:px-6 md:py-8"
 
   return (
     <SidebarProvider>
@@ -152,7 +146,7 @@ function Layout() {
         <header className="sticky top-0 z-20 border-b border-border/60 bg-background/75 px-4 backdrop-blur-xl">
           <div
             className={[
-              "mx-auto flex h-20 items-center gap-3",
+              "mx-auto flex h-[var(--density-header-height)] items-center gap-3",
               contentWidth,
             ].join(" ")}
           >
@@ -199,7 +193,7 @@ function Layout() {
                 <Input
                   aria-label="Search"
                   placeholder="Search users, items, or settings"
-                  className="h-10 rounded-full border-border/70 bg-card pl-9 shadow-none"
+                  className="h-[var(--density-control-height-lg)] rounded-full border-border/70 bg-card pl-9 shadow-none"
                 />
               </div>
               <Badge
@@ -228,7 +222,7 @@ function Layout() {
             </div>
           </div>
         </header>
-        <main className={["flex-1", contentPadding].join(" ")}>
+        <main className="flex-1 px-[var(--density-page-pad-x)] py-[var(--density-page-pad-y)] md:px-[var(--density-page-pad-x-md)] md:py-[var(--density-page-pad-y-md)]">
           <div className={["mx-auto", contentWidth].join(" ")}>
             <Outlet />
           </div>

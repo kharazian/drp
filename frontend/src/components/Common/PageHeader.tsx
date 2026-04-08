@@ -16,8 +16,8 @@ export function PageHeader({
   actions,
 }: PageHeaderProps) {
   return (
-    <div className="flex flex-col gap-4 rounded-[28px] border border-border/70 bg-card/85 p-6 shadow-sm backdrop-blur md:flex-row md:items-end md:justify-between">
-      <div className="space-y-3">
+    <div className="flex flex-col gap-[var(--density-page-header-gap)] rounded-[28px] border border-border/70 bg-card/85 p-[var(--density-page-header-pad)] shadow-sm backdrop-blur md:flex-row md:items-end md:justify-between">
+      <div className="space-y-[calc(var(--density-page-header-gap)*0.75)]">
         {badge ? (
           <Badge
             variant="outline"
@@ -26,7 +26,7 @@ export function PageHeader({
             {badge}
           </Badge>
         ) : null}
-        <div className="space-y-2">
+        <div className="space-y-[calc(var(--density-page-header-gap)*0.5)]">
           <h1 className="text-3xl font-semibold tracking-tight text-balance">
             {title}
           </h1>
@@ -36,7 +36,9 @@ export function PageHeader({
         </div>
       </div>
       {actions ? (
-        <div className="flex items-center gap-3">{actions}</div>
+        <div className="flex items-center gap-[calc(var(--density-page-header-gap)*0.75)]">
+          {actions}
+        </div>
       ) : null}
     </div>
   )
