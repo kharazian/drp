@@ -1,4 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router"
+import {
+  DashboardCard,
+  dashboardPanelClass,
+  dashboardPanelCompactClass,
+} from "@/components/Common/dashboard-surface"
 import { PageHeader } from "@/components/Common/PageHeader"
 import {
   profileActivity,
@@ -6,7 +11,6 @@ import {
   profilePermissions,
 } from "@/components/Dashboard/demo-data"
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
@@ -34,20 +38,17 @@ function ProfilePage() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {profileHighlights.map((item) => (
-          <Card
-            key={item.label}
-            className="rounded-[28px] border-border/70 bg-card/90 shadow-sm"
-          >
+          <DashboardCard key={item.label}>
             <CardHeader className="pb-2">
               <CardDescription>{item.label}</CardDescription>
               <CardTitle>{item.value}</CardTitle>
             </CardHeader>
-          </Card>
+          </DashboardCard>
         ))}
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-        <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+        <DashboardCard>
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
             <CardDescription>
@@ -56,10 +57,7 @@ function ProfilePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {profileActivity.map((entry, index) => (
-              <div
-                key={entry}
-                className="flex gap-4 rounded-2xl border border-border/70 bg-background/70 p-4"
-              >
+              <div key={entry} className={`flex gap-4 ${dashboardPanelClass}`}>
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/12 text-sm font-semibold text-primary">
                   {index + 1}
                 </div>
@@ -69,9 +67,9 @@ function ProfilePage() {
               </div>
             ))}
           </CardContent>
-        </Card>
+        </DashboardCard>
 
-        <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+        <DashboardCard>
           <CardHeader>
             <CardTitle>Permissions Snapshot</CardTitle>
             <CardDescription>
@@ -83,7 +81,7 @@ function ProfilePage() {
             {profilePermissions.map((permission) => (
               <div
                 key={permission.area}
-                className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/70 px-4 py-3"
+                className={`flex items-center justify-between ${dashboardPanelCompactClass}`}
               >
                 <span className="font-medium">{permission.area}</span>
                 <span className="text-sm text-muted-foreground">
@@ -92,7 +90,7 @@ function ProfilePage() {
               </div>
             ))}
           </CardContent>
-        </Card>
+        </DashboardCard>
       </div>
     </div>
   )

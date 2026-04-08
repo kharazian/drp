@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { CreditCard, Landmark, WalletCards } from "lucide-react"
 
+import {
+  DashboardCard,
+  dashboardPanelClass,
+} from "@/components/Common/dashboard-surface"
 import { PageHeader } from "@/components/Common/PageHeader"
 import { Badge } from "@/components/ui/badge"
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
@@ -58,10 +61,7 @@ function BillingPage() {
           const Icon = card.icon
 
           return (
-            <Card
-              key={card.label}
-              className="rounded-[28px] border-border/70 bg-card/90 shadow-sm"
-            >
+            <DashboardCard key={card.label}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div>
                   <CardDescription>{card.label}</CardDescription>
@@ -74,13 +74,13 @@ function BillingPage() {
               <CardContent>
                 <p className="text-sm text-muted-foreground">{card.hint}</p>
               </CardContent>
-            </Card>
+            </DashboardCard>
           )
         })}
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_0.8fr]">
-        <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+        <DashboardCard>
           <CardHeader>
             <CardTitle>Usage Snapshot</CardTitle>
             <CardDescription>
@@ -93,10 +93,7 @@ function BillingPage() {
               { label: "API environments", usage: "6 / 10" },
               { label: "Stored exports", usage: "184 GB / 250 GB" },
             ].map((item) => (
-              <div
-                key={item.label}
-                className="rounded-2xl border border-border/70 bg-background/70 p-4"
-              >
+              <div key={item.label} className={dashboardPanelClass}>
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <p className="font-medium">{item.label}</p>
                   <Badge variant="outline">{item.usage}</Badge>
@@ -104,9 +101,9 @@ function BillingPage() {
               </div>
             ))}
           </CardContent>
-        </Card>
+        </DashboardCard>
 
-        <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+        <DashboardCard>
           <CardHeader>
             <CardTitle>Payment Methods</CardTitle>
             <CardDescription>
@@ -115,10 +112,7 @@ function BillingPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {paymentMethods.map((method) => (
-              <div
-                key={method.name}
-                className="rounded-2xl border border-border/70 bg-background/70 p-4"
-              >
+              <div key={method.name} className={dashboardPanelClass}>
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <p className="font-medium">{method.name}</p>
                   <Badge variant="outline">{method.status}</Badge>
@@ -129,7 +123,7 @@ function BillingPage() {
               </div>
             ))}
           </CardContent>
-        </Card>
+        </DashboardCard>
       </div>
     </div>
   )
