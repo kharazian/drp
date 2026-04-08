@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router"
 import { Button } from "@/components/ui/button"
 
 const ErrorComponent = ({ error }: { error?: unknown }) => {
+  const isDev = import.meta.env.DEV
   const errorMessage =
     error instanceof Error
       ? error.message
@@ -26,7 +27,7 @@ const ErrorComponent = ({ error }: { error?: unknown }) => {
       <p className="text-lg text-muted-foreground mb-4 text-center z-10">
         Something went wrong. Please try again.
       </p>
-      {errorMessage ? (
+      {isDev && errorMessage ? (
         <pre className="mb-4 max-w-3xl overflow-auto rounded-lg border border-border bg-muted/40 p-4 text-sm text-foreground">
           {errorMessage}
         </pre>
