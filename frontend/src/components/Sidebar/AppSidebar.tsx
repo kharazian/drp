@@ -24,7 +24,7 @@ export function AppSidebar() {
       <SidebarHeader className="h-16 border-b border-sidebar-border/80 px-4 group-data-[collapsible=icon]:px-2">
         <Logo variant="responsive" />
       </SidebarHeader>
-      <SidebarContent className="px-3 py-4 pb-28 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:pb-24">
+      <SidebarContent className="px-3 py-4 group-data-[collapsible=icon]:px-2">
         <Main items={items} showSectionDivider />
         <div className="my-3 border-t border-sidebar-border/80" />
         <SidebarMenu className="gap-0.5 group-data-[collapsible=icon]:items-center">
@@ -45,7 +45,7 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="absolute right-0 bottom-0 left-0 z-20 border-t border-sidebar-border/80 bg-sidebar/95 p-3 backdrop-blur-sm group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:p-2">
+      <SidebarFooter className="mt-auto border-t border-sidebar-border/80 bg-sidebar/95 p-3 backdrop-blur-sm group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:p-2">
         <User user={currentUser} />
       </SidebarFooter>
     </Sidebar>
