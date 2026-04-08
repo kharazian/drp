@@ -55,6 +55,11 @@ const PAGE_META: Record<string, { title: string; description: string }> = {
     description:
       "Organize active initiatives with a board-style planning workflow.",
   },
+  "/orders": {
+    title: "Orders",
+    description:
+      "Track order flow, fulfillment progress, and shipment readiness.",
+  },
   "/profile": {
     title: "Profile",
     description:

@@ -3,6 +3,7 @@ import {
   Briefcase,
   Home,
   KanbanSquare,
+  ReceiptText,
   Settings,
   ShieldCheck,
   UserRound,
@@ -49,6 +50,13 @@ const baseItems: Item[] = [
     title: "Kanban",
     description: "Track product and delivery work",
     path: "/kanban",
+  },
+  {
+    section: "Commerce",
+    icon: ReceiptText,
+    title: "Orders",
+    description: "Track fulfillment and shipment flow",
+    path: "/orders",
   },
   {
     section: "Account",

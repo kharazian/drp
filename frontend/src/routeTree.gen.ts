@@ -17,6 +17,7 @@ import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutProfileRouteImport } from './routes/_layout/profile'
+import { Route as LayoutOrdersRouteImport } from './routes/_layout/orders'
 import { Route as LayoutNotificationsRouteImport } from './routes/_layout/notifications'
 import { Route as LayoutKanbanRouteImport } from './routes/_layout/kanban'
 import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
@@ -62,6 +63,11 @@ const LayoutProfileRoute = LayoutProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutOrdersRoute = LayoutOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutNotificationsRoute = LayoutNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/items': typeof LayoutItemsRoute
   '/kanban': typeof LayoutKanbanRoute
   '/notifications': typeof LayoutNotificationsRoute
+  '/orders': typeof LayoutOrdersRoute
   '/profile': typeof LayoutProfileRoute
   '/settings': typeof LayoutSettingsRoute
 }
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/items': typeof LayoutItemsRoute
   '/kanban': typeof LayoutKanbanRoute
   '/notifications': typeof LayoutNotificationsRoute
+  '/orders': typeof LayoutOrdersRoute
   '/profile': typeof LayoutProfileRoute
   '/settings': typeof LayoutSettingsRoute
   '/': typeof LayoutIndexRoute
@@ -128,6 +136,7 @@ export interface FileRoutesById {
   '/_layout/items': typeof LayoutItemsRoute
   '/_layout/kanban': typeof LayoutKanbanRoute
   '/_layout/notifications': typeof LayoutNotificationsRoute
+  '/_layout/orders': typeof LayoutOrdersRoute
   '/_layout/profile': typeof LayoutProfileRoute
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/': typeof LayoutIndexRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/items'
     | '/kanban'
     | '/notifications'
+    | '/orders'
     | '/profile'
     | '/settings'
   fileRoutesByTo: FileRoutesByTo
@@ -158,6 +168,7 @@ export interface FileRouteTypes {
     | '/items'
     | '/kanban'
     | '/notifications'
+    | '/orders'
     | '/profile'
     | '/settings'
     | '/'
@@ -173,6 +184,7 @@ export interface FileRouteTypes {
     | '/_layout/items'
     | '/_layout/kanban'
     | '/_layout/notifications'
+    | '/_layout/orders'
     | '/_layout/profile'
     | '/_layout/settings'
     | '/_layout/'
@@ -244,6 +256,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutProfileRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/orders': {
+      id: '/_layout/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof LayoutOrdersRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/notifications': {
       id: '/_layout/notifications'
       path: '/notifications'
@@ -288,6 +307,7 @@ interface LayoutRouteChildren {
   LayoutItemsRoute: typeof LayoutItemsRoute
   LayoutKanbanRoute: typeof LayoutKanbanRoute
   LayoutNotificationsRoute: typeof LayoutNotificationsRoute
+  LayoutOrdersRoute: typeof LayoutOrdersRoute
   LayoutProfileRoute: typeof LayoutProfileRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
@@ -299,6 +319,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutItemsRoute: LayoutItemsRoute,
   LayoutKanbanRoute: LayoutKanbanRoute,
   LayoutNotificationsRoute: LayoutNotificationsRoute,
+  LayoutOrdersRoute: LayoutOrdersRoute,
   LayoutProfileRoute: LayoutProfileRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
   LayoutIndexRoute: LayoutIndexRoute,
