@@ -155,11 +155,3 @@ export function getSidebarSections(
 
   return baseSections
 }
-
-export function flattenSidebarSections(sections: SidebarNavSection[]): Item[] {
-  return sections.flatMap((section) => section.items)
-}
-
-export function getSidebarItems(user?: UserPublic | null): Item[] {
-  return flattenSidebarSections(getSidebarSections(user))
-}
