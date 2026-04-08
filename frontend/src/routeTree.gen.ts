@@ -22,6 +22,7 @@ import { Route as LayoutNotificationsRouteImport } from './routes/_layout/notifi
 import { Route as LayoutKanbanRouteImport } from './routes/_layout/kanban'
 import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
 import { Route as LayoutInvoicesRouteImport } from './routes/_layout/invoices'
+import { Route as LayoutHelpSupportRouteImport } from './routes/_layout/help-support'
 import { Route as LayoutCustomersRouteImport } from './routes/_layout/customers'
 import { Route as LayoutChartsRouteImport } from './routes/_layout/charts'
 import { Route as LayoutCalendarRouteImport } from './routes/_layout/calendar'
@@ -92,6 +93,11 @@ const LayoutInvoicesRoute = LayoutInvoicesRouteImport.update({
   path: '/invoices',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutHelpSupportRoute = LayoutHelpSupportRouteImport.update({
+  id: '/help-support',
+  path: '/help-support',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutCustomersRoute = LayoutCustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
@@ -129,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof LayoutCalendarRoute
   '/charts': typeof LayoutChartsRoute
   '/customers': typeof LayoutCustomersRoute
+  '/help-support': typeof LayoutHelpSupportRoute
   '/invoices': typeof LayoutInvoicesRoute
   '/items': typeof LayoutItemsRoute
   '/kanban': typeof LayoutKanbanRoute
@@ -147,6 +154,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof LayoutCalendarRoute
   '/charts': typeof LayoutChartsRoute
   '/customers': typeof LayoutCustomersRoute
+  '/help-support': typeof LayoutHelpSupportRoute
   '/invoices': typeof LayoutInvoicesRoute
   '/items': typeof LayoutItemsRoute
   '/kanban': typeof LayoutKanbanRoute
@@ -168,6 +176,7 @@ export interface FileRoutesById {
   '/_layout/calendar': typeof LayoutCalendarRoute
   '/_layout/charts': typeof LayoutChartsRoute
   '/_layout/customers': typeof LayoutCustomersRoute
+  '/_layout/help-support': typeof LayoutHelpSupportRoute
   '/_layout/invoices': typeof LayoutInvoicesRoute
   '/_layout/items': typeof LayoutItemsRoute
   '/_layout/kanban': typeof LayoutKanbanRoute
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/charts'
     | '/customers'
+    | '/help-support'
     | '/invoices'
     | '/items'
     | '/kanban'
@@ -208,6 +218,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/charts'
     | '/customers'
+    | '/help-support'
     | '/invoices'
     | '/items'
     | '/kanban'
@@ -228,6 +239,7 @@ export interface FileRouteTypes {
     | '/_layout/calendar'
     | '/_layout/charts'
     | '/_layout/customers'
+    | '/_layout/help-support'
     | '/_layout/invoices'
     | '/_layout/items'
     | '/_layout/kanban'
@@ -339,6 +351,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutInvoicesRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/help-support': {
+      id: '/_layout/help-support'
+      path: '/help-support'
+      fullPath: '/help-support'
+      preLoaderRoute: typeof LayoutHelpSupportRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/customers': {
       id: '/_layout/customers'
       path: '/customers'
@@ -383,6 +402,7 @@ interface LayoutRouteChildren {
   LayoutCalendarRoute: typeof LayoutCalendarRoute
   LayoutChartsRoute: typeof LayoutChartsRoute
   LayoutCustomersRoute: typeof LayoutCustomersRoute
+  LayoutHelpSupportRoute: typeof LayoutHelpSupportRoute
   LayoutInvoicesRoute: typeof LayoutInvoicesRoute
   LayoutItemsRoute: typeof LayoutItemsRoute
   LayoutKanbanRoute: typeof LayoutKanbanRoute
@@ -399,6 +419,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutCalendarRoute: LayoutCalendarRoute,
   LayoutChartsRoute: LayoutChartsRoute,
   LayoutCustomersRoute: LayoutCustomersRoute,
+  LayoutHelpSupportRoute: LayoutHelpSupportRoute,
   LayoutInvoicesRoute: LayoutInvoicesRoute,
   LayoutItemsRoute: LayoutItemsRoute,
   LayoutKanbanRoute: LayoutKanbanRoute,

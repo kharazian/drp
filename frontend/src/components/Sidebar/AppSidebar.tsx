@@ -6,6 +6,7 @@ import {
   ContactRound,
   Home,
   KanbanSquare,
+  LifeBuoy,
   Receipt,
   ReceiptText,
   Settings,
@@ -103,6 +104,13 @@ const baseItems: Item[] = [
     title: "Settings",
     description: "Profile, security, and preferences",
     path: "/settings",
+  },
+  {
+    section: "System",
+    icon: LifeBuoy,
+    title: "Help & Support",
+    description: "Docs, tickets, and escalation paths",
+    path: "/help-support",
   },
 ]
 

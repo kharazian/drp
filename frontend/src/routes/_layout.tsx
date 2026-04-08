@@ -92,6 +92,11 @@ const PAGE_META: Record<string, { title: string; description: string }> = {
     description:
       "Update profile details, security controls, and day-to-day workspace preferences.",
   },
+  "/help-support": {
+    title: "Help & Support",
+    description:
+      "Browse docs, support options, and operational escalation paths.",
+  },
   "/notifications": {
     title: "Notifications",
     description:
