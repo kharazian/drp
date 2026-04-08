@@ -1,9 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { AreaChart, BarChart3, PieChart } from "lucide-react"
 
+import {
+  DashboardCard,
+  dashboardPanelClass,
+  dashboardPanelCompactClass,
+  dashboardPanelSpaciousClass,
+} from "@/components/Common/dashboard-surface"
 import { PageHeader } from "@/components/Common/PageHeader"
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
@@ -35,7 +40,7 @@ function ChartsPage() {
       />
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+        <DashboardCard>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="size-4 text-primary" />
@@ -46,7 +51,9 @@ function ChartsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex h-64 items-end gap-3 rounded-2xl border border-border/70 bg-background/70 p-6">
+            <div
+              className={`flex h-64 items-end gap-3 ${dashboardPanelSpaciousClass}`}
+            >
               {revenueBars.map((value, index) => (
                 <div
                   key={value}
@@ -63,10 +70,10 @@ function ChartsPage() {
               ))}
             </div>
           </CardContent>
-        </Card>
+        </DashboardCard>
 
         <div className="grid gap-6">
-          <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+          <DashboardCard>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <PieChart className="size-4 text-primary" />
@@ -80,7 +87,7 @@ function ChartsPage() {
               {channelSplit.map((item, index) => (
                 <div
                   key={item.label}
-                  className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/70 px-4 py-3"
+                  className={`flex items-center justify-between ${dashboardPanelCompactClass}`}
                 >
                   <div className="flex items-center gap-3">
                     <span
@@ -95,9 +102,9 @@ function ChartsPage() {
                 </div>
               ))}
             </CardContent>
-          </Card>
+          </DashboardCard>
 
-          <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+          <DashboardCard>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AreaChart className="size-4 text-primary" />
@@ -108,13 +115,15 @@ function ChartsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="relative h-40 overflow-hidden rounded-2xl border border-border/70 bg-background/70">
+              <div
+                className={`relative h-40 overflow-hidden ${dashboardPanelClass}`}
+              >
                 <div className="absolute inset-x-4 bottom-4 h-20 rounded-[100%_100%_0_0] bg-primary/18" />
                 <div className="absolute inset-x-8 bottom-4 h-14 rounded-[100%_100%_0_0] bg-primary/32" />
                 <div className="absolute inset-x-12 bottom-4 h-10 rounded-[100%_100%_0_0] bg-primary/50" />
               </div>
             </CardContent>
-          </Card>
+          </DashboardCard>
         </div>
       </div>
     </div>

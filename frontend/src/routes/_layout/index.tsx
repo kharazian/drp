@@ -148,7 +148,7 @@ function Dashboard() {
           <CardContent className="space-y-3">
             <Link
               to="/analytics"
-              className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/70 p-4 transition-colors hover:bg-accent/50"
+              className={`flex items-center justify-between ${dashboardPanelClass} transition-colors hover:bg-accent/50`}
             >
               <div className="flex items-start gap-3">
                 <BarChart3 className="mt-0.5 size-4 text-muted-foreground" />
@@ -163,7 +163,7 @@ function Dashboard() {
             </Link>
             <Link
               to="/items"
-              className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/70 p-4 transition-colors hover:bg-accent/50"
+              className={`flex items-center justify-between ${dashboardPanelClass} transition-colors hover:bg-accent/50`}
             >
               <div className="flex items-start gap-3">
                 <Briefcase className="mt-0.5 size-4 text-muted-foreground" />
@@ -178,7 +178,7 @@ function Dashboard() {
             </Link>
             <Link
               to="/kanban"
-              className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/70 p-4 transition-colors hover:bg-accent/50"
+              className={`flex items-center justify-between ${dashboardPanelClass} transition-colors hover:bg-accent/50`}
             >
               <div className="flex items-start gap-3">
                 <KanbanSquare className="mt-0.5 size-4 text-muted-foreground" />
@@ -194,7 +194,7 @@ function Dashboard() {
             {currentUser?.is_superuser ? (
               <Link
                 to="/admin"
-                className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/70 p-4 transition-colors hover:bg-accent/50"
+                className={`flex items-center justify-between ${dashboardPanelClass} transition-colors hover:bg-accent/50`}
               >
                 <div>
                   <p className="font-medium">Manage users</p>
@@ -207,7 +207,7 @@ function Dashboard() {
             ) : null}
             <Link
               to="/profile"
-              className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/70 p-4 transition-colors hover:bg-accent/50"
+              className={`flex items-center justify-between ${dashboardPanelClass} transition-colors hover:bg-accent/50`}
             >
               <div>
                 <p className="font-medium">Review profile workspace</p>

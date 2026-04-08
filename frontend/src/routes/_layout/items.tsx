@@ -5,11 +5,12 @@ import { Suspense } from "react"
 
 import { ItemsService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
+import { DashboardCard } from "@/components/Common/dashboard-surface"
 import { PageHeader } from "@/components/Common/PageHeader"
 import AddItem from "@/components/Items/AddItem"
 import { columns } from "@/components/Items/columns"
 import PendingItems from "@/components/Pending/PendingItems"
-import { Card, CardContent } from "@/components/ui/card"
+import { CardContent } from "@/components/ui/card"
 
 function getItemsQueryOptions() {
   return {
@@ -64,11 +65,11 @@ function Items() {
         description="Create, manage, and review the records that power your workflow."
         actions={<AddItem />}
       />
-      <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+      <DashboardCard>
         <CardContent className="p-0">
           <ItemsTable />
         </CardContent>
-      </Card>
+      </DashboardCard>
     </div>
   )
 }

@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router"
 
+import {
+  DashboardCard,
+  dashboardPanelClass,
+} from "@/components/Common/dashboard-surface"
 import { PageHeader } from "@/components/Common/PageHeader"
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
@@ -62,7 +65,7 @@ function ChatPage() {
       />
 
       <div className="grid gap-6 xl:grid-cols-[0.38fr_1fr]">
-        <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+        <DashboardCard>
           <CardHeader>
             <CardTitle>Conversations</CardTitle>
             <CardDescription>
@@ -71,10 +74,7 @@ function ChatPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {conversations.map((conversation) => (
-              <div
-                key={conversation.name}
-                className="rounded-2xl border border-border/70 bg-background/70 p-4"
-              >
+              <div key={conversation.name} className={dashboardPanelClass}>
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <p className="font-medium">{conversation.name}</p>
                   <span className="text-xs text-muted-foreground">
@@ -87,9 +87,9 @@ function ChatPage() {
               </div>
             ))}
           </CardContent>
-        </Card>
+        </DashboardCard>
 
-        <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+        <DashboardCard>
           <CardHeader>
             <CardTitle>Operations Team</CardTitle>
             <CardDescription>Today’s coordination thread.</CardDescription>
@@ -112,7 +112,7 @@ function ChatPage() {
               </div>
             ))}
           </CardContent>
-        </Card>
+        </DashboardCard>
       </div>
     </div>
   )

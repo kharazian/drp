@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { Building2, Globe2, UsersRound } from "lucide-react"
 
+import { DashboardCard } from "@/components/Common/dashboard-surface"
 import { PageHeader } from "@/components/Common/PageHeader"
 import { Badge } from "@/components/ui/badge"
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
@@ -91,10 +91,7 @@ function CustomersPage() {
         {customerStats.map((stat) => {
           const Icon = stat.icon
           return (
-            <Card
-              key={stat.label}
-              className="rounded-[28px] border-border/70 bg-card/90 shadow-sm"
-            >
+            <DashboardCard key={stat.label}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div>
                   <CardDescription>{stat.label}</CardDescription>
@@ -107,12 +104,12 @@ function CustomersPage() {
               <CardContent>
                 <p className="text-sm text-muted-foreground">{stat.hint}</p>
               </CardContent>
-            </Card>
+            </DashboardCard>
           )
         })}
       </div>
 
-      <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+      <DashboardCard>
         <CardHeader>
           <CardTitle>Customer Directory</CardTitle>
           <CardDescription>
@@ -146,7 +143,7 @@ function CustomersPage() {
             </TableBody>
           </Table>
         </CardContent>
-      </Card>
+      </DashboardCard>
     </div>
   )
 }

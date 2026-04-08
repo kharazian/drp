@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router"
+import {
+  DashboardCard,
+  dashboardPanelClass,
+} from "@/components/Common/dashboard-surface"
 import { PageHeader } from "@/components/Common/PageHeader"
 import { kanbanColumns } from "@/components/Dashboard/demo-data"
 import { Badge } from "@/components/ui/badge"
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
@@ -28,10 +31,7 @@ function KanbanPage() {
 
       <div className="grid gap-4 xl:grid-cols-4">
         {kanbanColumns.map((column) => (
-          <Card
-            key={column.title}
-            className="rounded-[28px] border-border/70 bg-card/90 shadow-sm"
-          >
+          <DashboardCard key={column.title}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>{column.title}</span>
@@ -43,10 +43,7 @@ function KanbanPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {column.tasks.map((task) => (
-                <div
-                  key={task.title}
-                  className="rounded-2xl border border-border/70 bg-background/70 p-4"
-                >
+                <div key={task.title} className={dashboardPanelClass}>
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <Badge variant="outline">{task.tag}</Badge>
                     <span className="text-xs font-medium text-muted-foreground">
@@ -62,7 +59,7 @@ function KanbanPage() {
                 </div>
               ))}
             </CardContent>
-          </Card>
+          </DashboardCard>
         ))}
       </div>
     </div>

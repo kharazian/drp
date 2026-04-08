@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router"
 
+import {
+  DashboardCard,
+  dashboardPanelCompactClass,
+} from "@/components/Common/dashboard-surface"
 import { PageHeader } from "@/components/Common/PageHeader"
 import { Badge } from "@/components/ui/badge"
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
@@ -41,10 +44,7 @@ function FilesPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         {fileGroups.map((group) => (
-          <Card
-            key={group.name}
-            className="rounded-[28px] border-border/70 bg-card/90 shadow-sm"
-          >
+          <DashboardCard key={group.name}>
             <CardHeader>
               <CardTitle>{group.name}</CardTitle>
               <CardDescription>Shared folder overview</CardDescription>
@@ -55,11 +55,11 @@ function FilesPage() {
               </p>
               <p className="text-2xl font-semibold">{group.size}</p>
             </CardContent>
-          </Card>
+          </DashboardCard>
         ))}
       </div>
 
-      <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+      <DashboardCard>
         <CardHeader>
           <CardTitle>Recent Files</CardTitle>
           <CardDescription>
@@ -70,7 +70,7 @@ function FilesPage() {
           {recentFiles.map((file) => (
             <div
               key={file.name}
-              className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/70 px-4 py-3"
+              className={`flex items-center justify-between ${dashboardPanelCompactClass}`}
             >
               <div className="min-w-0">
                 <p className="truncate font-medium">{file.name}</p>
@@ -80,7 +80,7 @@ function FilesPage() {
             </div>
           ))}
         </CardContent>
-      </Card>
+      </DashboardCard>
     </div>
   )
 }

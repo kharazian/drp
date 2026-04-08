@@ -1,9 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router"
 
+import {
+  DashboardCard,
+  dashboardPanelClass,
+  dashboardPanelCompactClass,
+} from "@/components/Common/dashboard-surface"
 import { PageHeader } from "@/components/Common/PageHeader"
 import { Badge } from "@/components/ui/badge"
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
@@ -57,7 +61,7 @@ function MailPage() {
       />
 
       <div className="grid gap-6 xl:grid-cols-[0.35fr_1fr]">
-        <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+        <DashboardCard>
           <CardHeader>
             <CardTitle>Folders</CardTitle>
             <CardDescription>
@@ -68,16 +72,16 @@ function MailPage() {
             {folders.map((folder) => (
               <div
                 key={folder.label}
-                className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/70 px-4 py-3"
+                className={`flex items-center justify-between ${dashboardPanelCompactClass}`}
               >
                 <span className="font-medium">{folder.label}</span>
                 <Badge variant="outline">{folder.count}</Badge>
               </div>
             ))}
           </CardContent>
-        </Card>
+        </DashboardCard>
 
-        <Card className="rounded-[28px] border-border/70 bg-card/90 shadow-sm">
+        <DashboardCard>
           <CardHeader>
             <CardTitle>Inbox</CardTitle>
             <CardDescription>
@@ -86,10 +90,7 @@ function MailPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {threads.map((thread) => (
-              <div
-                key={thread.subject}
-                className="rounded-2xl border border-border/70 bg-background/70 p-4"
-              >
+              <div key={thread.subject} className={dashboardPanelClass}>
                 <div className="mb-2 flex items-center gap-2">
                   <p className="font-medium">{thread.sender}</p>
                   {thread.unread ? <Badge>Unread</Badge> : null}
@@ -103,7 +104,7 @@ function MailPage() {
               </div>
             ))}
           </CardContent>
-        </Card>
+        </DashboardCard>
       </div>
     </div>
   )

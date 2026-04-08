@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { BellRing, CheckCircle2, TriangleAlert } from "lucide-react"
 
-import { DashboardCard } from "@/components/Common/dashboard-surface"
+import {
+  DashboardCard,
+  dashboardPanelClass,
+} from "@/components/Common/dashboard-surface"
 import { PageHeader } from "@/components/Common/PageHeader"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -63,7 +66,7 @@ function NotificationsPage() {
             return (
               <div
                 key={notification.title}
-                className="flex items-start gap-4 rounded-2xl border border-border/70 bg-background/70 p-4"
+                className={`flex items-start gap-4 ${dashboardPanelClass}`}
               >
                 <div className="rounded-2xl border border-primary/15 bg-primary/10 p-3 text-primary">
                   <Icon className="size-5" />
