@@ -20,6 +20,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { cn } from "@/lib/utils"
 
 export type Item = {
   section?: string
@@ -33,6 +34,46 @@ export type Item = {
 interface MainProps {
   items: Item[]
   showSectionDivider?: boolean
+}
+
+const menuItemShellClass =
+  "group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center"
+const baseIconOnlyButtonClass =
+  "group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+const parentButtonClass = cn(
+  "h-auto min-h-11 rounded-xl border border-transparent bg-sidebar-accent/25 px-3 py-2 text-sidebar-foreground/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]",
+  baseIconOnlyButtonClass,
+  "group-data-[collapsible=icon]:rounded-lg",
+)
+const leafButtonClass = cn(
+  "h-auto min-h-10 rounded-lg px-3 py-2 text-sidebar-foreground/72 transition-all duration-200 hover:bg-sidebar-accent/45 hover:text-sidebar-foreground",
+  baseIconOnlyButtonClass,
+)
+const childButtonClass =
+  "h-auto min-h-9 rounded-lg px-3 py-2 text-[13px] text-sidebar-foreground/68 transition-all duration-200 hover:translate-x-0.5 hover:bg-sidebar-accent/35 hover:text-sidebar-foreground"
+const parentIconClass = "size-[18px] text-sidebar-foreground/70"
+const leafIconClass = "size-[18px] text-sidebar-foreground/55"
+const childIconClass = "size-4 text-sidebar-foreground/55"
+const labelWrapClass =
+  "flex min-w-0 flex-1 flex-col items-start group-data-[collapsible=icon]:hidden"
+
+function ItemLabel({
+  title,
+  description,
+}: {
+  title: string
+  description?: string
+}) {
+  return (
+    <div className={labelWrapClass}>
+      <span className="font-medium">{title}</span>
+      {description ? (
+        <span className="text-xs text-sidebar-foreground/65">
+          {description}
+        </span>
+      ) : null}
+    </div>
+  )
 }
 
 export function Main({ items, showSectionDivider = false }: MainProps) {
@@ -138,7 +179,7 @@ export function Main({ items, showSectionDivider = false }: MainProps) {
                 return (
                   <SidebarMenuItem
                     key={item.title}
-                    className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center"
+                    className={menuItemShellClass}
                     onMouseEnter={() => {
                       if (
                         preferences.submenuMode === "hover" &&
@@ -183,17 +224,13 @@ export function Main({ items, showSectionDivider = false }: MainProps) {
                             tooltip={shouldHideTooltip ? undefined : item.title}
                             isActive={isActive}
                             size="lg"
-                            className="h-auto min-h-11 rounded-xl border border-transparent bg-sidebar-accent/25 px-3 py-2 text-sidebar-foreground/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-lg group-data-[collapsible=icon]:px-0"
+                            className={parentButtonClass}
                           >
-                            <item.icon className="size-[18px] text-sidebar-foreground/70" />
-                            <div className="flex min-w-0 flex-1 flex-col items-start group-data-[collapsible=icon]:hidden">
-                              <span className="font-medium">{item.title}</span>
-                              {item.description ? (
-                                <span className="text-xs text-sidebar-foreground/65">
-                                  {item.description}
-                                </span>
-                              ) : null}
-                            </div>
+                            <item.icon className={parentIconClass} />
+                            <ItemLabel
+                              title={item.title}
+                              description={item.description}
+                            />
                           </SidebarMenuButton>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
@@ -245,7 +282,7 @@ export function Main({ items, showSectionDivider = false }: MainProps) {
                           tooltip={shouldHideTooltip ? undefined : item.title}
                           isActive={isActive}
                           size="lg"
-                          className="h-auto min-h-11 rounded-xl border border-transparent bg-sidebar-accent/25 px-3 py-2 text-sidebar-foreground/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-lg group-data-[collapsible=icon]:px-0"
+                          className={parentButtonClass}
                           onClick={() => {
                             if (!open && !isMobile) {
                               return
@@ -253,15 +290,11 @@ export function Main({ items, showSectionDivider = false }: MainProps) {
                             toggleItem(item.title)
                           }}
                         >
-                          <item.icon className="size-[18px] text-sidebar-foreground/70" />
-                          <div className="flex min-w-0 flex-1 flex-col items-start group-data-[collapsible=icon]:hidden">
-                            <span className="font-medium">{item.title}</span>
-                            {item.description ? (
-                              <span className="text-xs text-sidebar-foreground/65">
-                                {item.description}
-                              </span>
-                            ) : null}
-                          </div>
+                          <item.icon className={parentIconClass} />
+                          <ItemLabel
+                            title={item.title}
+                            description={item.description}
+                          />
                           <ChevronRight
                             className={[
                               "ml-auto size-4 text-sidebar-foreground/65 transition-transform group-data-[collapsible=icon]:hidden",
@@ -289,19 +322,20 @@ export function Main({ items, showSectionDivider = false }: MainProps) {
                                       tooltip={child.title}
                                       isActive={isChildRouteActive}
                                       asChild
-                                      className={[
-                                        "h-auto min-h-9 rounded-lg px-3 py-2 text-[13px] text-sidebar-foreground/68 transition-all duration-200",
-                                        "hover:translate-x-0.5 hover:bg-sidebar-accent/35 hover:text-sidebar-foreground",
+                                      className={cn(
+                                        childButtonClass,
                                         isChildRouteActive
                                           ? "bg-sidebar-accent/55 text-sidebar-primary shadow-sm"
                                           : "bg-transparent",
-                                      ].join(" ")}
+                                      )}
                                     >
                                       <RouterLink
                                         to={child.path}
                                         onClick={handleMenuClick}
                                       >
-                                        <child.icon className="size-4 text-sidebar-foreground/55" />
+                                        <child.icon
+                                          className={childIconClass}
+                                        />
                                         <span className="font-medium">
                                           {child.title}
                                         </span>
@@ -320,18 +354,14 @@ export function Main({ items, showSectionDivider = false }: MainProps) {
                         isActive={isActive}
                         asChild
                         size="lg"
-                        className="h-auto min-h-10 rounded-lg px-3 py-2 text-sidebar-foreground/72 transition-all duration-200 hover:bg-sidebar-accent/45 hover:text-sidebar-foreground group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+                        className={leafButtonClass}
                       >
                         <RouterLink to={item.path} onClick={handleMenuClick}>
-                          <item.icon className="size-[18px] text-sidebar-foreground/55" />
-                          <div className="flex min-w-0 flex-col items-start group-data-[collapsible=icon]:hidden">
-                            <span className="font-medium">{item.title}</span>
-                            {item.description ? (
-                              <span className="text-xs text-sidebar-foreground/65">
-                                {item.description}
-                              </span>
-                            ) : null}
-                          </div>
+                          <item.icon className={leafIconClass} />
+                          <ItemLabel
+                            title={item.title}
+                            description={item.description}
+                          />
                         </RouterLink>
                       </SidebarMenuButton>
                     )}
