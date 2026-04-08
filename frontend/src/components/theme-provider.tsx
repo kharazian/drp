@@ -20,6 +20,7 @@ export type LayoutMode = "sidebar" | "top-nav"
 export type ContainerMode = "fluid" | "boxed"
 export type DirectionMode = "ltr" | "rtl"
 export type Language = "english" | "deutsch" | "francais"
+export type SubmenuMode = "click" | "hover"
 
 export type DashboardPreferences = {
   preset: ColorPreset
@@ -28,6 +29,7 @@ export type DashboardPreferences = {
   container: ContainerMode
   direction: DirectionMode
   language: Language
+  submenuMode: SubmenuMode
 }
 
 type ThemeProviderProps = {
@@ -55,6 +57,7 @@ const DEFAULT_PREFERENCES: DashboardPreferences = {
   container: "fluid",
   direction: "ltr",
   language: "english",
+  submenuMode: "click",
 }
 
 const initialState: ThemeProviderState = {
@@ -139,6 +142,7 @@ export function ThemeProvider({
       root.dataset.layout = nextPreferences.layout
       root.dataset.container = nextPreferences.container
       root.dataset.language = nextPreferences.language
+      root.dataset.submenuMode = nextPreferences.submenuMode
       root.dir = nextPreferences.direction
     },
     [],

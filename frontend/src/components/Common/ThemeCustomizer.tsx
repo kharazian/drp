@@ -3,10 +3,12 @@ import {
   LayoutDashboard,
   Monitor,
   Moon,
+  MousePointerClick,
   Palette,
   PanelTop,
   Rows3,
   SlidersHorizontal,
+  SquareMousePointer,
   Sun,
 } from "lucide-react"
 import { type ComponentType, type SVGProps, useState } from "react"
@@ -18,6 +20,7 @@ import {
   type DirectionMode,
   type Language,
   type LayoutMode,
+  type SubmenuMode,
   type Theme,
   useTheme,
 } from "@/components/theme-provider"
@@ -88,6 +91,15 @@ const directionOptions: Array<{
 }> = [
   { value: "ltr", label: "LTR" },
   { value: "rtl", label: "RTL" },
+]
+
+const submenuOptions: Array<{
+  value: SubmenuMode
+  label: string
+  icon: typeof MousePointerClick
+}> = [
+  { value: "click", label: "Click", icon: MousePointerClick },
+  { value: "hover", label: "Hover", icon: SquareMousePointer },
 ]
 
 const languageOptions: Array<{
@@ -256,6 +268,21 @@ export function ThemeCustomizer() {
                   label={option.label}
                   active={preferences.direction === option.value}
                   onClick={() => updatePreference("direction", option.value)}
+                />
+              ))}
+            </div>
+          </section>
+
+          <section className="space-y-3 border-t border-border/70 pt-5">
+            <p className="text-sm font-medium">Menu Opening</p>
+            <div className="grid grid-cols-2 gap-3">
+              {submenuOptions.map((option) => (
+                <OptionCard
+                  key={option.value}
+                  label={option.label}
+                  icon={option.icon}
+                  active={preferences.submenuMode === option.value}
+                  onClick={() => updatePreference("submenuMode", option.value)}
                 />
               ))}
             </div>
