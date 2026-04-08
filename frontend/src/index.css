@@ -99,6 +99,19 @@
   --density-stat-icon-pad: 0.75rem;
   --density-badge-pad-x: 0.5rem;
   --density-badge-pad-y: 0.125rem;
+  --density-sidebar-header-height: 4rem;
+  --density-sidebar-pad-x: 0.75rem;
+  --density-sidebar-pad-y: 1rem;
+  --density-sidebar-pad-collapsed-x: 0.5rem;
+  --density-sidebar-footer-pad: 0.75rem;
+  --density-sidebar-footer-pad-collapsed: 0.5rem;
+  --density-sidebar-menu-gap: 0.375rem;
+  --density-sidebar-parent-min-h: 2.75rem;
+  --density-sidebar-leaf-min-h: 2.5rem;
+  --density-sidebar-child-min-h: 2.25rem;
+  --density-sidebar-collapsed-button: 2.75rem;
+  --density-sidebar-user-avatar: 2.25rem;
+  --density-sidebar-user-logout: 2rem;
 }
 
 .dark {
@@ -186,6 +199,19 @@
   --density-stat-icon-pad: 0.625rem;
   --density-badge-pad-x: 0.4375rem;
   --density-badge-pad-y: 0.125rem;
+  --density-sidebar-header-height: 3.5rem;
+  --density-sidebar-pad-x: 0.625rem;
+  --density-sidebar-pad-y: 0.75rem;
+  --density-sidebar-pad-collapsed-x: 0.375rem;
+  --density-sidebar-footer-pad: 0.625rem;
+  --density-sidebar-footer-pad-collapsed: 0.375rem;
+  --density-sidebar-menu-gap: 0.25rem;
+  --density-sidebar-parent-min-h: 2.5rem;
+  --density-sidebar-leaf-min-h: 2.25rem;
+  --density-sidebar-child-min-h: 2rem;
+  --density-sidebar-collapsed-button: 2.5rem;
+  --density-sidebar-user-avatar: 2rem;
+  --density-sidebar-user-logout: 1.875rem;
 }
 
 :root[data-density="spacious"] {
@@ -214,6 +240,19 @@
   --density-stat-icon-pad: 0.875rem;
   --density-badge-pad-x: 0.625rem;
   --density-badge-pad-y: 0.1875rem;
+  --density-sidebar-header-height: 4.5rem;
+  --density-sidebar-pad-x: 0.875rem;
+  --density-sidebar-pad-y: 1.25rem;
+  --density-sidebar-pad-collapsed-x: 0.625rem;
+  --density-sidebar-footer-pad: 0.875rem;
+  --density-sidebar-footer-pad-collapsed: 0.625rem;
+  --density-sidebar-menu-gap: 0.5rem;
+  --density-sidebar-parent-min-h: 3rem;
+  --density-sidebar-leaf-min-h: 2.75rem;
+  --density-sidebar-child-min-h: 2.5rem;
+  --density-sidebar-collapsed-button: 3rem;
+  --density-sidebar-user-avatar: 2.5rem;
+  --density-sidebar-user-logout: 2.25rem;
 }
 
 @layer base {

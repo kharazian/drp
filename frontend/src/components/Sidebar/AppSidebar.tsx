@@ -21,19 +21,19 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border/80">
-      <SidebarHeader className="h-16 border-b border-sidebar-border/80 px-4 group-data-[collapsible=icon]:px-2">
+      <SidebarHeader className="h-[var(--density-sidebar-header-height)] border-b border-sidebar-border/80 px-4 group-data-[collapsible=icon]:px-2">
         <Logo variant="responsive" />
       </SidebarHeader>
-      <SidebarContent className="px-3 py-4 group-data-[collapsible=icon]:px-2">
+      <SidebarContent className="px-[var(--density-sidebar-pad-x)] py-[var(--density-sidebar-pad-y)] group-data-[collapsible=icon]:px-[var(--density-sidebar-pad-collapsed-x)]">
         <Main sections={sections} showSectionDivider />
         <div className="my-3 border-t border-sidebar-border/80" />
-        <SidebarMenu className="gap-0.5 group-data-[collapsible=icon]:items-center">
+        <SidebarMenu className="gap-[var(--density-sidebar-menu-gap)] group-data-[collapsible=icon]:items-center">
           <SidebarMenuItem className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
             <SidebarMenuButton
               asChild
               tooltip="Documentation"
               size="lg"
-              className="h-auto min-h-11 rounded-lg px-3 py-2 text-sidebar-foreground/72 transition-all duration-200 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+              className="h-auto min-h-[var(--density-sidebar-parent-min-h)] rounded-lg px-3 py-2 text-sidebar-foreground/72 transition-all duration-200 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-[var(--density-sidebar-collapsed-button)] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
             >
               <RouterLink to="/help-support" aria-label="Open documentation">
                 <BookOpen className="size-[18px] shrink-0 text-sidebar-foreground/50" />
@@ -45,7 +45,7 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="mt-auto border-t border-sidebar-border/80 bg-sidebar/95 p-3 backdrop-blur-sm group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:p-2">
+      <SidebarFooter className="mt-auto border-t border-sidebar-border/80 bg-sidebar/95 p-[var(--density-sidebar-footer-pad)] backdrop-blur-sm group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:p-[var(--density-sidebar-footer-pad-collapsed)]">
         <User user={currentUser} />
       </SidebarFooter>
     </Sidebar>

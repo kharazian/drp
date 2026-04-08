@@ -16,7 +16,7 @@ interface UserInfoProps {
 function UserInfo({ fullName, email, roleLabel }: UserInfoProps) {
   return (
     <div className="flex w-full min-w-0 items-center gap-2.5 group-data-[collapsible=icon]:justify-center">
-      <Avatar className="size-9">
+      <Avatar className="size-[var(--density-sidebar-user-avatar)]">
         <AvatarFallback className="bg-primary text-primary-foreground">
           {getInitials(fullName || "User")}
         </AvatarFallback>
@@ -59,7 +59,7 @@ export function User({ user }: { user?: UserPublic | null }) {
       </RouterLink>
       <button
         type="button"
-        className="flex size-8 items-center justify-center rounded-md text-sidebar-foreground/40 transition-colors hover:bg-sidebar-accent/45 hover:text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden"
+        className="flex size-[var(--density-sidebar-user-logout)] items-center justify-center rounded-md text-sidebar-foreground/40 transition-colors hover:bg-sidebar-accent/45 hover:text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden"
         onClick={handleLogout}
       >
         <LogOut className="size-4" />
@@ -67,7 +67,7 @@ export function User({ user }: { user?: UserPublic | null }) {
       </button>
       <button
         type="button"
-        className="hidden size-11 items-center justify-center rounded-lg text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent/45 hover:text-sidebar-foreground group-data-[collapsible=icon]:flex"
+        className="hidden size-[var(--density-sidebar-collapsed-button)] items-center justify-center rounded-lg text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent/45 hover:text-sidebar-foreground group-data-[collapsible=icon]:flex"
         onClick={handleLogout}
       >
         <LogOut className="size-4" />
