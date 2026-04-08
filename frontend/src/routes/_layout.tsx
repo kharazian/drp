@@ -65,6 +65,10 @@ const PAGE_META: Record<string, { title: string; description: string }> = {
     description:
       "Review customer accounts, health signals, and regional coverage.",
   },
+  "/invoices": {
+    title: "Invoices",
+    description: "Track invoice balances, due dates, and collection status.",
+  },
   "/profile": {
     title: "Profile",
     description:

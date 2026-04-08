@@ -4,6 +4,7 @@ import {
   ContactRound,
   Home,
   KanbanSquare,
+  Receipt,
   ReceiptText,
   Settings,
   ShieldCheck,
@@ -65,6 +66,13 @@ const baseItems: Item[] = [
     title: "Customers",
     description: "Review account health and ownership",
     path: "/customers",
+  },
+  {
+    section: "Commerce",
+    icon: Receipt,
+    title: "Invoices",
+    description: "Track billing and collection status",
+    path: "/invoices",
   },
   {
     section: "Account",
