@@ -48,6 +48,9 @@ type ThemeProviderState = {
   resetPreferences: () => void
 }
 
+const isBrowser = () =>
+  typeof window !== "undefined" && typeof document !== "undefined"
+
 const DEFAULT_PREFERENCES: DashboardPreferences = {
   preset: "emerald",
   density: "comfortable",
@@ -57,19 +60,29 @@ const DEFAULT_PREFERENCES: DashboardPreferences = {
   submenuMode: "click",
 }
 
-const initialState: ThemeProviderState = {
-  theme: "system",
-  resolvedTheme: "light",
-  preferences: DEFAULT_PREFERENCES,
-  setTheme: () => null,
-  updatePreference: () => null,
-  resetPreferences: () => null,
+const ThemeProviderContext = createContext<ThemeProviderState | undefined>(
+  undefined,
+)
+
+function readStoredTheme(storageKey: string, defaultTheme: Theme) {
+  if (!isBrowser()) {
+    return defaultTheme
+  }
+
+  const storedTheme = window.localStorage.getItem(storageKey)
+  return storedTheme === "light" ||
+    storedTheme === "dark" ||
+    storedTheme === "system"
+    ? storedTheme
+    : defaultTheme
 }
 
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
-
 function getStoredPreferences(storageKey: string) {
-  const stored = localStorage.getItem(`${storageKey}-prefs`)
+  if (!isBrowser()) {
+    return DEFAULT_PREFERENCES
+  }
+
+  const stored = window.localStorage.getItem(`${storageKey}-prefs`)
 
   if (!stored) {
     return DEFAULT_PREFERENCES
@@ -85,43 +98,48 @@ function getStoredPreferences(storageKey: string) {
   }
 }
 
+function resolveTheme(theme: Theme): "dark" | "light" {
+  if (theme !== "system") {
+    return theme
+  }
+
+  if (!isBrowser()) {
+    return "light"
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light"
+}
+
 export function ThemeProvider({
   children,
   defaultTheme = "system",
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
+  const [theme, setTheme] = useState<Theme>(() =>
+    readStoredTheme(storageKey, defaultTheme),
   )
   const [preferences, setPreferences] = useState<DashboardPreferences>(() =>
     getStoredPreferences(storageKey),
   )
 
-  const getResolvedTheme = useCallback((theme: Theme): "dark" | "light" => {
-    if (theme === "system") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light"
-    }
-
-    return theme
-  }, [])
-
   const [resolvedTheme, setResolvedTheme] = useState<"dark" | "light">(() =>
-    getResolvedTheme(theme),
+    resolveTheme(theme),
   )
 
   const updateTheme = useCallback((newTheme: Theme) => {
+    if (!isBrowser()) {
+      return
+    }
+
     const root = window.document.documentElement
 
     root.classList.remove("light", "dark")
 
     if (newTheme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light"
+      const systemTheme = resolveTheme("system")
 
       root.classList.add(systemTheme)
       return
@@ -132,6 +150,10 @@ export function ThemeProvider({
 
   const applyPreferences = useCallback(
     (nextPreferences: DashboardPreferences) => {
+      if (!isBrowser()) {
+        return
+      }
+
       const root = window.document.documentElement
 
       root.dataset.preset = nextPreferences.preset
@@ -146,14 +168,18 @@ export function ThemeProvider({
 
   useEffect(() => {
     updateTheme(theme)
-    setResolvedTheme(getResolvedTheme(theme))
+    setResolvedTheme(resolveTheme(theme))
+
+    if (!isBrowser()) {
+      return
+    }
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
 
     const handleChange = () => {
       if (theme === "system") {
         updateTheme("system")
-        setResolvedTheme(getResolvedTheme("system"))
+        setResolvedTheme(resolveTheme("system"))
       }
     }
 
@@ -162,7 +188,7 @@ export function ThemeProvider({
     return () => {
       mediaQuery.removeEventListener("change", handleChange)
     }
-  }, [theme, updateTheme, getResolvedTheme])
+  }, [theme, updateTheme])
 
   useEffect(() => {
     applyPreferences(preferences)
@@ -174,21 +200,30 @@ export function ThemeProvider({
       resolvedTheme,
       preferences,
       setTheme: (theme) => {
-        localStorage.setItem(storageKey, theme)
+        if (isBrowser()) {
+          window.localStorage.setItem(storageKey, theme)
+        }
         setTheme(theme)
       },
       updatePreference: (key, value) => {
         setPreferences((current) => {
           const next = { ...current, [key]: value }
-          localStorage.setItem(`${storageKey}-prefs`, JSON.stringify(next))
+          if (isBrowser()) {
+            window.localStorage.setItem(
+              `${storageKey}-prefs`,
+              JSON.stringify(next),
+            )
+          }
           return next
         })
       },
       resetPreferences: () => {
-        localStorage.setItem(
-          `${storageKey}-prefs`,
-          JSON.stringify(DEFAULT_PREFERENCES),
-        )
+        if (isBrowser()) {
+          window.localStorage.setItem(
+            `${storageKey}-prefs`,
+            JSON.stringify(DEFAULT_PREFERENCES),
+          )
+        }
         setPreferences(DEFAULT_PREFERENCES)
       },
     }),
