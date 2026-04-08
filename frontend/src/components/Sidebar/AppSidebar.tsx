@@ -1,6 +1,7 @@
 import {
   BarChart3,
   Briefcase,
+  ContactRound,
   Home,
   KanbanSquare,
   ReceiptText,
@@ -57,6 +58,13 @@ const baseItems: Item[] = [
     title: "Orders",
     description: "Track fulfillment and shipment flow",
     path: "/orders",
+  },
+  {
+    section: "Commerce",
+    icon: ContactRound,
+    title: "Customers",
+    description: "Review account health and ownership",
+    path: "/customers",
   },
   {
     section: "Account",

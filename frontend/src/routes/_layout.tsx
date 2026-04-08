@@ -60,6 +60,11 @@ const PAGE_META: Record<string, { title: string; description: string }> = {
     description:
       "Track order flow, fulfillment progress, and shipment readiness.",
   },
+  "/customers": {
+    title: "Customers",
+    description:
+      "Review customer accounts, health signals, and regional coverage.",
+  },
   "/profile": {
     title: "Profile",
     description:
