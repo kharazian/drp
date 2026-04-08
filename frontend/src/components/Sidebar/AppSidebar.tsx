@@ -1,6 +1,7 @@
 import {
   BarChart3,
   Briefcase,
+  CalendarDays,
   ChartColumn,
   ContactRound,
   Home,
@@ -60,6 +61,13 @@ const baseItems: Item[] = [
     title: "Kanban",
     description: "Track product and delivery work",
     path: "/kanban",
+  },
+  {
+    section: "Apps",
+    icon: CalendarDays,
+    title: "Calendar",
+    description: "Plan meetings and team schedules",
+    path: "/calendar",
   },
   {
     section: "Commerce",

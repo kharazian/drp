@@ -24,6 +24,7 @@ import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
 import { Route as LayoutInvoicesRouteImport } from './routes/_layout/invoices'
 import { Route as LayoutCustomersRouteImport } from './routes/_layout/customers'
 import { Route as LayoutChartsRouteImport } from './routes/_layout/charts'
+import { Route as LayoutCalendarRouteImport } from './routes/_layout/calendar'
 import { Route as LayoutAnalyticsRouteImport } from './routes/_layout/analytics'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 
@@ -101,6 +102,11 @@ const LayoutChartsRoute = LayoutChartsRouteImport.update({
   path: '/charts',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutCalendarRoute = LayoutCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutAnalyticsRoute = LayoutAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
   '/analytics': typeof LayoutAnalyticsRoute
+  '/calendar': typeof LayoutCalendarRoute
   '/charts': typeof LayoutChartsRoute
   '/customers': typeof LayoutCustomersRoute
   '/invoices': typeof LayoutInvoicesRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
   '/analytics': typeof LayoutAnalyticsRoute
+  '/calendar': typeof LayoutCalendarRoute
   '/charts': typeof LayoutChartsRoute
   '/customers': typeof LayoutCustomersRoute
   '/invoices': typeof LayoutInvoicesRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/_layout/admin': typeof LayoutAdminRoute
   '/_layout/analytics': typeof LayoutAnalyticsRoute
+  '/_layout/calendar': typeof LayoutCalendarRoute
   '/_layout/charts': typeof LayoutChartsRoute
   '/_layout/customers': typeof LayoutCustomersRoute
   '/_layout/invoices': typeof LayoutInvoicesRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/admin'
     | '/analytics'
+    | '/calendar'
     | '/charts'
     | '/customers'
     | '/invoices'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/admin'
     | '/analytics'
+    | '/calendar'
     | '/charts'
     | '/customers'
     | '/invoices'
@@ -214,6 +225,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_layout/admin'
     | '/_layout/analytics'
+    | '/_layout/calendar'
     | '/_layout/charts'
     | '/_layout/customers'
     | '/_layout/invoices'
@@ -341,6 +353,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutChartsRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/calendar': {
+      id: '/_layout/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof LayoutCalendarRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/analytics': {
       id: '/_layout/analytics'
       path: '/analytics'
@@ -361,6 +380,7 @@ declare module '@tanstack/react-router' {
 interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRoute
   LayoutAnalyticsRoute: typeof LayoutAnalyticsRoute
+  LayoutCalendarRoute: typeof LayoutCalendarRoute
   LayoutChartsRoute: typeof LayoutChartsRoute
   LayoutCustomersRoute: typeof LayoutCustomersRoute
   LayoutInvoicesRoute: typeof LayoutInvoicesRoute
@@ -376,6 +396,7 @@ interface LayoutRouteChildren {
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAdminRoute: LayoutAdminRoute,
   LayoutAnalyticsRoute: LayoutAnalyticsRoute,
+  LayoutCalendarRoute: LayoutCalendarRoute,
   LayoutChartsRoute: LayoutChartsRoute,
   LayoutCustomersRoute: LayoutCustomersRoute,
   LayoutInvoicesRoute: LayoutInvoicesRoute,

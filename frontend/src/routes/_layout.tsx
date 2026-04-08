@@ -54,6 +54,10 @@ const PAGE_META: Record<string, { title: string; description: string }> = {
     title: "Charts",
     description: "Preview chart-oriented modules and reporting visualizations.",
   },
+  "/calendar": {
+    title: "Calendar",
+    description: "Review shared schedules, checkpoints, and upcoming meetings.",
+  },
   "/kanban": {
     title: "Kanban",
     description:
