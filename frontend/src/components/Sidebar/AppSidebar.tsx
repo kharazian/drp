@@ -4,6 +4,7 @@ import {
   CalendarDays,
   ChartColumn,
   ContactRound,
+  FolderKanban,
   Home,
   KanbanSquare,
   LifeBuoy,
@@ -85,6 +86,13 @@ const baseItems: Item[] = [
     title: "Chat",
     description: "Coordinate in team message threads",
     path: "/chat",
+  },
+  {
+    section: "Apps",
+    icon: FolderKanban,
+    title: "Files",
+    description: "Browse exports and shared assets",
+    path: "/files",
   },
   {
     section: "Commerce",

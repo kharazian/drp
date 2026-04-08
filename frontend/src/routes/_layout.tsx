@@ -66,6 +66,10 @@ const PAGE_META: Record<string, { title: string; description: string }> = {
     title: "Chat",
     description: "Coordinate with teams and customers in message threads.",
   },
+  "/files": {
+    title: "Files",
+    description: "Browse shared exports, assets, and uploaded documents.",
+  },
   "/kanban": {
     title: "Kanban",
     description:
