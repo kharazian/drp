@@ -7,6 +7,7 @@ import {
   ContactRound,
   CreditCard,
   FolderKanban,
+  FormInput,
   Home,
   KanbanSquare,
   LifeBuoy,
@@ -84,6 +85,12 @@ const baseSections: SidebarNavSection[] = [
           { icon: KanbanSquare, title: "Kanban", path: "/kanban" },
           { icon: CalendarDays, title: "Calendar", path: "/calendar" },
         ],
+      },
+      {
+        icon: FormInput,
+        title: "Forms",
+        description: "Versioned builders and history",
+        path: "/forms",
       },
       {
         icon: FolderKanban,

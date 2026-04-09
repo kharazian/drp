@@ -1,8 +1,9 @@
+import uuid
 from collections.abc import Generator
 from typing import Annotated
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Path, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
@@ -11,7 +12,8 @@ from sqlmodel import Session
 from app.core import security
 from app.core.config import settings
 from app.core.db import engine
-from app.models import TokenPayload, User
+from app.models import Form, TokenPayload, User
+from app.services.forms import get_owned_form
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
@@ -47,6 +49,17 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def get_current_owned_form(
+    session: SessionDep,
+    current_user: CurrentUser,
+    form_id: uuid.UUID = Path(...),
+) -> Form:
+    return get_owned_form(session=session, user=current_user, form_id=form_id)
+
+
+OwnedForm = Annotated[Form, Depends(get_current_owned_form)]
 
 
 def get_current_active_superuser(current_user: CurrentUser) -> User:

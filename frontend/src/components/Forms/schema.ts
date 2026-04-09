@@ -1,0 +1,241 @@
+import type { JsonSchema, JsonSchemaField } from "@/lib/forms-api"
+
+export type FieldKind =
+  | "text"
+  | "textarea"
+  | "number"
+  | "select"
+  | "email"
+  | "date"
+  | "checkbox"
+  | "radio"
+
+export type BuilderField = {
+  key: string
+  id: string
+  kind: FieldKind
+  label: string
+  helpText: string
+  placeholder: string
+  required: boolean
+  width: "full" | "half"
+  optionsText: string
+  minLength: string
+  maxLength: string
+  minValue: string
+  maxValue: string
+  pattern: string
+}
+
+type BuilderFieldSeed = Omit<BuilderField, "key">
+
+const starterBuilderFieldSeeds: BuilderFieldSeed[] = [
+  {
+    id: "requester_name",
+    kind: "text",
+    label: "Requester Name",
+    helpText: "",
+    placeholder: "Jordan Lee",
+    required: true,
+    width: "half",
+    optionsText: "",
+    minLength: "",
+    maxLength: "",
+    minValue: "",
+    maxValue: "",
+    pattern: "",
+  },
+  {
+    id: "request_details",
+    kind: "textarea",
+    label: "Request Details",
+    helpText: "",
+    placeholder: "Describe the request",
+    required: true,
+    width: "full",
+    optionsText: "",
+    minLength: "",
+    maxLength: "",
+    minValue: "",
+    maxValue: "",
+    pattern: "",
+  },
+]
+
+function createFieldKey() {
+  return crypto.randomUUID()
+}
+
+function withFieldKey(field: BuilderFieldSeed): BuilderField {
+  return {
+    key: createFieldKey(),
+    ...field,
+  }
+}
+
+export function createEmptyField(index: number): BuilderField {
+  return withFieldKey({
+    id: `field_${index + 1}`,
+    kind: "text",
+    label: "New Field",
+    helpText: "",
+    placeholder: "",
+    required: false,
+    width: "full",
+    optionsText: "",
+    minLength: "",
+    maxLength: "",
+    minValue: "",
+    maxValue: "",
+    pattern: "",
+  })
+}
+
+export function cloneStarterFields(): BuilderField[] {
+  return starterBuilderFieldSeeds.map((field) => withFieldKey(field))
+}
+
+export function buildSchemaFromFields(fields: BuilderField[]): JsonSchema {
+  return {
+    fields: fields.map((field) => {
+      const baseField: JsonSchemaField = {
+        id: field.id.trim(),
+        label: field.label.trim(),
+        type: field.kind,
+        placeholder: field.placeholder.trim() || undefined,
+        help_text: field.helpText.trim() || undefined,
+        required: field.required,
+        width: field.width,
+      }
+
+      const validation: NonNullable<JsonSchemaField["validation"]> = {}
+      if (field.minLength.trim()) {
+        validation.min_length = Number(field.minLength)
+      }
+      if (field.maxLength.trim()) {
+        validation.max_length = Number(field.maxLength)
+      }
+      if (field.minValue.trim()) {
+        validation.min_value = Number(field.minValue)
+      }
+      if (field.maxValue.trim()) {
+        validation.max_value = Number(field.maxValue)
+      }
+      if (field.pattern.trim()) {
+        validation.pattern = field.pattern.trim()
+      }
+      if (Object.keys(validation).length > 0) {
+        baseField.validation = validation
+      }
+
+      if (field.kind === "select" || field.kind === "radio") {
+        baseField.options = field.optionsText
+          .split(",")
+          .map((option) => option.trim())
+          .filter(Boolean)
+      }
+
+      return baseField
+    }),
+  }
+}
+
+export function builderFieldsFromSchema(
+  schema?: JsonSchema | null,
+): BuilderField[] {
+  if (!schema?.fields?.length) {
+    return cloneStarterFields()
+  }
+
+  return schema.fields.map((field) => ({
+    key: createFieldKey(),
+    id: field.id,
+    kind:
+      field.type === "select" || field.type === "radio"
+        ? field.type
+        : normalizeKind(field.type),
+    label: field.label,
+    helpText: field.help_text ?? "",
+    placeholder: field.placeholder ?? "",
+    required: field.required ?? false,
+    width: field.width ?? "full",
+    optionsText: field.options?.join(", ") ?? "",
+    minLength: field.validation?.min_length?.toString() ?? "",
+    maxLength: field.validation?.max_length?.toString() ?? "",
+    minValue: field.validation?.min_value?.toString() ?? "",
+    maxValue: field.validation?.max_value?.toString() ?? "",
+    pattern: field.validation?.pattern ?? "",
+  }))
+}
+
+function normalizeKind(type: JsonSchemaField["type"]): FieldKind {
+  switch (type) {
+    case "text":
+    case "textarea":
+    case "number":
+    case "select":
+    case "email":
+    case "date":
+    case "checkbox":
+    case "radio":
+      return type
+    default:
+      return "text"
+  }
+}
+
+export function validateBuilderDraft(
+  title: string,
+  fields: BuilderField[],
+): string | null {
+  if (!title.trim()) {
+    return "Form title is required."
+  }
+  if (!fields.length) {
+    return "Add at least one field before saving."
+  }
+
+  const ids = new Set<string>()
+  for (const field of fields) {
+    const fieldId = field.id.trim()
+    const fieldLabel = field.label.trim()
+
+    if (!fieldLabel) {
+      return "Every field needs a label."
+    }
+    if (!fieldId) {
+      return "Every field needs an ID."
+    }
+    if (ids.has(fieldId)) {
+      return "Field IDs must be unique."
+    }
+    ids.add(fieldId)
+
+    if (
+      (field.kind === "select" || field.kind === "radio") &&
+      field.optionsText
+        .split(",")
+        .map((option) => option.trim())
+        .filter(Boolean).length === 0
+    ) {
+      return `Select field "${fieldLabel}" needs at least one option.`
+    }
+
+    if (
+      field.minLength.trim() &&
+      field.maxLength.trim() &&
+      Number(field.minLength) > Number(field.maxLength)
+    ) {
+      return `Field "${fieldLabel}" has a minimum length greater than its maximum length.`
+    }
+    if (
+      field.minValue.trim() &&
+      field.maxValue.trim() &&
+      Number(field.minValue) > Number(field.maxValue)
+    ) {
+      return `Field "${fieldLabel}" has a minimum value greater than its maximum value.`
+    }
+  }
+
+  return null
+}
