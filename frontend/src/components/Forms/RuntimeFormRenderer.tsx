@@ -14,7 +14,7 @@ import type { BuilderField } from "./schema"
 function Textarea(props: ComponentProps<"textarea">) {
   return (
     <textarea
-      className="border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 min-h-28 w-full rounded-xl border bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px]"
+      className="border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 min-h-28 w-full rounded-2xl border bg-background/80 px-4 py-3 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px]"
       {...props}
     />
   )
@@ -52,13 +52,13 @@ export function RuntimeFormRenderer({
   readOnly?: boolean
   layout?: "auto" | "single"
 }) {
-  const gridClass = layout === "single" ? "grid gap-3" : "grid gap-4 md:grid-cols-2"
+  const gridClass = layout === "single" ? "grid gap-3" : "grid gap-4 sm:grid-cols-2"
 
   return (
     <div className={gridClass}>
       {fields.map((field) => {
         const widthClass =
-          layout === "single" ? "" : field.width === "full" ? "md:col-span-2" : ""
+          layout === "single" ? "" : field.width === "full" ? "sm:col-span-2" : ""
 
         if (readOnly) {
           return (
@@ -87,7 +87,7 @@ export function RuntimeFormRenderer({
               {field.helpText ? (
                 <p className="mt-2 text-xs text-muted-foreground">{field.helpText}</p>
               ) : null}
-              <p className="mt-2 break-words text-sm leading-6">
+              <p className="mt-3 break-words rounded-xl bg-background/70 px-3 py-2 text-sm leading-6 shadow-[inset_0_1px_0_0_color-mix(in_oklab,white_65%,transparent)]">
                 {formatReadOnlyValue(field, values[field.id])}
               </p>
             </div>
@@ -118,6 +118,7 @@ export function RuntimeFormRenderer({
               <Input
                 type="text"
                 id={field.id}
+                className="h-11 rounded-2xl bg-background/80"
                 value={String(values[field.id] ?? "")}
                 placeholder={field.placeholder}
                 required={field.required}
@@ -131,6 +132,7 @@ export function RuntimeFormRenderer({
               <Input
                 type="email"
                 id={field.id}
+                className="h-11 rounded-2xl bg-background/80"
                 value={String(values[field.id] ?? "")}
                 placeholder={field.placeholder}
                 required={field.required}
@@ -144,6 +146,7 @@ export function RuntimeFormRenderer({
               <Input
                 id={field.id}
                 type="date"
+                className="h-11 rounded-2xl bg-background/80"
                 value={String(values[field.id] ?? "")}
                 required={field.required}
                 onChange={(event) => onChange?.(field.id, event.target.value)}
@@ -153,6 +156,7 @@ export function RuntimeFormRenderer({
               <Input
                 id={field.id}
                 type="number"
+                className="h-11 rounded-2xl bg-background/80"
                 value={String(values[field.id] ?? "")}
                 placeholder={field.placeholder}
                 required={field.required}
@@ -173,7 +177,7 @@ export function RuntimeFormRenderer({
                 }
                 onValueChange={(value) => onChange?.(field.id, value)}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
                   <SelectValue placeholder={field.placeholder || "Choose an option"} />
                 </SelectTrigger>
                 <SelectContent>
@@ -190,7 +194,7 @@ export function RuntimeFormRenderer({
               </Select>
             ) : null}
             {field.kind === "radio" ? (
-              <div className="grid gap-3 rounded-xl border border-border/60 bg-background/70 px-4 py-3">
+              <div className="grid gap-3 rounded-2xl border border-border/60 bg-background/80 px-4 py-3">
                 {field.optionsText
                   .split(",")
                   .map((option) => option.trim())
@@ -213,14 +217,14 @@ export function RuntimeFormRenderer({
               </div>
             ) : null}
             {field.kind === "checkbox" ? (
-              <label className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/70 px-4 py-3 text-sm">
+              <label className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/80 px-4 py-3 text-sm">
                 <Checkbox
                   checked={Boolean(values[field.id] ?? false)}
-                  onCheckedChange={(checked) =>
-                    onChange?.(field.id, Boolean(checked))
-                  }
+                  onCheckedChange={(checked) => onChange?.(field.id, Boolean(checked))}
                 />
-                <span>{field.placeholder || field.label}</span>
+                <span className="min-w-0 break-words">
+                  {field.placeholder || field.label}
+                </span>
               </label>
             ) : null}
             {errors?.[field.id] ? (

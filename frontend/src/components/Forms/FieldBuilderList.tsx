@@ -51,14 +51,14 @@ function SortableFieldCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group rounded-[24px] border bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_92%,white),color-mix(in_oklab,var(--card)_86%,transparent))] p-4 transition-all",
+        "group rounded-[24px] border bg-[radial-gradient(circle_at_top_left,color-mix(in_oklab,var(--accent)_18%,white),transparent_34%),linear-gradient(180deg,color-mix(in_oklab,var(--card)_92%,white),color-mix(in_oklab,var(--card)_86%,transparent))] p-4 transition-all duration-200",
         isSelected
           ? "border-primary/70 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_9%,white),color-mix(in_oklab,var(--card)_88%,transparent))] shadow-[0_22px_44px_-30px_color-mix(in_oklab,var(--primary)_44%,transparent)]"
           : "border-border/60 hover:border-border hover:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_32%,white),color-mix(in_oklab,var(--card)_86%,transparent))]",
         isDragging && "scale-[1.01] shadow-2xl ring-1 ring-primary/25",
       )}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <button
           type="button"
           className="flex min-w-0 flex-1 items-start gap-3 text-left"
@@ -77,17 +77,22 @@ function SortableFieldCard({
               <p className="font-medium tracking-tight">
                 {field.label || `Field ${index + 1}`}
               </p>
-              <Badge variant="outline" className="uppercase">
+              <Badge variant="outline" className="rounded-full uppercase">
                 {field.kind}
               </Badge>
-              {field.required ? <Badge variant="secondary">Required</Badge> : null}
-              {isSelected ? <Badge>Selected</Badge> : null}
+              {field.required ? <Badge variant="secondary" className="rounded-full">Required</Badge> : null}
+              {isSelected ? <Badge className="rounded-full">Selected</Badge> : null}
             </div>
             <p className="mt-1 truncate text-xs text-muted-foreground">{field.id}</p>
           </div>
         </button>
 
-        <Button variant="outline" size="sm" onClick={() => onRemove(field.key)}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full rounded-xl bg-background/80 sm:w-auto"
+          onClick={() => onRemove(field.key)}
+        >
           <Trash2 className="mr-2 h-4 w-4" />
           Remove
         </Button>

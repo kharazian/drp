@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { arrayMove } from "@dnd-kit/sortable"
 import {
   AlertCircle,
+  ChevronDown,
   ClipboardCheck,
   Eye,
   History,
@@ -10,9 +11,12 @@ import {
   RefreshCcw,
   Save,
   Search,
+  Settings2,
+  Sparkles,
   Trash2,
+  WandSparkles,
 } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { type ReactNode, useEffect, useMemo, useState } from "react"
 
 import {
   dashboardPanelClass,
@@ -43,9 +47,9 @@ import {
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import useCustomToast from "@/hooks/useCustomToast"
-import { cn } from "@/lib/utils"
-import type { AuditLog } from "@/lib/forms-api"
+import type { AuditLog, FormDetail } from "@/lib/forms-api"
 import { formsApi } from "@/lib/forms-api"
+import { cn } from "@/lib/utils"
 import { FieldBuilderList } from "./FieldBuilderList"
 import { RuntimeFormRenderer } from "./RuntimeFormRenderer"
 import {
@@ -75,9 +79,9 @@ function EmptyState({
   description: string
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-border/65 p-6 text-center">
-      <p className="font-medium">{title}</p>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+    <div className="rounded-[26px] border border-dashed border-border/65 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--background)_94%,white),color-mix(in_oklab,var(--muted)_24%,transparent))] px-6 py-8 text-center">
+      <p className="text-base font-semibold tracking-tight">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
     </div>
   )
 }
@@ -92,7 +96,10 @@ function ErrorState({
   onRetry?: () => void
 }) {
   return (
-    <Alert variant="destructive">
+    <Alert
+      variant="destructive"
+      className="rounded-[24px] border-destructive/35 bg-destructive/8"
+    >
       <AlertCircle className="h-4 w-4" />
       <AlertTitle>{title}</AlertTitle>
       <AlertDescription>
@@ -108,13 +115,27 @@ function ErrorState({
   )
 }
 
-function OverviewMetric({ label, value }: { label: string; value: string }) {
+function OverviewMetric({
+  label,
+  value,
+  hint,
+}: {
+  label: string
+  value: string
+  hint: string
+}) {
   return (
-    <div className={cn(dashboardPanelDenseClass, "rounded-[24px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_94%,white),color-mix(in_oklab,var(--card)_84%,transparent))]")}>
+    <div
+      className={cn(
+        dashboardPanelDenseClass,
+        "rounded-[24px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_94%,white),color-mix(in_oklab,var(--card)_84%,transparent))]",
+      )}
+    >
       <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
         {label}
       </p>
       <p className="mt-3 text-3xl font-semibold tracking-tight">{value}</p>
+      <p className="mt-2 text-xs leading-5 text-muted-foreground">{hint}</p>
     </div>
   )
 }
@@ -129,16 +150,341 @@ function SectionIntro({
   description: string
 }) {
   return (
-    <div className="space-y-2">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-primary/80">
+    <div className="space-y-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-primary/80">
         {eyebrow}
       </p>
       <div className="space-y-1">
-        <h3 className="text-xl font-semibold tracking-tight">{title}</h3>
-        <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+        <h3 className="text-[1.35rem] font-semibold tracking-tight">{title}</h3>
+        <p className="max-w-2xl text-sm leading-6 text-muted-foreground/90">
           {description}
         </p>
       </div>
+    </div>
+  )
+}
+
+function ExpandableSection({
+  title,
+  description,
+  defaultOpen = false,
+  children,
+}: {
+  title: string
+  description: string
+  defaultOpen?: boolean
+  children: ReactNode
+}) {
+  return (
+    <details
+      open={defaultOpen}
+      className="group rounded-[24px] border border-border/60 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--background)_96%,white),color-mix(in_oklab,var(--muted)_18%,transparent))]"
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
+        <div className="min-w-0">
+          <p className="font-medium tracking-tight">{title}</p>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">{description}</p>
+        </div>
+        <div className="rounded-full border border-border/60 bg-background/80 p-2 text-muted-foreground transition-transform group-open:rotate-180">
+          <ChevronDown className="h-4 w-4" />
+        </div>
+      </summary>
+      <div className="border-t border-border/55 px-5 py-5">{children}</div>
+    </details>
+  )
+}
+
+function BuilderSnapshot({
+  selectedFormId,
+  draftTitle,
+  selectedForm,
+  draftFieldsCount,
+  hasUnsavedSchemaChanges,
+  hasUnsavedTitleChanges,
+}: {
+  selectedFormId: string | null
+  draftTitle: string
+  selectedForm: FormDetail | null
+  draftFieldsCount: number
+  hasUnsavedSchemaChanges: boolean
+  hasUnsavedTitleChanges: boolean
+}) {
+  return (
+    <div className="grid gap-3 rounded-[28px] border border-border/60 bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--primary)_10%,white),transparent_34%),linear-gradient(180deg,color-mix(in_oklab,var(--card)_95%,white),color-mix(in_oklab,var(--card)_84%,transparent))] p-5 shadow-[0_22px_46px_-38px_color-mix(in_oklab,var(--primary)_28%,transparent)] sm:p-6">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="outline" className="rounded-full">
+          Workspace
+        </Badge>
+        {selectedForm?.active_version ? (
+          <Badge className="rounded-full">
+            Published v{selectedForm.active_version.version_number}
+          </Badge>
+        ) : (
+          <Badge variant="secondary" className="rounded-full">
+            New draft
+          </Badge>
+        )}
+        {selectedForm?.draft_version ? (
+          <Badge variant="secondary" className="rounded-full">
+            Draft v{selectedForm.draft_version.version_number}
+          </Badge>
+        ) : null}
+      </div>
+      <div>
+        <h2 className="text-[1.75rem] font-semibold tracking-tight sm:text-[2.1rem]">
+          {draftTitle || "New form draft"}
+        </h2>
+        <p className="mt-2 max-w-3xl text-sm leading-7 text-muted-foreground">
+          Shape the draft, pressure-test it in preview, then publish only when the
+          live version is ready for real submissions.
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {hasUnsavedTitleChanges ? (
+          <Badge variant="secondary" className="rounded-full">
+            Title changed
+          </Badge>
+        ) : null}
+        {hasUnsavedSchemaChanges ? (
+          <Badge variant="secondary" className="rounded-full">
+            Schema changed
+          </Badge>
+        ) : null}
+        <Badge variant="outline" className="rounded-full">
+          {draftFieldsCount} field{draftFieldsCount === 1 ? "" : "s"}
+        </Badge>
+        <Badge variant="outline" className="rounded-full">
+          {selectedFormId ? "Saved form" : "Unsaved form"}
+        </Badge>
+      </div>
+    </div>
+  )
+}
+
+function FieldSummaryList({ fields }: { fields: BuilderField[] }) {
+  if (!fields.length) {
+    return (
+      <EmptyState
+        title="No fields yet"
+        description="Add a field to start shaping the form."
+      />
+    )
+  }
+
+  return (
+    <div className="grid gap-3">
+      {fields.map((field, index) => (
+        <div
+          key={field.key}
+          className="rounded-[22px] border border-border/60 bg-background/65 px-4 py-4"
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="rounded-full">
+              {index + 1}
+            </Badge>
+            <p className="font-medium tracking-tight">{field.label}</p>
+            <Badge variant="secondary" className="rounded-full uppercase">
+              {field.kind}
+            </Badge>
+            {field.required ? (
+              <Badge variant="secondary" className="rounded-full">
+                Required
+              </Badge>
+            ) : null}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">{field.id}</p>
+          {field.helpText ? (
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">{field.helpText}</p>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+type SchemaChange =
+  | {
+      type: "added"
+      field: BuilderField
+      index: number
+    }
+  | {
+      type: "removed"
+      field: BuilderField
+      previousIndex: number
+    }
+  | {
+      type: "updated"
+      field: BuilderField
+      previousField: BuilderField
+      index: number
+      changes: string[]
+    }
+
+function describeFieldChanges(nextField: BuilderField, previousField: BuilderField): string[] {
+  const changes: string[] = []
+
+  if (nextField.label !== previousField.label) {
+    changes.push(`Label changed to "${nextField.label}"`)
+  }
+  if (nextField.kind !== previousField.kind) {
+    changes.push(`Type changed from ${previousField.kind} to ${nextField.kind}`)
+  }
+  if (nextField.required !== previousField.required) {
+    changes.push(nextField.required ? "Marked required" : "Made optional")
+  }
+  if (nextField.width !== previousField.width) {
+    changes.push(`Width changed to ${nextField.width}`)
+  }
+  if (nextField.helpText !== previousField.helpText) {
+    changes.push(nextField.helpText ? "Help text updated" : "Help text removed")
+  }
+  if (nextField.placeholder !== previousField.placeholder) {
+    changes.push(nextField.placeholder ? "Placeholder updated" : "Placeholder removed")
+  }
+  if (nextField.optionsText !== previousField.optionsText) {
+    changes.push("Choice options updated")
+  }
+  if (nextField.minLength !== previousField.minLength) {
+    changes.push(
+      nextField.minLength ? `Min length set to ${nextField.minLength}` : "Min length removed",
+    )
+  }
+  if (nextField.maxLength !== previousField.maxLength) {
+    changes.push(
+      nextField.maxLength ? `Max length set to ${nextField.maxLength}` : "Max length removed",
+    )
+  }
+  if (nextField.minValue !== previousField.minValue) {
+    changes.push(
+      nextField.minValue ? `Min value set to ${nextField.minValue}` : "Min value removed",
+    )
+  }
+  if (nextField.maxValue !== previousField.maxValue) {
+    changes.push(
+      nextField.maxValue ? `Max value set to ${nextField.maxValue}` : "Max value removed",
+    )
+  }
+  if (nextField.pattern !== previousField.pattern) {
+    changes.push(nextField.pattern ? "Pattern updated" : "Pattern removed")
+  }
+
+  return changes
+}
+
+function compareDraftToPublished(
+  draftFields: BuilderField[],
+  publishedFields: BuilderField[],
+): SchemaChange[] {
+  const publishedById = new Map(
+    publishedFields.map((field, index) => [field.id, { field, index }] as const),
+  )
+  const draftIds = new Set(draftFields.map((field) => field.id))
+  const changes: SchemaChange[] = []
+
+  draftFields.forEach((field, index) => {
+    const previous = publishedById.get(field.id)
+    if (!previous) {
+      changes.push({ type: "added", field, index })
+      return
+    }
+
+    const fieldChanges = describeFieldChanges(field, previous.field)
+    if (previous.index !== index) {
+      fieldChanges.push(`Moved from position ${previous.index + 1} to ${index + 1}`)
+    }
+
+    if (fieldChanges.length) {
+      changes.push({
+        type: "updated",
+        field,
+        previousField: previous.field,
+        index,
+        changes: fieldChanges,
+      })
+    }
+  })
+
+  publishedFields.forEach((field, index) => {
+    if (!draftIds.has(field.id)) {
+      changes.push({ type: "removed", field, previousIndex: index })
+    }
+  })
+
+  return changes
+}
+
+function DraftChangeList({
+  draftFields,
+  publishedFields,
+}: {
+  draftFields: BuilderField[]
+  publishedFields: BuilderField[]
+}) {
+  const changes = compareDraftToPublished(draftFields, publishedFields)
+
+  if (!publishedFields.length) {
+    return (
+      <div className="grid gap-3">
+        <div className="rounded-[22px] border border-border/60 bg-background/65 px-4 py-4">
+          <p className="font-medium tracking-tight">First published version</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            This form does not have a published baseline yet. Publishing will create the
+            first live version with {draftFields.length} field{draftFields.length === 1 ? "" : "s"}.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!changes.length) {
+    return (
+      <EmptyState
+        title="No draft changes"
+        description="The draft matches the currently published version."
+      />
+    )
+  }
+
+  return (
+    <div className="grid gap-3">
+      {changes.map((change, index) => (
+        <div
+          key={`${change.type}-${change.field.id}-${index}`}
+          className="rounded-[22px] border border-border/60 bg-background/65 px-4 py-4"
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge
+              variant={change.type === "removed" ? "outline" : "secondary"}
+              className="rounded-full capitalize"
+            >
+              {change.type}
+            </Badge>
+            <p className="font-medium tracking-tight">{change.field.label}</p>
+            <Badge variant="outline" className="rounded-full uppercase">
+              {change.field.kind}
+            </Badge>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">{change.field.id}</p>
+          {change.type === "added" ? (
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              Added at position {change.index + 1}.
+            </p>
+          ) : null}
+          {change.type === "removed" ? (
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              Removed from published position {change.previousIndex + 1}.
+            </p>
+          ) : null}
+          {change.type === "updated" ? (
+            <ul className="mt-3 grid gap-2 text-sm leading-6 text-muted-foreground">
+              {change.changes.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ))}
     </div>
   )
 }
@@ -156,16 +502,17 @@ function HistoryList({ logs }: { logs: AuditLog[] }) {
   return (
     <div className="grid gap-3">
       {logs.map((log) => (
-        <div key={log.id} className="rounded-2xl border border-border/60 p-4">
+        <div
+          key={log.id}
+          className="rounded-[24px] border border-border/60 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_92%,white),color-mix(in_oklab,var(--card)_84%,transparent))] p-5"
+        >
           <div className="flex items-center justify-between gap-3">
             <p className="font-medium">Submission updated</p>
             <p className="text-xs text-muted-foreground">
-              {log.changed_at
-                ? new Date(log.changed_at).toLocaleString()
-                : "Unknown time"}
+              {log.changed_at ? new Date(log.changed_at).toLocaleString() : "Unknown time"}
             </p>
           </div>
-          <pre className="mt-3 overflow-x-auto rounded-xl bg-muted/35 p-3 text-xs">
+          <pre className="mt-4 overflow-x-auto rounded-2xl bg-muted/35 p-4 text-xs leading-6">
             {JSON.stringify(log.changes, null, 2)}
           </pre>
         </div>
@@ -297,10 +644,7 @@ export function FormWorkspace() {
       (submission) => submission.id === selectedSubmissionId,
     ) ?? null
 
-  const draftSchema = useMemo(
-    () => buildSchemaFromFields(draftFields),
-    [draftFields],
-  )
+  const draftSchema = useMemo(() => buildSchemaFromFields(draftFields), [draftFields])
   const publishedFields = useMemo(
     () => builderFieldsFromSchema(selectedForm?.active_version?.schema),
     [selectedForm?.active_version?.schema],
@@ -309,8 +653,7 @@ export function FormWorkspace() {
   const loadedSchema =
     selectedForm?.draft_version?.schema ?? selectedForm?.active_version?.schema ?? null
   const hasUnsavedSchemaChanges =
-    Boolean(selectedFormId) &&
-    JSON.stringify(draftSchema) !== JSON.stringify(loadedSchema)
+    Boolean(selectedFormId) && JSON.stringify(draftSchema) !== JSON.stringify(loadedSchema)
   const loadedTitle = selectedForm?.draft_title ?? selectedForm?.title ?? ""
   const hasUnsavedTitleChanges =
     Boolean(selectedFormId) && draftTitle.trim() !== loadedTitle
@@ -336,9 +679,7 @@ export function FormWorkspace() {
         submission.updated_at ?? "",
         ...Object.values(submission.data).map((value) => String(value ?? "")),
       ]
-      return searchableValues.some((value) =>
-        value.toLowerCase().includes(query),
-      )
+      return searchableValues.some((value) => value.toLowerCase().includes(query))
     })
   }, [submissionSearch, submissionsQuery.data])
 
@@ -478,9 +819,7 @@ export function FormWorkspace() {
   const publishFormMutation = useMutation({
     mutationFn: (formId: string) => formsApi.publishForm(formId),
     onSuccess: (form) => {
-      showSuccessToast(
-        `Published version ${form.active_version?.version_number ?? "latest"}`,
-      )
+      showSuccessToast(`Published version ${form.active_version?.version_number ?? "latest"}`)
       queryClient.invalidateQueries({ queryKey: ["forms"] })
       queryClient.invalidateQueries({ queryKey: ["forms", form.id] })
     },
@@ -555,9 +894,7 @@ export function FormWorkspace() {
     }
 
     setDraftFields((current) =>
-      current.map((field) =>
-        field.key === selectedFieldKey ? updater(field) : field,
-      ),
+      current.map((field) => (field.key === selectedFieldKey ? updater(field) : field)),
     )
   }
 
@@ -661,21 +998,23 @@ export function FormWorkspace() {
   }
 
   return (
-    <CardContent className="grid gap-8 p-6 xl:grid-cols-[320px_minmax(0,1fr)] xl:p-8">
-      <aside className="grid gap-5">
-        <div className="rounded-[30px] border border-border/60 bg-[radial-gradient(circle_at_top_left,color-mix(in_oklab,var(--primary)_16%,white),transparent_38%),linear-gradient(180deg,color-mix(in_oklab,var(--card)_94%,white),color-mix(in_oklab,var(--card)_82%,transparent))] p-6 shadow-[0_24px_48px_-36px_color-mix(in_oklab,var(--primary)_42%,transparent)]">
+    <CardContent className="grid gap-6 bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--primary)_7%,white),transparent_28%),linear-gradient(180deg,color-mix(in_oklab,var(--background)_98%,white),color-mix(in_oklab,var(--muted)_14%,transparent))] p-4 sm:gap-8 sm:p-6 xl:grid-cols-[310px_minmax(0,1fr)] xl:p-8">
+      <aside className="grid gap-5 self-start xl:sticky xl:top-6">
+        <div className="rounded-[32px] border border-border/60 bg-[radial-gradient(circle_at_top_left,color-mix(in_oklab,var(--primary)_16%,white),transparent_38%),linear-gradient(180deg,color-mix(in_oklab,var(--card)_95%,white),color-mix(in_oklab,var(--card)_82%,transparent))] p-6 shadow-[0_24px_48px_-36px_color-mix(in_oklab,var(--primary)_42%,transparent)]">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/80">
             Form Library
           </p>
-          <h2 className="mt-3 text-[2rem] font-semibold tracking-tight">
-            Builder workspace
-          </h2>
+          <h2 className="mt-3 text-[2rem] font-semibold tracking-tight">Builder workspace</h2>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            Create forms from field rows, publish structure through versions, and
-            validate the result with live submissions.
+            Keep your form catalog on the left, then use the main canvas to shape
+            drafts, preview the experience, and manage published responses.
           </p>
           <div className="mt-6 grid gap-2.5">
-            <Button variant="outline" className="h-11 justify-start rounded-xl bg-background/75" onClick={resetDraft}>
+            <Button
+              variant="outline"
+              className="h-11 justify-start rounded-xl bg-background/75"
+              onClick={resetDraft}
+            >
               <Plus className="mr-2 h-4 w-4" />
               New Blank Form
             </Button>
@@ -725,7 +1064,7 @@ export function FormWorkspace() {
               type="button"
               onClick={() => setSelectedFormId(form.id)}
               className={cn(
-                "rounded-[24px] border px-4 py-4 text-left transition-all",
+                "rounded-[24px] border px-4 py-4 text-left transition-all duration-200",
                 selectedFormId === form.id
                   ? "border-primary/70 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_9%,white),color-mix(in_oklab,var(--card)_88%,transparent))] shadow-[0_20px_36px_-28px_color-mix(in_oklab,var(--primary)_40%,transparent)]"
                   : "border-border/60 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_92%,white),color-mix(in_oklab,var(--card)_84%,transparent))] hover:border-border hover:bg-muted/25",
@@ -733,85 +1072,48 @@ export function FormWorkspace() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-medium">{form.title}</p>
+                  <p className="font-medium tracking-tight">{form.title}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {form.updated_at
                       ? new Date(form.updated_at).toLocaleString()
                       : "Recently updated"}
                   </p>
                 </div>
-                {selectedFormId === form.id ? <Badge>Active</Badge> : null}
+                {selectedFormId === form.id ? (
+                  <Badge className="rounded-full px-3">Active</Badge>
+                ) : null}
               </div>
             </button>
           ))}
         </div>
       </aside>
 
-      <div className="grid gap-8">
-        <div className="grid gap-4 md:grid-cols-3">
-          <OverviewMetric label="Forms" value={String(formsQuery.data?.count ?? 0)} />
-          <OverviewMetric
-            label="Draft Fields"
-            value={String(draftFields.length)}
+      <div className="grid gap-6 sm:gap-8">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)]">
+          <BuilderSnapshot
+            selectedFormId={selectedFormId}
+            draftTitle={draftTitle}
+            selectedForm={selectedForm}
+            draftFieldsCount={draftFields.length}
+            hasUnsavedSchemaChanges={hasUnsavedSchemaChanges}
+            hasUnsavedTitleChanges={hasUnsavedTitleChanges}
           />
-          <OverviewMetric
-            label="Submissions"
-            value={String(submissionsQuery.data?.count ?? 0)}
-          />
-        </div>
-
-        <div className={cn(dashboardPanelClass, "overflow-hidden rounded-[30px] bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--primary)_10%,white),transparent_34%),linear-gradient(180deg,color-mix(in_oklab,var(--card)_94%,white),color-mix(in_oklab,var(--card)_84%,transparent))] p-7")}>
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline">Selected Form</Badge>
-                {selectedForm?.active_version ? (
-                  <Badge>Published v{selectedForm.active_version.version_number}</Badge>
-                ) : (
-                  <Badge variant="secondary">Draft</Badge>
-                )}
-                {selectedForm?.draft_version ? (
-                  <Badge variant="secondary">
-                    Draft v{selectedForm.draft_version.version_number}
-                  </Badge>
-                ) : null}
-              </div>
-              <h3 className="mt-4 text-[2.35rem] font-semibold tracking-tight">
-                {draftTitle || "New form draft"}
-              </h3>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
-                Save draft edits without changing the live version, then publish
-                when the structure is ready for real submissions.
-              </p>
-              {selectedForm?.draft_title && selectedForm.draft_title !== selectedForm.title ? (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  Published title:
-                  <span className="ml-2 font-medium text-foreground">
-                    {selectedForm.title}
-                  </span>
-                </p>
-              ) : null}
-            </div>
-            <div className="grid gap-2 rounded-[22px] border border-border/60 bg-background/65 px-4 py-4 text-sm shadow-[0_14px_32px_-30px_color-mix(in_oklab,var(--foreground)_30%,transparent)]">
-              <p>
-                Published Version ID:
-                <span className="ml-2 font-mono text-xs">
-                  {selectedForm?.active_version?.id ?? "Not created yet"}
-                </span>
-              </p>
-              <p>
-                Draft Version ID:
-                <span className="ml-2 font-mono text-xs">
-                  {selectedForm?.draft_version?.id ?? "No draft saved"}
-                </span>
-              </p>
-              <p>
-                Form ID:
-                <span className="ml-2 font-mono text-xs">
-                  {selectedForm?.id ?? "Draft"}
-                </span>
-              </p>
-            </div>
+          <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+            <OverviewMetric
+              label="Forms"
+              value={String(formsQuery.data?.count ?? 0)}
+              hint="All reusable form entries in this workspace."
+            />
+            <OverviewMetric
+              label="Draft Fields"
+              value={String(draftFields.length)}
+              hint="Structure currently loaded into the builder."
+            />
+            <OverviewMetric
+              label="Submissions"
+              value={String(submissionsQuery.data?.count ?? 0)}
+              hint="Saved responses attached to the active version."
+            />
           </div>
         </div>
 
@@ -823,8 +1125,8 @@ export function FormWorkspace() {
           />
         ) : null}
 
-        <Tabs defaultValue="builder">
-          <TabsList>
+        <Tabs defaultValue="builder" className="grid gap-6">
+          <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-[24px] border border-border/60 bg-background/72 p-1.5 shadow-[0_18px_34px_-28px_color-mix(in_oklab,var(--foreground)_24%,transparent)]">
             <TabsTrigger value="builder">
               <Layers3 className="h-4 w-4" />
               Builder
@@ -843,385 +1145,556 @@ export function FormWorkspace() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="builder" className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-            <div className={cn(dashboardPanelClass, "rounded-[30px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_94%,white),color-mix(in_oklab,var(--card)_82%,transparent))] p-7")}>
-              <div className="grid gap-6">
-                <SectionIntro
-                  eyebrow="Builder"
-                  title="Shape the form canvas"
-                  description="Define the title, add fields, and drag them into a sensible reading order before saving a draft or publishing the next live version."
-                />
-
-                <div className="grid gap-2">
-                  <label htmlFor="form-title" className="text-sm font-medium">
-                    Form Title
-                  </label>
-                  <Input
-                    id="form-title"
-                    className="h-12 rounded-xl bg-background/75"
-                    value={draftTitle}
-                    onChange={(event) => setDraftTitle(event.target.value)}
-                    placeholder="Operations Request"
+          <TabsContent value="builder" className="grid gap-6">
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.95fr)]">
+              <div
+                className={cn(
+                  dashboardPanelClass,
+                  "rounded-[32px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_95%,white),color-mix(in_oklab,var(--card)_82%,transparent))] p-7 shadow-[0_28px_58px_-42px_color-mix(in_oklab,var(--foreground)_20%,transparent)]",
+                )}
+              >
+                <div className="grid gap-6">
+                  <SectionIntro
+                    eyebrow="Builder"
+                    title="Shape the form canvas"
+                    description="Work through the draft in layers: title first, field structure next, and publishing controls last."
                   />
-                </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-[24px] border border-dashed border-border/70 bg-muted/18 px-4 py-4">
-                  <div>
-                    <p className="text-sm font-semibold tracking-tight">Field stack</p>
-                    <p className="text-xs leading-5 text-muted-foreground">
-                      Drag from the grip to reorder. Select a row to edit it in the inspector.
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="rounded-xl bg-background/80"
-                    onClick={() =>
-                      setDraftFields((current) => {
-                        const nextField = createEmptyField(current.length)
-                        const next = [...current, nextField]
-                        setSelectedFieldKey(nextField.key)
-                        return next
-                      })
-                    }
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Field
-                  </Button>
-                </div>
+                  <Tabs defaultValue="structure" className="grid gap-6">
+                    <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-[22px] border border-border/55 bg-background/75 p-1.5">
+                      <TabsTrigger value="structure">
+                        <Layers3 className="h-4 w-4" />
+                        Structure
+                      </TabsTrigger>
+                      <TabsTrigger value="content">
+                        <Sparkles className="h-4 w-4" />
+                        Content
+                      </TabsTrigger>
+                      <TabsTrigger value="publish">
+                        <WandSparkles className="h-4 w-4" />
+                        Review
+                      </TabsTrigger>
+                    </TabsList>
 
-                <FieldBuilderList
-                  fields={draftFields}
-                  selectedKey={selectedFieldKey}
-                  onSelect={setSelectedFieldKey}
-                  onReorder={handleReorderFields}
-                  onRemove={(fieldKey) =>
-                    setDraftFields((current) => {
-                      const removedIndex = current.findIndex(
-                        (field) => field.key === fieldKey,
-                      )
-                      const next = current.filter((field) => field.key !== fieldKey)
-                      const nextSelected =
-                        next[removedIndex] ?? next[Math.max(0, removedIndex - 1)] ?? null
-                      setSelectedFieldKey(nextSelected?.key ?? null)
-                      return next
-                    })
-                  }
-                />
+                    <TabsContent value="structure" className="grid gap-5">
+                      <ExpandableSection
+                        title="Form metadata"
+                        description="Name the form and keep the stable identity clear before you adjust field structure."
+                        defaultOpen
+                      >
+                        <div className="grid gap-4">
+                          <div className="grid gap-2">
+                            <label htmlFor="form-title" className="text-sm font-medium">
+                              Form Title
+                            </label>
+                            <Input
+                              id="form-title"
+                              className="h-12 rounded-xl bg-background/75"
+                              value={draftTitle}
+                              onChange={(event) => setDraftTitle(event.target.value)}
+                              placeholder="Operations Request"
+                            />
+                          </div>
+                          <div className="grid gap-2 rounded-[20px] border border-border/60 bg-muted/18 px-4 py-4 text-sm text-muted-foreground">
+                            <p>
+                              Published title:
+                              <span className="ml-2 font-medium text-foreground">
+                                {selectedForm?.title ?? "Not published yet"}
+                              </span>
+                            </p>
+                            <p>
+                              Draft version:
+                              <span className="ml-2 font-medium text-foreground">
+                                {selectedForm?.draft_version
+                                  ? `v${selectedForm.draft_version.version_number}`
+                                  : "No draft saved yet"}
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                      </ExpandableSection>
 
-                <div className="flex items-center justify-between gap-4 rounded-[24px] border border-border/60 bg-background/60 px-4 py-4">
-                  <p className="text-sm leading-6 text-muted-foreground">
-                    Save a draft explicitly, or publish directly and the builder will save pending schema changes first.
-                  </p>
-                  <div className="flex flex-wrap gap-3">
-                    <LoadingButton
-                      onClick={handleSaveDraft}
-                      loading={
-                        createFormMutation.isPending || updateFormMutation.isPending
-                      }
-                      className="min-w-36 rounded-xl"
-                    >
-                      <Save className="mr-2 h-4 w-4" />
-                      {selectedFormId ? "Save Draft" : "Create Form"}
-                    </LoadingButton>
-                    <LoadingButton
-                      variant="outline"
-                      onClick={handlePublishForm}
-                      loading={publishFormMutation.isPending}
-                      disabled={
-                        !selectedFormId ||
-                        (!hasDraftVersion &&
-                          !hasUnsavedSchemaChanges &&
-                          !hasUnsavedTitleChanges)
-                      }
-                      className="min-w-36 rounded-xl"
-                    >
-                      Publish Version
-                    </LoadingButton>
-                  </div>
+                      <ExpandableSection
+                        title="Field stack"
+                        description="Reorder fields by drag handle, remove noisy rows, and keep the reading order natural for a real user."
+                        defaultOpen
+                      >
+                        <div className="grid gap-4">
+                          <div className="flex flex-col gap-4 rounded-[22px] border border-dashed border-border/70 bg-muted/18 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                              <p className="text-sm font-semibold tracking-tight">Builder stack</p>
+                              <p className="text-xs leading-5 text-muted-foreground">
+                                Select any row to edit it in the field settings panel.
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              className="w-full rounded-xl bg-background/80 sm:w-auto"
+                              onClick={() =>
+                                setDraftFields((current) => {
+                                  const nextField = createEmptyField(current.length)
+                                  const next = [...current, nextField]
+                                  setSelectedFieldKey(nextField.key)
+                                  return next
+                                })
+                              }
+                            >
+                              <Plus className="mr-2 h-4 w-4" />
+                              Add Field
+                            </Button>
+                          </div>
+
+                          <FieldBuilderList
+                            fields={draftFields}
+                            selectedKey={selectedFieldKey}
+                            onSelect={setSelectedFieldKey}
+                            onReorder={handleReorderFields}
+                            onRemove={(fieldKey) =>
+                              setDraftFields((current) => {
+                                const removedIndex = current.findIndex(
+                                  (field) => field.key === fieldKey,
+                                )
+                                const next = current.filter((field) => field.key !== fieldKey)
+                                const nextSelected =
+                                  next[removedIndex] ??
+                                  next[Math.max(0, removedIndex - 1)] ??
+                                  null
+                                setSelectedFieldKey(nextSelected?.key ?? null)
+                                return next
+                              })
+                            }
+                          />
+                        </div>
+                      </ExpandableSection>
+                    </TabsContent>
+
+                    <TabsContent value="content" className="grid gap-5">
+                      <ExpandableSection
+                        title="Field inventory"
+                        description="Scan the current draft as a compact summary without opening the full editor for every field."
+                        defaultOpen
+                      >
+                        <FieldSummaryList fields={draftFields} />
+                      </ExpandableSection>
+                    </TabsContent>
+
+                    <TabsContent value="publish" className="grid gap-5">
+                      <ExpandableSection
+                        title="Draft and publish controls"
+                        description="Save a private draft first, or publish after the builder saves any pending changes."
+                        defaultOpen
+                      >
+                        <div className="grid gap-5">
+                          <div className="grid gap-3 rounded-[22px] border border-border/60 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--background)_94%,white),color-mix(in_oklab,var(--muted)_24%,transparent))] px-4 py-4 text-sm text-muted-foreground">
+                            <p>
+                              Published version ID:
+                              <span className="ml-2 font-mono text-xs text-foreground">
+                                {selectedForm?.active_version?.id ?? "Not created yet"}
+                              </span>
+                            </p>
+                            <p>
+                              Draft version ID:
+                              <span className="ml-2 font-mono text-xs text-foreground">
+                                {selectedForm?.draft_version?.id ?? "No draft saved"}
+                              </span>
+                            </p>
+                            <p>
+                              Form ID:
+                              <span className="ml-2 font-mono text-xs text-foreground">
+                                {selectedForm?.id ?? "Draft"}
+                              </span>
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-3">
+                            <LoadingButton
+                              onClick={handleSaveDraft}
+                              loading={
+                                createFormMutation.isPending || updateFormMutation.isPending
+                              }
+                              className="min-w-36 rounded-xl shadow-sm"
+                            >
+                              <Save className="mr-2 h-4 w-4" />
+                              {selectedFormId ? "Save Draft" : "Create Form"}
+                            </LoadingButton>
+                            <LoadingButton
+                              variant="outline"
+                              onClick={handlePublishForm}
+                              loading={publishFormMutation.isPending}
+                              disabled={
+                                !selectedFormId ||
+                                (!hasDraftVersion &&
+                                  !hasUnsavedSchemaChanges &&
+                                  !hasUnsavedTitleChanges)
+                              }
+                              className="min-w-36 rounded-xl bg-background/80"
+                            >
+                              Publish Version
+                            </LoadingButton>
+                          </div>
+                        </div>
+                      </ExpandableSection>
+                    </TabsContent>
+                  </Tabs>
                 </div>
               </div>
-            </div>
 
-            <div className={cn(dashboardPanelClass, "rounded-[30px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_96%,white),color-mix(in_oklab,var(--card)_86%,transparent))] p-6")}>
-              <SectionIntro
-                eyebrow="Inspector"
-                title="Tune the selected field"
-                description="Keep the field list lean on the left and use this side panel for naming, validation intent, and presentation details."
-              />
-              <Separator className="my-4" />
-              {selectedField ? (
-                <div className="grid gap-4">
-                  <div className="rounded-[24px] border border-border/60 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_18%,white),color-mix(in_oklab,var(--card)_86%,transparent))] p-5">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="outline">Field {selectedFieldIndex + 1}</Badge>
-                      <Badge className="uppercase">{selectedField.kind}</Badge>
-                      {selectedField.required ? <Badge variant="secondary">Required</Badge> : null}
-                    </div>
-                    <p className="mt-4 text-xl font-semibold tracking-tight">
-                      {selectedField.label || "Untitled field"}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {selectedField.id || "No field ID yet"}
-                    </p>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <label className="text-sm font-medium">Label</label>
-                    <Input
-                      className="h-11 rounded-xl bg-background/75"
-                      value={selectedField.label}
-                      onChange={(event) =>
-                        updateSelectedField((field) => ({
-                          ...field,
-                          label: event.target.value,
-                        }))
-                      }
-                      placeholder="Field Label"
-                    />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <label className="text-sm font-medium">ID</label>
-                    <Input
-                      className="h-11 rounded-xl bg-background/75"
-                      value={selectedField.id}
-                      onChange={(event) =>
-                        updateSelectedField((field) => ({
-                          ...field,
-                          id: event.target.value,
-                        }))
-                      }
-                      placeholder="field_id"
-                    />
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="grid gap-2">
-                      <label className="text-sm font-medium">Type</label>
-                      <Select
-                        value={selectedField.kind}
-                        onValueChange={(value) =>
-                          updateSelectedField((field) => ({
-                            ...field,
-                            kind: value as BuilderField["kind"],
-                          }))
-                        }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="text">Text</SelectItem>
-                          <SelectItem value="email">Email</SelectItem>
-                          <SelectItem value="date">Date</SelectItem>
-                          <SelectItem value="textarea">Textarea</SelectItem>
-                          <SelectItem value="number">Number</SelectItem>
-                          <SelectItem value="select">Select</SelectItem>
-                          <SelectItem value="radio">Radio</SelectItem>
-                          <SelectItem value="checkbox">Checkbox</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <label className="text-sm font-medium">Width</label>
-                      <Select
-                        value={selectedField.width}
-                        onValueChange={(value) =>
-                          updateSelectedField((field) => ({
-                            ...field,
-                            width: value as BuilderField["width"],
-                          }))
-                        }
-                      >
-                        <SelectTrigger className="w-full rounded-xl bg-background/75">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="full">Full width</SelectItem>
-                          <SelectItem value="half">Half width</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <label className="text-sm font-medium">Help Text</label>
-                    <Input
-                      className="h-11 rounded-xl bg-background/75"
-                      value={selectedField.helpText}
-                      onChange={(event) =>
-                        updateSelectedField((field) => ({
-                          ...field,
-                          helpText: event.target.value,
-                        }))
-                      }
-                      placeholder="Optional short guidance"
-                    />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <label className="text-sm font-medium">Placeholder</label>
-                    <Input
-                      className="h-11 rounded-xl bg-background/75"
-                      value={selectedField.placeholder}
-                      onChange={(event) =>
-                        updateSelectedField((field) => ({
-                          ...field,
-                          placeholder: event.target.value,
-                        }))
-                      }
-                      placeholder="Optional placeholder"
-                    />
-                  </div>
-
-                  {selectedField.kind === "checkbox" ? (
-                    <p className="text-xs text-muted-foreground">
-                      For checkbox fields, the placeholder is used as the toggle label in the published form.
-                    </p>
-                  ) : null}
-
-                  <label className="flex items-center gap-3 rounded-[20px] border border-border/60 bg-muted/20 px-4 py-3 text-sm">
-                    <Checkbox
-                      checked={selectedField.required}
-                      onCheckedChange={(checked) =>
-                        updateSelectedField((field) => ({
-                          ...field,
-                          required: Boolean(checked),
-                        }))
-                      }
-                    />
-                    Required field
-                  </label>
-
-                  {selectedField.kind === "select" || selectedField.kind === "radio" ? (
-                    <div className="grid gap-2">
-                      <label className="text-sm font-medium">Options</label>
-                      <Input
-                        className="h-11 rounded-xl bg-background/75"
-                        value={selectedField.optionsText}
-                        onChange={(event) =>
-                          updateSelectedField((field) => ({
-                            ...field,
-                            optionsText: event.target.value,
-                          }))
-                        }
-                        placeholder="low, medium, high"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Enter comma-separated options for the choice list.
+              <div
+                className={cn(
+                  dashboardPanelClass,
+                  "rounded-[32px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_96%,white),color-mix(in_oklab,var(--card)_86%,transparent))] p-6 shadow-[0_24px_48px_-40px_color-mix(in_oklab,var(--foreground)_18%,transparent)]",
+                )}
+              >
+                <SectionIntro
+                  eyebrow="Inspector"
+                  title="Tune the selected field"
+                  description="Use focused tabs and expandable sections so the field settings feel deliberate instead of crowded."
+                />
+                <Separator className="my-4" />
+                {selectedField ? (
+                  <div className="grid gap-5">
+                    <div className="rounded-[24px] border border-border/60 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_18%,white),color-mix(in_oklab,var(--card)_86%,transparent))] p-5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="outline" className="rounded-full">
+                          Field {selectedFieldIndex + 1}
+                        </Badge>
+                        <Badge className="rounded-full uppercase">{selectedField.kind}</Badge>
+                        {selectedField.required ? (
+                          <Badge variant="secondary" className="rounded-full">
+                            Required
+                          </Badge>
+                        ) : null}
+                      </div>
+                      <p className="mt-4 text-xl font-semibold tracking-tight">
+                        {selectedField.label || "Untitled field"}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {selectedField.id || "No field ID yet"}
                       </p>
                     </div>
-                  ) : null}
 
-                  {selectedField.kind === "text" ||
-                  selectedField.kind === "textarea" ||
-                  selectedField.kind === "email" ? (
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="grid gap-2">
-                        <label className="text-sm font-medium">Min Length</label>
-                        <Input
-                          className="h-11 rounded-xl bg-background/75"
-                          inputMode="numeric"
-                          value={selectedField.minLength}
-                          onChange={(event) =>
-                            updateSelectedField((field) => ({
-                              ...field,
-                              minLength: event.target.value,
-                            }))
-                          }
-                          placeholder="Optional"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <label className="text-sm font-medium">Max Length</label>
-                        <Input
-                          className="h-11 rounded-xl bg-background/75"
-                          inputMode="numeric"
-                          value={selectedField.maxLength}
-                          onChange={(event) =>
-                            updateSelectedField((field) => ({
-                              ...field,
-                              maxLength: event.target.value,
-                            }))
-                          }
-                          placeholder="Optional"
-                        />
-                      </div>
-                      <div className="grid gap-2 md:col-span-2">
-                        <label className="text-sm font-medium">Pattern</label>
-                        <Input
-                          className="h-11 rounded-xl bg-background/75"
-                          value={selectedField.pattern}
-                          onChange={(event) =>
-                            updateSelectedField((field) => ({
-                              ...field,
-                              pattern: event.target.value,
-                            }))
-                          }
-                          placeholder={
-                            selectedField.kind === "email"
-                              ? "Optional regex override"
-                              : "Optional regex pattern"
-                          }
-                        />
-                      </div>
-                    </div>
-                  ) : null}
+                    <Tabs defaultValue="general" className="grid gap-4">
+                      <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-[20px] border border-border/55 bg-background/72 p-1.5">
+                        <TabsTrigger value="general">
+                          <Settings2 className="h-4 w-4" />
+                          General
+                        </TabsTrigger>
+                        <TabsTrigger value="options">
+                          <Layers3 className="h-4 w-4" />
+                          Options
+                        </TabsTrigger>
+                        <TabsTrigger value="validation">
+                          <Sparkles className="h-4 w-4" />
+                          Validation
+                        </TabsTrigger>
+                      </TabsList>
 
-                  {selectedField.kind === "number" ? (
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="grid gap-2">
-                        <label className="text-sm font-medium">Min Value</label>
-                        <Input
-                          className="h-11 rounded-xl bg-background/75"
-                          inputMode="decimal"
-                          value={selectedField.minValue}
-                          onChange={(event) =>
-                            updateSelectedField((field) => ({
-                              ...field,
-                              minValue: event.target.value,
-                            }))
-                          }
-                          placeholder="Optional"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <label className="text-sm font-medium">Max Value</label>
-                        <Input
-                          className="h-11 rounded-xl bg-background/75"
-                          inputMode="decimal"
-                          value={selectedField.maxValue}
-                          onChange={(event) =>
-                            updateSelectedField((field) => ({
-                              ...field,
-                              maxValue: event.target.value,
-                            }))
-                          }
-                          placeholder="Optional"
-                        />
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              ) : (
-                <EmptyState
-                  title="No field selected"
-                  description="Select a field from the list or add a new one."
-                />
-              )}
+                      <TabsContent value="general" className="grid gap-4">
+                        <ExpandableSection
+                          title="Identity"
+                          description="Choose the human-facing label and the stable ID stored in submissions."
+                          defaultOpen
+                        >
+                          <div className="grid gap-4">
+                            <div className="grid gap-2">
+                              <label className="text-sm font-medium">Label</label>
+                              <Input
+                                className="h-11 rounded-xl bg-background/75"
+                                value={selectedField.label}
+                                onChange={(event) =>
+                                  updateSelectedField((field) => ({
+                                    ...field,
+                                    label: event.target.value,
+                                  }))
+                                }
+                                placeholder="Field Label"
+                              />
+                            </div>
+
+                            <div className="grid gap-2">
+                              <label className="text-sm font-medium">ID</label>
+                              <Input
+                                className="h-11 rounded-xl bg-background/75"
+                                value={selectedField.id}
+                                onChange={(event) =>
+                                  updateSelectedField((field) => ({
+                                    ...field,
+                                    id: event.target.value,
+                                  }))
+                                }
+                                placeholder="field_id"
+                              />
+                            </div>
+                          </div>
+                        </ExpandableSection>
+
+                        <ExpandableSection
+                          title="Presentation"
+                          description="Set field type, width, supporting copy, and whether the answer is required."
+                          defaultOpen
+                        >
+                          <div className="grid gap-4">
+                            <div className="grid gap-4 sm:grid-cols-2">
+                              <div className="grid gap-2">
+                                <label className="text-sm font-medium">Type</label>
+                                <Select
+                                  value={selectedField.kind}
+                                  onValueChange={(value) =>
+                                    updateSelectedField((field) => ({
+                                      ...field,
+                                      kind: value as BuilderField["kind"],
+                                    }))
+                                  }
+                                >
+                                  <SelectTrigger className="w-full rounded-xl bg-background/75">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="text">Text</SelectItem>
+                                    <SelectItem value="email">Email</SelectItem>
+                                    <SelectItem value="date">Date</SelectItem>
+                                    <SelectItem value="textarea">Textarea</SelectItem>
+                                    <SelectItem value="number">Number</SelectItem>
+                                    <SelectItem value="select">Select</SelectItem>
+                                    <SelectItem value="radio">Radio</SelectItem>
+                                    <SelectItem value="checkbox">Checkbox</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div className="grid gap-2">
+                                <label className="text-sm font-medium">Width</label>
+                                <Select
+                                  value={selectedField.width}
+                                  onValueChange={(value) =>
+                                    updateSelectedField((field) => ({
+                                      ...field,
+                                      width: value as BuilderField["width"],
+                                    }))
+                                  }
+                                >
+                                  <SelectTrigger className="w-full rounded-xl bg-background/75">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="full">Full width</SelectItem>
+                                    <SelectItem value="half">Half width</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+
+                            <div className="grid gap-2">
+                              <label className="text-sm font-medium">Help Text</label>
+                              <Input
+                                className="h-11 rounded-xl bg-background/75"
+                                value={selectedField.helpText}
+                                onChange={(event) =>
+                                  updateSelectedField((field) => ({
+                                    ...field,
+                                    helpText: event.target.value,
+                                  }))
+                                }
+                                placeholder="Optional short guidance"
+                              />
+                            </div>
+
+                            <div className="grid gap-2">
+                              <label className="text-sm font-medium">Placeholder</label>
+                              <Input
+                                className="h-11 rounded-xl bg-background/75"
+                                value={selectedField.placeholder}
+                                onChange={(event) =>
+                                  updateSelectedField((field) => ({
+                                    ...field,
+                                    placeholder: event.target.value,
+                                  }))
+                                }
+                                placeholder="Optional placeholder"
+                              />
+                            </div>
+
+                            <label className="flex items-center gap-3 rounded-[20px] border border-border/60 bg-muted/20 px-4 py-3 text-sm">
+                              <Checkbox
+                                checked={selectedField.required}
+                                onCheckedChange={(checked) =>
+                                  updateSelectedField((field) => ({
+                                    ...field,
+                                    required: Boolean(checked),
+                                  }))
+                                }
+                              />
+                              Required field
+                            </label>
+
+                            {selectedField.kind === "checkbox" ? (
+                              <p className="text-xs text-muted-foreground">
+                                For checkbox fields, the placeholder is used as the toggle label
+                                in the published form.
+                              </p>
+                            ) : null}
+                          </div>
+                        </ExpandableSection>
+                      </TabsContent>
+
+                      <TabsContent value="options" className="grid gap-4">
+                        <ExpandableSection
+                          title="Choice options"
+                          description="Only shown for select and radio fields. Keep the option list short and stable."
+                          defaultOpen
+                        >
+                          {selectedField.kind === "select" || selectedField.kind === "radio" ? (
+                            <div className="grid gap-2">
+                              <label className="text-sm font-medium">Options</label>
+                              <Input
+                                className="h-11 rounded-xl bg-background/75"
+                                value={selectedField.optionsText}
+                                onChange={(event) =>
+                                  updateSelectedField((field) => ({
+                                    ...field,
+                                    optionsText: event.target.value,
+                                  }))
+                                }
+                                placeholder="low, medium, high"
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                Enter comma-separated options for the choice list.
+                              </p>
+                            </div>
+                          ) : (
+                            <EmptyState
+                              title="No option set needed"
+                              description="Switch this field to Select or Radio to manage fixed choices."
+                            />
+                          )}
+                        </ExpandableSection>
+                      </TabsContent>
+
+                      <TabsContent value="validation" className="grid gap-4">
+                        <ExpandableSection
+                          title="Validation rules"
+                          description="Use only the rules that help response quality. Too much friction can hurt completion."
+                          defaultOpen
+                        >
+                          {selectedField.kind === "text" ||
+                          selectedField.kind === "textarea" ||
+                          selectedField.kind === "email" ? (
+                            <div className="grid gap-4 sm:grid-cols-2">
+                              <div className="grid gap-2">
+                                <label className="text-sm font-medium">Min Length</label>
+                                <Input
+                                  className="h-11 rounded-xl bg-background/75"
+                                  inputMode="numeric"
+                                  value={selectedField.minLength}
+                                  onChange={(event) =>
+                                    updateSelectedField((field) => ({
+                                      ...field,
+                                      minLength: event.target.value,
+                                    }))
+                                  }
+                                  placeholder="Optional"
+                                />
+                              </div>
+                              <div className="grid gap-2">
+                                <label className="text-sm font-medium">Max Length</label>
+                                <Input
+                                  className="h-11 rounded-xl bg-background/75"
+                                  inputMode="numeric"
+                                  value={selectedField.maxLength}
+                                  onChange={(event) =>
+                                    updateSelectedField((field) => ({
+                                      ...field,
+                                      maxLength: event.target.value,
+                                    }))
+                                  }
+                                  placeholder="Optional"
+                                />
+                              </div>
+                              <div className="grid gap-2 sm:col-span-2">
+                                <label className="text-sm font-medium">Pattern</label>
+                                <Input
+                                  className="h-11 rounded-xl bg-background/75"
+                                  value={selectedField.pattern}
+                                  onChange={(event) =>
+                                    updateSelectedField((field) => ({
+                                      ...field,
+                                      pattern: event.target.value,
+                                    }))
+                                  }
+                                  placeholder={
+                                    selectedField.kind === "email"
+                                      ? "Optional regex override"
+                                      : "Optional regex pattern"
+                                  }
+                                />
+                              </div>
+                            </div>
+                          ) : selectedField.kind === "number" ? (
+                            <div className="grid gap-4 sm:grid-cols-2">
+                              <div className="grid gap-2">
+                                <label className="text-sm font-medium">Min Value</label>
+                                <Input
+                                  className="h-11 rounded-xl bg-background/75"
+                                  inputMode="decimal"
+                                  value={selectedField.minValue}
+                                  onChange={(event) =>
+                                    updateSelectedField((field) => ({
+                                      ...field,
+                                      minValue: event.target.value,
+                                    }))
+                                  }
+                                  placeholder="Optional"
+                                />
+                              </div>
+                              <div className="grid gap-2">
+                                <label className="text-sm font-medium">Max Value</label>
+                                <Input
+                                  className="h-11 rounded-xl bg-background/75"
+                                  inputMode="decimal"
+                                  value={selectedField.maxValue}
+                                  onChange={(event) =>
+                                    updateSelectedField((field) => ({
+                                      ...field,
+                                      maxValue: event.target.value,
+                                    }))
+                                  }
+                                  placeholder="Optional"
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <EmptyState
+                              title="No extra rules for this field"
+                              description="This field type only uses required state right now."
+                            />
+                          )}
+                        </ExpandableSection>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+                ) : (
+                  <EmptyState
+                    title="No field selected"
+                    description="Select a field from the stack or add a new one."
+                  />
+                )}
+              </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="preview" className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <div className={cn(dashboardPanelClass, "rounded-[30px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_95%,white),color-mix(in_oklab,var(--card)_86%,transparent))] p-7")}>
+          <TabsContent value="preview" className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.8fr)]">
+            <div
+              className={cn(
+                dashboardPanelClass,
+                "rounded-[32px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_95%,white),color-mix(in_oklab,var(--card)_86%,transparent))] p-7 shadow-[0_24px_52px_-40px_color-mix(in_oklab,var(--foreground)_18%,transparent)]",
+              )}
+            >
               <SectionIntro
                 eyebrow="Preview"
                 title="Experience the current draft"
-                description="This preview shows the draft you are editing. It is separate from the published version until you explicitly publish."
+                description="This preview shows the draft you are editing. It stays separate from the live response flow until you publish."
               />
               <Separator className="my-4" />
-              <div className="rounded-[28px] border border-border/60 bg-[linear-gradient(180deg,color-mix(in_oklab,white_84%,transparent),color-mix(in_oklab,var(--background)_88%,transparent))] p-6 shadow-[0_18px_40px_-34px_color-mix(in_oklab,var(--foreground)_26%,transparent)]">
+              <div className="rounded-[30px] border border-border/60 bg-[radial-gradient(circle_at_top_left,color-mix(in_oklab,var(--primary)_8%,white),transparent_32%),linear-gradient(180deg,color-mix(in_oklab,white_84%,transparent),color-mix(in_oklab,var(--background)_88%,transparent))] p-6 shadow-[0_18px_40px_-34px_color-mix(in_oklab,var(--foreground)_26%,transparent)]">
                 <div className="mb-6 space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
                     Draft preview
@@ -1230,105 +1703,172 @@ export function FormWorkspace() {
                     {draftTitle || "Untitled form"}
                   </h4>
                   <p className="text-sm leading-6 text-muted-foreground">
-                    Review the unpublished draft before saving or publishing it.
+                    Review the unpublished structure before saving or publishing it.
                   </p>
                 </div>
-                <RuntimeFormRenderer
-                  fields={draftFields}
-                  values={submissionDraft}
-                  readOnly
-                />
+                <RuntimeFormRenderer fields={draftFields} values={submissionDraft} readOnly />
               </div>
             </div>
 
-            <div className={cn(dashboardPanelClass, "rounded-[30px] p-6")}>
-              <SectionIntro
-                eyebrow="Notes"
-                title="Preview checklist"
-                description="Use this quick pass to decide whether the draft feels calm, clear, and ready to replace the published version."
-              />
-              <div className="mt-5 grid gap-3 text-sm text-muted-foreground">
-                <p>Keep field IDs stable to preserve compatibility over time.</p>
-                <p>Use half-width fields for compact pairs like names and dates.</p>
-                <p>Prefer select fields when the answer set should stay controlled.</p>
+            <div className="grid gap-5">
+              <div
+                className={cn(
+                  dashboardPanelClass,
+                  "rounded-[32px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_94%,white),color-mix(in_oklab,var(--card)_86%,transparent))] p-6",
+                )}
+              >
+                <SectionIntro
+                  eyebrow="Checklist"
+                  title="Preview review"
+                  description="Use this pass to decide whether the draft feels calm, legible, and ready to publish."
+                />
+                <div className="mt-5 grid gap-3 text-sm text-muted-foreground">
+                  <p>Use half-width fields for compact pairs like names, dates, and small numeric inputs.</p>
+                  <p>Keep labels short and keep help text focused on what the user needs right now.</p>
+                  <p>Prefer select or radio when the answer set should stay controlled over time.</p>
+                </div>
+              </div>
+
+              <div
+                className={cn(
+                  dashboardPanelClass,
+                  "rounded-[32px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_94%,white),color-mix(in_oklab,var(--card)_86%,transparent))] p-6",
+                )}
+              >
+                <SectionIntro
+                  eyebrow="Compare"
+                  title="Published baseline"
+                  description="Keep the live version in view while you inspect the draft."
+                />
+                <div className="mt-5 grid gap-3 rounded-[22px] border border-border/60 bg-background/70 px-4 py-4 text-sm text-muted-foreground">
+                  <p>
+                    Published title:
+                    <span className="ml-2 font-medium text-foreground">
+                      {publishedTitle || "No published title yet"}
+                    </span>
+                  </p>
+                  <p>
+                    Published fields:
+                    <span className="ml-2 font-medium text-foreground">
+                      {publishedFields.length}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              <div
+                className={cn(
+                  dashboardPanelClass,
+                  "rounded-[32px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_94%,white),color-mix(in_oklab,var(--card)_86%,transparent))] p-6",
+                )}
+              >
+                <SectionIntro
+                  eyebrow="Changes"
+                  title="Draft vs published"
+                  description="See exactly what will change before the next publish."
+                />
+                <div className="mt-5">
+                  <DraftChangeList
+                    draftFields={draftFields}
+                    publishedFields={publishedFields}
+                  />
+                </div>
               </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="submissions" className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <div className={cn(dashboardPanelClass, "rounded-[30px] p-7")}>
-              <SectionIntro
-                eyebrow="Submissions"
-                title="Test the published response flow"
-                description="This area always uses the published active version. Draft changes should not appear here until you publish them."
-              />
-              <Separator className="my-4" />
-              <div className="mb-5 rounded-[22px] border border-border/60 bg-background/55 px-4 py-4 text-sm text-muted-foreground">
-                <p>
-                  Published form:
-                  <span className="ml-2 font-medium text-foreground">
-                    {publishedTitle || "No published title yet"}
-                  </span>
-                </p>
-                <p className="mt-1">
-                  Published fields:
-                  <span className="ml-2 font-medium text-foreground">
-                    {publishedFields.length}
-                  </span>
-                </p>
-              </div>
-              <RuntimeFormRenderer
-                fields={publishedFields}
-                values={submissionDraft}
-                errors={submissionErrors}
-                onChange={(fieldId, value) =>
-                  {
-                    setSubmissionDraft((current) => ({ ...current, [fieldId]: value }))
-                    setSubmissionErrors((current) => {
-                      const next = { ...current }
-                      delete next[fieldId]
-                      return next
-                    })
-                  }
-                }
-              />
-              <div className="mt-6 flex flex-wrap gap-3">
-                <LoadingButton
-                  onClick={handleCreateSubmission}
-                  loading={createSubmissionMutation.isPending}
+          <TabsContent value="submissions" className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(400px,0.95fr)]">
+            <div className="grid gap-6">
+              <div
+                className={cn(
+                  dashboardPanelClass,
+                  "rounded-[32px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_95%,white),color-mix(in_oklab,var(--card)_86%,transparent))] p-7",
+                )}
+              >
+                <SectionIntro
+                  eyebrow="Submissions"
+                  title="Test the published response flow"
+                  description="This area always uses the active published version. Draft changes should not appear here until you publish them."
+                />
+                <Separator className="my-4" />
+                <ExpandableSection
+                  title="Published form context"
+                  description="Confirm exactly what is live before you save or update a response."
+                  defaultOpen
                 >
-                  Save Submission
-                </LoadingButton>
-                <LoadingButton
-                  variant="outline"
-                  onClick={handleUpdateSubmission}
-                  loading={updateSubmissionMutation.isPending}
-                >
-                  Update Submission
-                </LoadingButton>
+                  <div className="grid gap-2 text-sm text-muted-foreground">
+                    <p>
+                      Published form:
+                      <span className="ml-2 font-medium text-foreground">
+                        {publishedTitle || "No published title yet"}
+                      </span>
+                    </p>
+                    <p>
+                      Published fields:
+                      <span className="ml-2 font-medium text-foreground">
+                        {publishedFields.length}
+                      </span>
+                    </p>
+                  </div>
+                </ExpandableSection>
+                <div className="mt-5">
+                  <RuntimeFormRenderer
+                    fields={publishedFields}
+                    values={submissionDraft}
+                    errors={submissionErrors}
+                    onChange={(fieldId, value) => {
+                      setSubmissionDraft((current) => ({ ...current, [fieldId]: value }))
+                      setSubmissionErrors((current) => {
+                        const next = { ...current }
+                        delete next[fieldId]
+                        return next
+                      })
+                    }}
+                  />
+                </div>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <LoadingButton
+                    onClick={handleCreateSubmission}
+                    loading={createSubmissionMutation.isPending}
+                    className="rounded-xl shadow-sm"
+                  >
+                    Save Submission
+                  </LoadingButton>
+                  <LoadingButton
+                    variant="outline"
+                    onClick={handleUpdateSubmission}
+                    loading={updateSubmissionMutation.isPending}
+                    className="rounded-xl bg-background/80"
+                  >
+                    Update Submission
+                  </LoadingButton>
+                </div>
               </div>
-            </div>
 
-            <div className={cn(dashboardPanelClass, "rounded-[30px] p-6")}>
-              <SectionIntro
-                eyebrow="Responses"
-                title="Inspect saved answers"
-                description="Saved responses are rendered against the schema version they were submitted with, so older history stays accurate."
-              />
-              <Separator className="my-4" />
-              {submissionsQuery.isError ? (
-                <ErrorState
-                  title="Could not load submissions"
-                  error={submissionsQuery.error}
-                  onRetry={() => submissionsQuery.refetch()}
+              <div
+                className={cn(
+                  dashboardPanelClass,
+                  "rounded-[32px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_95%,white),color-mix(in_oklab,var(--card)_87%,transparent))] p-6",
+                )}
+              >
+                <SectionIntro
+                  eyebrow="Responses"
+                  title="Find saved answers"
+                  description="Search by ID, timestamps, or captured values, then open the matching response beside the table."
                 />
-              ) : !submissionsQuery.data?.data.length ? (
-                <EmptyState
-                  title="No submissions yet"
-                  description="Save a submission to start testing updates and history."
-                />
-              ) : (
-                <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,440px)]">
+                <Separator className="my-4" />
+                {submissionsQuery.isError ? (
+                  <ErrorState
+                    title="Could not load submissions"
+                    error={submissionsQuery.error}
+                    onRetry={() => submissionsQuery.refetch()}
+                  />
+                ) : !submissionsQuery.data?.data.length ? (
+                  <EmptyState
+                    title="No submissions yet"
+                    description="Save a submission to start testing updates and history."
+                  />
+                ) : (
                   <div className="grid gap-4">
                     <div className="relative">
                       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -1340,7 +1880,50 @@ export function FormWorkspace() {
                       />
                     </div>
 
-                    <div className="overflow-hidden rounded-[24px] border border-border/60">
+                    <div className="grid gap-3 md:hidden">
+                      {filteredSubmissions.length ? (
+                        filteredSubmissions.map((submission) => (
+                          <button
+                            key={submission.id}
+                            type="button"
+                            className={cn(
+                              "rounded-[22px] border px-4 py-4 text-left transition-all",
+                              selectedSubmissionId === submission.id
+                                ? "border-primary/70 bg-primary/8 shadow-[0_18px_34px_-30px_color-mix(in_oklab,var(--primary)_30%,transparent)]"
+                                : "border-border/60 bg-background/70",
+                            )}
+                            onClick={() => setSelectedSubmissionId(submission.id)}
+                          >
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge variant="outline" className="rounded-full">
+                                {submission.id.slice(0, 8)}
+                              </Badge>
+                              <Badge variant="secondary" className="rounded-full">
+                                v
+                                {selectedForm?.versions.find(
+                                  (version) => version.id === submission.form_version_id,
+                                )?.version_number ?? "?"}
+                              </Badge>
+                            </div>
+                            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                              {buildSubmissionPreview(submission)}
+                            </p>
+                            <p className="mt-3 text-xs text-muted-foreground">
+                              {submission.updated_at
+                                ? new Date(submission.updated_at).toLocaleString()
+                                : "Unknown"}
+                            </p>
+                          </button>
+                        ))
+                      ) : (
+                        <EmptyState
+                          title="No submissions match"
+                          description="Try a broader search to find saved responses."
+                        />
+                      )}
+                    </div>
+
+                    <div className="hidden overflow-hidden rounded-[24px] border border-border/60 bg-background/70 shadow-[0_22px_44px_-38px_color-mix(in_oklab,var(--foreground)_18%,transparent)] md:block">
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -1355,9 +1938,9 @@ export function FormWorkspace() {
                               <TableRow
                                 key={submission.id}
                                 className={cn(
-                                  "cursor-pointer",
+                                  "cursor-pointer transition-colors",
                                   selectedSubmissionId === submission.id &&
-                                    "bg-primary/8",
+                                    "bg-primary/8 shadow-[inset_3px_0_0_0_var(--primary)]",
                                 )}
                                 onClick={() => setSelectedSubmissionId(submission.id)}
                               >
@@ -1365,7 +1948,8 @@ export function FormWorkspace() {
                                   <div className="space-y-1">
                                     <p className="font-medium">{submission.id.slice(0, 8)}</p>
                                     <p className="text-xs text-muted-foreground">
-                                      v{selectedForm?.versions.find(
+                                      v
+                                      {selectedForm?.versions.find(
                                         (version) => version.id === submission.form_version_id,
                                       )?.version_number ?? "?"}
                                     </p>
@@ -1395,57 +1979,93 @@ export function FormWorkspace() {
                       </Table>
                     </div>
                   </div>
+                )}
+              </div>
+            </div>
 
-                  {selectedSubmission ? (
-                    <div className="grid gap-4">
-                      <div className="rounded-[24px] border border-border/60 bg-background/60 p-5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="outline">Submission</Badge>
-                          <Badge>v{selectedSubmissionVersion?.version_number ?? "?"}</Badge>
-                        </div>
-                        <p className="mt-4 text-lg font-semibold tracking-tight">
-                          {selectedSubmission.id}
-                        </p>
-                        <div className="mt-4 grid gap-2 text-sm text-muted-foreground">
-                          <p>
-                            Created:
-                            <span className="ml-2 text-foreground">
-                              {selectedSubmission.created_at
-                                ? new Date(selectedSubmission.created_at).toLocaleString()
-                                : "Unknown"}
-                            </span>
-                          </p>
-                          <p>
-                            Updated:
-                            <span className="ml-2 text-foreground">
-                              {selectedSubmission.updated_at
-                                ? new Date(selectedSubmission.updated_at).toLocaleString()
-                                : "Unknown"}
-                            </span>
-                          </p>
-                        </div>
+            <div
+              className={cn(
+                dashboardPanelClass,
+                "rounded-[32px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_95%,white),color-mix(in_oklab,var(--card)_87%,transparent))] p-6",
+              )}
+            >
+              <SectionIntro
+                eyebrow="Detail"
+                title="Read the selected response"
+                description="This panel renders answers against the exact version they were submitted with so older history stays trustworthy."
+              />
+              <Separator className="my-4" />
+              {selectedSubmission ? (
+                <div className="grid gap-4">
+                  <ExpandableSection
+                    title="Submission metadata"
+                    description="Reference the response identity, version, and timestamps before reviewing field values."
+                    defaultOpen
+                  >
+                    <div className="grid gap-3 text-sm text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="outline" className="rounded-full">
+                          Submission
+                        </Badge>
+                        <Badge className="rounded-full">
+                          v{selectedSubmissionVersion?.version_number ?? "?"}
+                        </Badge>
                       </div>
-
-                      <RuntimeFormRenderer
-                        fields={selectedSubmissionFields}
-                        values={selectedSubmission.data}
-                        readOnly
-                        layout="single"
-                      />
+                      <p className="font-mono text-xs text-foreground">{selectedSubmission.id}</p>
+                      <p>
+                        Created:
+                        <span className="ml-2 text-foreground">
+                          {selectedSubmission.created_at
+                            ? new Date(selectedSubmission.created_at).toLocaleString()
+                            : "Unknown"}
+                        </span>
+                      </p>
+                      <p>
+                        Updated:
+                        <span className="ml-2 text-foreground">
+                          {selectedSubmission.updated_at
+                            ? new Date(selectedSubmission.updated_at).toLocaleString()
+                            : "Unknown"}
+                        </span>
+                      </p>
                     </div>
-                  ) : (
-                    <EmptyState
-                      title="No response selected"
-                      description="Choose a saved submission from the list to inspect its version-bound data."
+                  </ExpandableSection>
+
+                  <ExpandableSection
+                    title="Captured answers"
+                    description="Read the response as a clean version-bound snapshot."
+                    defaultOpen
+                  >
+                    <RuntimeFormRenderer
+                      fields={selectedSubmissionFields}
+                      values={selectedSubmission.data}
+                      readOnly
+                      layout="single"
                     />
-                  )}
+                  </ExpandableSection>
                 </div>
+              ) : (
+                <EmptyState
+                  title="No response selected"
+                  description="Choose a saved submission from the list to inspect its version-bound data."
+                />
               )}
             </div>
           </TabsContent>
 
           <TabsContent value="history">
-            <div className={cn(dashboardPanelClass, "rounded-[30px] p-7")}>
+            <div
+              className={cn(
+                dashboardPanelClass,
+                "rounded-[32px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_94%,white),color-mix(in_oklab,var(--card)_86%,transparent))] p-7",
+              )}
+            >
+              <SectionIntro
+                eyebrow="History"
+                title="Audit the selected response"
+                description="Use the submission selected in the responses area, then inspect the saved before-and-after changes here."
+              />
+              <Separator className="my-4" />
               {!selectedSubmissionId ? (
                 <EmptyState
                   title="No submission selected"
