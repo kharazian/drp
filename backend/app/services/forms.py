@@ -27,6 +27,12 @@ def _dump_form_schema(schema: FormSchema | None) -> dict[str, object]:
     return schema.model_dump(exclude_none=True)
 
 
+def _schema_fields(schema: FormSchema) -> list[FormSchemaField]:
+    if schema.sections:
+        return [field for section in schema.sections for field in section.fields]
+    return schema.fields
+
+
 def _validate_submission_field(
     *, field: FormSchemaField, value: object | None
 ) -> str | None:
@@ -95,7 +101,7 @@ def _validate_submission_data(
     schema = FormSchema.model_validate(schema_payload)
     errors = [
         error
-        for field in schema.fields
+        for field in _schema_fields(schema)
         if (error := _validate_submission_field(field=field, value=data.get(field.id)))
     ]
     if errors:

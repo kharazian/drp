@@ -1,4 +1,4 @@
-import type { JsonSchema, JsonSchemaField } from "@/lib/forms-api"
+import type { JsonSchema, JsonSchemaField, JsonSchemaSection } from "@/lib/forms-api"
 
 export type FieldKind =
   | "text"
@@ -25,6 +25,24 @@ export type BuilderField = {
   minValue: string
   maxValue: string
   pattern: string
+}
+
+export type DesignerSection = {
+  id: string
+  title: string
+  description: string
+  columns: 1 | 2
+  fields: BuilderField[]
+}
+
+export type DesignerDocument = {
+  version: 2
+  settings: {
+    title: string
+    description: string
+    submitLabel: string
+  }
+  sections: DesignerSection[]
 }
 
 type BuilderFieldSeed = Omit<BuilderField, "key">
@@ -66,6 +84,10 @@ function createFieldKey() {
   return crypto.randomUUID()
 }
 
+function createSectionKey() {
+  return crypto.randomUUID()
+}
+
 function withFieldKey(field: BuilderFieldSeed): BuilderField {
   return {
     key: createFieldKey(),
@@ -91,63 +113,76 @@ export function createEmptyField(index: number): BuilderField {
   })
 }
 
-export function cloneStarterFields(): BuilderField[] {
-  return starterBuilderFieldSeeds.map((field) => withFieldKey(field))
-}
-
-export function buildSchemaFromFields(fields: BuilderField[]): JsonSchema {
+export function createEmptySection(index: number): DesignerSection {
   return {
-    fields: fields.map((field) => {
-      const baseField: JsonSchemaField = {
-        id: field.id.trim(),
-        label: field.label.trim(),
-        type: field.kind,
-        placeholder: field.placeholder.trim() || undefined,
-        help_text: field.helpText.trim() || undefined,
-        required: field.required,
-        width: field.width,
-      }
-
-      const validation: NonNullable<JsonSchemaField["validation"]> = {}
-      if (field.minLength.trim()) {
-        validation.min_length = Number(field.minLength)
-      }
-      if (field.maxLength.trim()) {
-        validation.max_length = Number(field.maxLength)
-      }
-      if (field.minValue.trim()) {
-        validation.min_value = Number(field.minValue)
-      }
-      if (field.maxValue.trim()) {
-        validation.max_value = Number(field.maxValue)
-      }
-      if (field.pattern.trim()) {
-        validation.pattern = field.pattern.trim()
-      }
-      if (Object.keys(validation).length > 0) {
-        baseField.validation = validation
-      }
-
-      if (field.kind === "select" || field.kind === "radio") {
-        baseField.options = field.optionsText
-          .split(",")
-          .map((option) => option.trim())
-          .filter(Boolean)
-      }
-
-      return baseField
-    }),
+    id: `section_${index + 1}`,
+    title: `Section ${index + 1}`,
+    description: "",
+    columns: 2,
+    fields: [],
   }
 }
 
-export function builderFieldsFromSchema(
-  schema?: JsonSchema | null,
-): BuilderField[] {
-  if (!schema?.fields?.length) {
-    return cloneStarterFields()
+export function cloneStarterDocument(title = ""): DesignerDocument {
+  const firstSection = createEmptySection(0)
+  firstSection.title = "Main Section"
+  firstSection.description = "Primary section for the initial draft."
+  firstSection.fields = cloneStarterFields()
+
+  return {
+    version: 2,
+    settings: {
+      title,
+      description: "",
+      submitLabel: "Submit",
+    },
+    sections: [firstSection],
+  }
+}
+
+function toJsonSchemaField(field: BuilderField): JsonSchemaField {
+  const baseField: JsonSchemaField = {
+    id: field.id.trim(),
+    label: field.label.trim(),
+    type: field.kind,
+    placeholder: field.placeholder.trim() || undefined,
+    help_text: field.helpText.trim() || undefined,
+    required: field.required,
+    width: field.width,
   }
 
-  return schema.fields.map((field) => ({
+  const validation: NonNullable<JsonSchemaField["validation"]> = {}
+  if (field.minLength.trim()) {
+    validation.min_length = Number(field.minLength)
+  }
+  if (field.maxLength.trim()) {
+    validation.max_length = Number(field.maxLength)
+  }
+  if (field.minValue.trim()) {
+    validation.min_value = Number(field.minValue)
+  }
+  if (field.maxValue.trim()) {
+    validation.max_value = Number(field.maxValue)
+  }
+  if (field.pattern.trim()) {
+    validation.pattern = field.pattern.trim()
+  }
+  if (Object.keys(validation).length > 0) {
+    baseField.validation = validation
+  }
+
+  if (field.kind === "select" || field.kind === "radio") {
+    baseField.options = field.optionsText
+      .split(",")
+      .map((option) => option.trim())
+      .filter(Boolean)
+  }
+
+  return baseField
+}
+
+function fromJsonSchemaField(field: JsonSchemaField): BuilderField {
+  return {
     key: createFieldKey(),
     id: field.id,
     kind:
@@ -165,7 +200,102 @@ export function builderFieldsFromSchema(
     minValue: field.validation?.min_value?.toString() ?? "",
     maxValue: field.validation?.max_value?.toString() ?? "",
     pattern: field.validation?.pattern ?? "",
-  }))
+  }
+}
+
+export function cloneStarterFields(): BuilderField[] {
+  return starterBuilderFieldSeeds.map((field) => withFieldKey(field))
+}
+
+export function buildSchemaFromFields(fields: BuilderField[]): JsonSchema {
+  return {
+    fields: fields.map(toJsonSchemaField),
+  }
+}
+
+export function builderFieldsFromSchema(
+  schema?: JsonSchema | null,
+): BuilderField[] {
+  const rawFields = schema?.sections?.flatMap((section) => section.fields) ?? schema?.fields
+
+  if (!rawFields?.length) {
+    return cloneStarterFields()
+  }
+
+  return rawFields.map(fromJsonSchemaField)
+}
+
+export function designerDocumentFromBuilder(
+  title: string,
+  fields: BuilderField[],
+): DesignerDocument {
+  const document = cloneStarterDocument(title)
+  document.sections[0].fields = fields
+  document.sections[0].description = "Current draft fields from the existing flat schema."
+  return document
+}
+
+function sectionFromJsonSchemaSection(section: JsonSchemaSection, index: number): DesignerSection {
+  return {
+    id: section.id || createSectionKey(),
+    title: section.title || `Section ${index + 1}`,
+    description: section.description ?? "",
+    columns: section.layout?.columns === 1 ? 1 : 2,
+    fields: section.fields.map(fromJsonSchemaField),
+  }
+}
+
+export function builderStateFromDesigner(document: DesignerDocument): {
+  title: string
+  fields: BuilderField[]
+} {
+  return {
+    title: document.settings.title,
+    fields: document.sections.flatMap((section) => section.fields),
+  }
+}
+
+export function builderFieldsFromDesigner(document: DesignerDocument): BuilderField[] {
+  return document.sections.flatMap((section) => section.fields)
+}
+
+export function designerDocumentFromSchema(
+  title: string,
+  schema?: JsonSchema | null,
+): DesignerDocument {
+  if (schema?.sections?.length) {
+    return {
+      version: 2,
+      settings: {
+        title: schema.settings?.title ?? title,
+        description: schema.settings?.description ?? "",
+        submitLabel: schema.settings?.submitLabel ?? "Submit",
+      },
+      sections: schema.sections.map(sectionFromJsonSchemaSection),
+    }
+  }
+
+  return designerDocumentFromBuilder(title, builderFieldsFromSchema(schema))
+}
+
+export function buildSchemaFromDesigner(document: DesignerDocument): JsonSchema {
+  return {
+    version: 2,
+    settings: {
+      title: document.settings.title,
+      description: document.settings.description || undefined,
+      submitLabel: document.settings.submitLabel || undefined,
+    },
+    sections: document.sections.map((section) => ({
+      id: section.id,
+      title: section.title,
+      description: section.description || undefined,
+      layout: {
+        columns: section.columns,
+      },
+      fields: section.fields.map(toJsonSchemaField),
+    })),
+  }
 }
 
 function normalizeKind(type: JsonSchemaField["type"]): FieldKind {
@@ -238,4 +368,32 @@ export function validateBuilderDraft(
   }
 
   return null
+}
+
+export function validateDesignerDocument(document: DesignerDocument): string | null {
+  if (!document.settings.title.trim()) {
+    return "Form title is required."
+  }
+  if (!document.sections.length) {
+    return "Add at least one section before saving."
+  }
+
+  const sectionIds = new Set<string>()
+  const allFields = document.sections.flatMap((section) => section.fields)
+  for (const [index, section] of document.sections.entries()) {
+    const sectionId = section.id.trim()
+    const sectionTitle = section.title.trim()
+    if (!sectionTitle) {
+      return `Section ${index + 1} needs a title.`
+    }
+    if (!sectionId) {
+      return `Section "${sectionTitle}" needs an ID.`
+    }
+    if (sectionIds.has(sectionId)) {
+      return "Section IDs must be unique."
+    }
+    sectionIds.add(sectionId)
+  }
+
+  return validateBuilderDraft(document.settings.title, allFields)
 }

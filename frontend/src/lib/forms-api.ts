@@ -16,8 +16,25 @@ export type JsonSchemaField = {
   }
 }
 
-export type JsonSchema = {
+export type JsonSchemaSection = {
+  id: string
+  title: string
+  description?: string
+  layout?: {
+    columns?: 1 | 2
+  }
   fields: JsonSchemaField[]
+}
+
+export type JsonSchema = {
+  version?: number
+  settings?: {
+    title?: string
+    description?: string
+    submitLabel?: string
+  }
+  fields?: JsonSchemaField[]
+  sections?: JsonSchemaSection[]
 }
 
 export type FormVersion = {

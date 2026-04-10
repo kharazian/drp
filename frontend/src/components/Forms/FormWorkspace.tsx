@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { arrayMove } from "@dnd-kit/sortable"
 import {
   AlertCircle,
   ChevronDown,
@@ -11,10 +10,7 @@ import {
   RefreshCcw,
   Save,
   Search,
-  Settings2,
-  Sparkles,
   Trash2,
-  WandSparkles,
 } from "lucide-react"
 import { type ReactNode, useEffect, useMemo, useState } from "react"
 
@@ -26,16 +22,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { CardContent } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import {
   Table,
@@ -50,15 +38,17 @@ import useCustomToast from "@/hooks/useCustomToast"
 import type { AuditLog, FormDetail } from "@/lib/forms-api"
 import { formsApi } from "@/lib/forms-api"
 import { cn } from "@/lib/utils"
-import { FieldBuilderList } from "./FieldBuilderList"
+import { FormDesigner } from "./FormDesigner"
 import { RuntimeFormRenderer } from "./RuntimeFormRenderer"
 import {
   type BuilderField,
-  buildSchemaFromFields,
+  buildSchemaFromDesigner,
+  builderFieldsFromDesigner,
   builderFieldsFromSchema,
-  cloneStarterFields,
-  createEmptyField,
-  validateBuilderDraft,
+  designerDocumentFromSchema,
+  cloneStarterDocument,
+  type DesignerDocument,
+  validateDesignerDocument,
 } from "./schema"
 
 function getErrorMessage(error: unknown): string {
@@ -257,47 +247,6 @@ function BuilderSnapshot({
           {selectedFormId ? "Saved form" : "Unsaved form"}
         </Badge>
       </div>
-    </div>
-  )
-}
-
-function FieldSummaryList({ fields }: { fields: BuilderField[] }) {
-  if (!fields.length) {
-    return (
-      <EmptyState
-        title="No fields yet"
-        description="Add a field to start shaping the form."
-      />
-    )
-  }
-
-  return (
-    <div className="grid gap-3">
-      {fields.map((field, index) => (
-        <div
-          key={field.key}
-          className="rounded-[22px] border border-border/60 bg-background/65 px-4 py-4"
-        >
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="rounded-full">
-              {index + 1}
-            </Badge>
-            <p className="font-medium tracking-tight">{field.label}</p>
-            <Badge variant="secondary" className="rounded-full uppercase">
-              {field.kind}
-            </Badge>
-            {field.required ? (
-              <Badge variant="secondary" className="rounded-full">
-                Required
-              </Badge>
-            ) : null}
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">{field.id}</p>
-          {field.helpText ? (
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">{field.helpText}</p>
-          ) : null}
-        </div>
-      ))}
     </div>
   )
 }
@@ -550,8 +499,9 @@ export function FormWorkspace() {
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null)
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null)
   const [submissionSearch, setSubmissionSearch] = useState("")
-  const [draftTitle, setDraftTitle] = useState("")
-  const [draftFields, setDraftFields] = useState<BuilderField[]>(cloneStarterFields())
+  const [draftDocument, setDraftDocument] = useState<DesignerDocument>(
+    cloneStarterDocument(),
+  )
   const [selectedFieldKey, setSelectedFieldKey] = useState<string | null>(null)
   const [submissionDraft, setSubmissionDraft] = useState<Record<string, unknown>>({})
   const [submissionErrors, setSubmissionErrors] = useState<Record<string, string>>({})
@@ -594,14 +544,21 @@ export function FormWorkspace() {
     if (!formDetailQuery.data) {
       return
     }
-    setDraftTitle(formDetailQuery.data.draft_title ?? formDetailQuery.data.title)
-    const nextFields = builderFieldsFromSchema(
+    const nextDocument = designerDocumentFromSchema(
+      formDetailQuery.data.draft_title ?? formDetailQuery.data.title,
       formDetailQuery.data.draft_version?.schema ??
         formDetailQuery.data.active_version?.schema,
     )
-    setDraftFields(nextFields)
+    setDraftDocument(nextDocument)
+    const nextFields = builderFieldsFromDesigner(nextDocument)
     setSelectedFieldKey(nextFields[0]?.key ?? null)
   }, [formDetailQuery.data])
+
+  const draftTitle = draftDocument.settings.title
+  const draftFields = useMemo(
+    () => builderFieldsFromDesigner(draftDocument),
+    [draftDocument],
+  )
 
   useEffect(() => {
     if (!draftFields.length) {
@@ -635,16 +592,15 @@ export function FormWorkspace() {
 
   const selectedForm = formDetailQuery.data ?? null
   const hasDraftVersion = Boolean(selectedForm?.draft_version)
-  const selectedFieldIndex = selectedFieldKey
-    ? draftFields.findIndex((field) => field.key === selectedFieldKey)
-    : -1
-  const selectedField = draftFields[selectedFieldIndex] ?? null
   const selectedSubmission =
     submissionsQuery.data?.data.find(
       (submission) => submission.id === selectedSubmissionId,
     ) ?? null
 
-  const draftSchema = useMemo(() => buildSchemaFromFields(draftFields), [draftFields])
+  const draftSchema = useMemo(
+    () => buildSchemaFromDesigner(draftDocument),
+    [draftDocument],
+  )
   const publishedFields = useMemo(
     () => builderFieldsFromSchema(selectedForm?.active_version?.schema),
     [selectedForm?.active_version?.schema],
@@ -802,7 +758,7 @@ export function FormWorkspace() {
     }: {
       formId: string
       title: string
-      schema: ReturnType<typeof buildSchemaFromFields>
+      schema: ReturnType<typeof buildSchemaFromDesigner>
     }) => formsApi.updateForm(formId, { title, schema }),
     onSuccess: (form) => {
       showSuccessToast(
@@ -881,38 +837,15 @@ export function FormWorkspace() {
   const resetDraft = () => {
     setSelectedFormId(null)
     setSelectedSubmissionId(null)
-    setDraftTitle("")
-    const nextFields = cloneStarterFields()
-    setDraftFields(nextFields)
+    const nextDocument = cloneStarterDocument()
+    setDraftDocument(nextDocument)
+    const nextFields = builderFieldsFromDesigner(nextDocument)
     setSelectedFieldKey(nextFields[0]?.key ?? null)
     setSubmissionDraft({})
   }
 
-  const updateSelectedField = (updater: (field: BuilderField) => BuilderField) => {
-    if (!selectedFieldKey) {
-      return
-    }
-
-    setDraftFields((current) =>
-      current.map((field) => (field.key === selectedFieldKey ? updater(field) : field)),
-    )
-  }
-
-  const handleReorderFields = (activeKey: string, overKey: string) => {
-    setDraftFields((current) => {
-      const activeIndex = current.findIndex((field) => field.key === activeKey)
-      const overIndex = current.findIndex((field) => field.key === overKey)
-
-      if (activeIndex < 0 || overIndex < 0 || activeIndex === overIndex) {
-        return current
-      }
-
-      return arrayMove(current, activeIndex, overIndex)
-    })
-  }
-
   const handleSaveDraft = () => {
-    const validationError = validateBuilderDraft(draftTitle, draftFields)
+    const validationError = validateDesignerDocument(draftDocument)
     if (validationError) {
       showErrorToast(validationError)
       return
@@ -932,7 +865,7 @@ export function FormWorkspace() {
   }
 
   const handlePublishForm = async () => {
-    const validationError = validateBuilderDraft(draftTitle, draftFields)
+    const validationError = validateDesignerDocument(draftDocument)
     if (validationError) {
       showErrorToast(validationError)
       return
@@ -1146,537 +1079,92 @@ export function FormWorkspace() {
           </TabsList>
 
           <TabsContent value="builder" className="grid gap-6">
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.95fr)]">
-              <div
-                className={cn(
-                  dashboardPanelClass,
-                  "rounded-[32px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_95%,white),color-mix(in_oklab,var(--card)_82%,transparent))] p-7 shadow-[0_28px_58px_-42px_color-mix(in_oklab,var(--foreground)_20%,transparent)]",
-                )}
-              >
-                <div className="grid gap-6">
-                  <SectionIntro
-                    eyebrow="Builder"
-                    title="Shape the form canvas"
-                    description="Work through the draft in layers: title first, field structure next, and publishing controls last."
-                  />
-
-                  <Tabs defaultValue="structure" className="grid gap-6">
-                    <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-[22px] border border-border/55 bg-background/75 p-1.5">
-                      <TabsTrigger value="structure">
-                        <Layers3 className="h-4 w-4" />
-                        Structure
-                      </TabsTrigger>
-                      <TabsTrigger value="content">
-                        <Sparkles className="h-4 w-4" />
-                        Content
-                      </TabsTrigger>
-                      <TabsTrigger value="publish">
-                        <WandSparkles className="h-4 w-4" />
-                        Review
-                      </TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="structure" className="grid gap-5">
-                      <ExpandableSection
-                        title="Form metadata"
-                        description="Name the form and keep the stable identity clear before you adjust field structure."
-                        defaultOpen
-                      >
-                        <div className="grid gap-4">
-                          <div className="grid gap-2">
-                            <label htmlFor="form-title" className="text-sm font-medium">
-                              Form Title
-                            </label>
-                            <Input
-                              id="form-title"
-                              className="h-12 rounded-xl bg-background/75"
-                              value={draftTitle}
-                              onChange={(event) => setDraftTitle(event.target.value)}
-                              placeholder="Operations Request"
-                            />
-                          </div>
-                          <div className="grid gap-2 rounded-[20px] border border-border/60 bg-muted/18 px-4 py-4 text-sm text-muted-foreground">
-                            <p>
-                              Published title:
-                              <span className="ml-2 font-medium text-foreground">
-                                {selectedForm?.title ?? "Not published yet"}
-                              </span>
-                            </p>
-                            <p>
-                              Draft version:
-                              <span className="ml-2 font-medium text-foreground">
-                                {selectedForm?.draft_version
-                                  ? `v${selectedForm.draft_version.version_number}`
-                                  : "No draft saved yet"}
-                              </span>
-                            </p>
-                          </div>
-                        </div>
-                      </ExpandableSection>
-
-                      <ExpandableSection
-                        title="Field stack"
-                        description="Reorder fields by drag handle, remove noisy rows, and keep the reading order natural for a real user."
-                        defaultOpen
-                      >
-                        <div className="grid gap-4">
-                          <div className="flex flex-col gap-4 rounded-[22px] border border-dashed border-border/70 bg-muted/18 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                              <p className="text-sm font-semibold tracking-tight">Builder stack</p>
-                              <p className="text-xs leading-5 text-muted-foreground">
-                                Select any row to edit it in the field settings panel.
-                              </p>
-                            </div>
-                            <Button
-                              variant="outline"
-                              className="w-full rounded-xl bg-background/80 sm:w-auto"
-                              onClick={() =>
-                                setDraftFields((current) => {
-                                  const nextField = createEmptyField(current.length)
-                                  const next = [...current, nextField]
-                                  setSelectedFieldKey(nextField.key)
-                                  return next
-                                })
-                              }
-                            >
-                              <Plus className="mr-2 h-4 w-4" />
-                              Add Field
-                            </Button>
-                          </div>
-
-                          <FieldBuilderList
-                            fields={draftFields}
-                            selectedKey={selectedFieldKey}
-                            onSelect={setSelectedFieldKey}
-                            onReorder={handleReorderFields}
-                            onRemove={(fieldKey) =>
-                              setDraftFields((current) => {
-                                const removedIndex = current.findIndex(
-                                  (field) => field.key === fieldKey,
-                                )
-                                const next = current.filter((field) => field.key !== fieldKey)
-                                const nextSelected =
-                                  next[removedIndex] ??
-                                  next[Math.max(0, removedIndex - 1)] ??
-                                  null
-                                setSelectedFieldKey(nextSelected?.key ?? null)
-                                return next
-                              })
-                            }
-                          />
-                        </div>
-                      </ExpandableSection>
-                    </TabsContent>
-
-                    <TabsContent value="content" className="grid gap-5">
-                      <ExpandableSection
-                        title="Field inventory"
-                        description="Scan the current draft as a compact summary without opening the full editor for every field."
-                        defaultOpen
-                      >
-                        <FieldSummaryList fields={draftFields} />
-                      </ExpandableSection>
-                    </TabsContent>
-
-                    <TabsContent value="publish" className="grid gap-5">
-                      <ExpandableSection
-                        title="Draft and publish controls"
-                        description="Save a private draft first, or publish after the builder saves any pending changes."
-                        defaultOpen
-                      >
-                        <div className="grid gap-5">
-                          <div className="grid gap-3 rounded-[22px] border border-border/60 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--background)_94%,white),color-mix(in_oklab,var(--muted)_24%,transparent))] px-4 py-4 text-sm text-muted-foreground">
-                            <p>
-                              Published version ID:
-                              <span className="ml-2 font-mono text-xs text-foreground">
-                                {selectedForm?.active_version?.id ?? "Not created yet"}
-                              </span>
-                            </p>
-                            <p>
-                              Draft version ID:
-                              <span className="ml-2 font-mono text-xs text-foreground">
-                                {selectedForm?.draft_version?.id ?? "No draft saved"}
-                              </span>
-                            </p>
-                            <p>
-                              Form ID:
-                              <span className="ml-2 font-mono text-xs text-foreground">
-                                {selectedForm?.id ?? "Draft"}
-                              </span>
-                            </p>
-                          </div>
-                          <div className="flex flex-wrap gap-3">
-                            <LoadingButton
-                              onClick={handleSaveDraft}
-                              loading={
-                                createFormMutation.isPending || updateFormMutation.isPending
-                              }
-                              className="min-w-36 rounded-xl shadow-sm"
-                            >
-                              <Save className="mr-2 h-4 w-4" />
-                              {selectedFormId ? "Save Draft" : "Create Form"}
-                            </LoadingButton>
-                            <LoadingButton
-                              variant="outline"
-                              onClick={handlePublishForm}
-                              loading={publishFormMutation.isPending}
-                              disabled={
-                                !selectedFormId ||
-                                (!hasDraftVersion &&
-                                  !hasUnsavedSchemaChanges &&
-                                  !hasUnsavedTitleChanges)
-                              }
-                              className="min-w-36 rounded-xl bg-background/80"
-                            >
-                              Publish Version
-                            </LoadingButton>
-                          </div>
-                        </div>
-                      </ExpandableSection>
-                    </TabsContent>
-                  </Tabs>
-                </div>
-              </div>
-
-              <div
-                className={cn(
-                  dashboardPanelClass,
-                  "rounded-[32px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_96%,white),color-mix(in_oklab,var(--card)_86%,transparent))] p-6 shadow-[0_24px_48px_-40px_color-mix(in_oklab,var(--foreground)_18%,transparent)]",
-                )}
-              >
+            <div
+              className={cn(
+                dashboardPanelClass,
+                "rounded-[32px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_95%,white),color-mix(in_oklab,var(--card)_82%,transparent))] p-5 shadow-[0_28px_58px_-42px_color-mix(in_oklab,var(--foreground)_20%,transparent)] sm:p-7",
+              )}
+            >
+              <div className="grid gap-6">
                 <SectionIntro
-                  eyebrow="Inspector"
-                  title="Tune the selected field"
-                  description="Use focused tabs and expandable sections so the field settings feel deliberate instead of crowded."
+                  eyebrow="Designer"
+                  title="V2 builder foundation"
+                  description="This first pass shifts the builder toward a real designer: structure panel, live canvas, and adaptive inspector, while still saving through the current backend schema."
                 />
-                <Separator className="my-4" />
-                {selectedField ? (
-                  <div className="grid gap-5">
-                    <div className="rounded-[24px] border border-border/60 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--accent)_18%,white),color-mix(in_oklab,var(--card)_86%,transparent))] p-5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="outline" className="rounded-full">
-                          Field {selectedFieldIndex + 1}
-                        </Badge>
-                        <Badge className="rounded-full uppercase">{selectedField.kind}</Badge>
-                        {selectedField.required ? (
-                          <Badge variant="secondary" className="rounded-full">
-                            Required
-                          </Badge>
-                        ) : null}
+
+                <FormDesigner
+                  document={draftDocument}
+                  setDocument={setDraftDocument}
+                  selectedFieldKey={selectedFieldKey}
+                  setSelectedFieldKey={setSelectedFieldKey}
+                />
+
+                <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]">
+                  <ExpandableSection
+                    title="Draft and publish controls"
+                    description="The designer now sits in front of the same draft and publish workflow, so we can evolve the UI without breaking versioning."
+                    defaultOpen
+                  >
+                    <div className="grid gap-5">
+                      <div className="grid gap-3 rounded-[22px] border border-border/60 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--background)_94%,white),color-mix(in_oklab,var(--muted)_24%,transparent))] px-4 py-4 text-sm text-muted-foreground">
+                        <p>
+                          Published version ID:
+                          <span className="ml-2 font-mono text-xs text-foreground">
+                            {selectedForm?.active_version?.id ?? "Not created yet"}
+                          </span>
+                        </p>
+                        <p>
+                          Draft version ID:
+                          <span className="ml-2 font-mono text-xs text-foreground">
+                            {selectedForm?.draft_version?.id ?? "No draft saved"}
+                          </span>
+                        </p>
+                        <p>
+                          Form ID:
+                          <span className="ml-2 font-mono text-xs text-foreground">
+                            {selectedForm?.id ?? "Draft"}
+                          </span>
+                        </p>
                       </div>
-                      <p className="mt-4 text-xl font-semibold tracking-tight">
-                        {selectedField.label || "Untitled field"}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {selectedField.id || "No field ID yet"}
-                      </p>
+                      <div className="flex flex-wrap gap-3">
+                        <LoadingButton
+                          onClick={handleSaveDraft}
+                          loading={createFormMutation.isPending || updateFormMutation.isPending}
+                          className="min-w-36 rounded-xl shadow-sm"
+                        >
+                          <Save className="mr-2 h-4 w-4" />
+                          {selectedFormId ? "Save Draft" : "Create Form"}
+                        </LoadingButton>
+                        <LoadingButton
+                          variant="outline"
+                          onClick={handlePublishForm}
+                          loading={publishFormMutation.isPending}
+                          disabled={
+                            !selectedFormId ||
+                            (!hasDraftVersion &&
+                              !hasUnsavedSchemaChanges &&
+                              !hasUnsavedTitleChanges)
+                          }
+                          className="min-w-36 rounded-xl bg-background/80"
+                        >
+                          Publish Version
+                        </LoadingButton>
+                      </div>
                     </div>
+                  </ExpandableSection>
 
-                    <Tabs defaultValue="general" className="grid gap-4">
-                      <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-[20px] border border-border/55 bg-background/72 p-1.5">
-                        <TabsTrigger value="general">
-                          <Settings2 className="h-4 w-4" />
-                          General
-                        </TabsTrigger>
-                        <TabsTrigger value="options">
-                          <Layers3 className="h-4 w-4" />
-                          Options
-                        </TabsTrigger>
-                        <TabsTrigger value="validation">
-                          <Sparkles className="h-4 w-4" />
-                          Validation
-                        </TabsTrigger>
-                      </TabsList>
-
-                      <TabsContent value="general" className="grid gap-4">
-                        <ExpandableSection
-                          title="Identity"
-                          description="Choose the human-facing label and the stable ID stored in submissions."
-                          defaultOpen
-                        >
-                          <div className="grid gap-4">
-                            <div className="grid gap-2">
-                              <label className="text-sm font-medium">Label</label>
-                              <Input
-                                className="h-11 rounded-xl bg-background/75"
-                                value={selectedField.label}
-                                onChange={(event) =>
-                                  updateSelectedField((field) => ({
-                                    ...field,
-                                    label: event.target.value,
-                                  }))
-                                }
-                                placeholder="Field Label"
-                              />
-                            </div>
-
-                            <div className="grid gap-2">
-                              <label className="text-sm font-medium">ID</label>
-                              <Input
-                                className="h-11 rounded-xl bg-background/75"
-                                value={selectedField.id}
-                                onChange={(event) =>
-                                  updateSelectedField((field) => ({
-                                    ...field,
-                                    id: event.target.value,
-                                  }))
-                                }
-                                placeholder="field_id"
-                              />
-                            </div>
-                          </div>
-                        </ExpandableSection>
-
-                        <ExpandableSection
-                          title="Presentation"
-                          description="Set field type, width, supporting copy, and whether the answer is required."
-                          defaultOpen
-                        >
-                          <div className="grid gap-4">
-                            <div className="grid gap-4 sm:grid-cols-2">
-                              <div className="grid gap-2">
-                                <label className="text-sm font-medium">Type</label>
-                                <Select
-                                  value={selectedField.kind}
-                                  onValueChange={(value) =>
-                                    updateSelectedField((field) => ({
-                                      ...field,
-                                      kind: value as BuilderField["kind"],
-                                    }))
-                                  }
-                                >
-                                  <SelectTrigger className="w-full rounded-xl bg-background/75">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="text">Text</SelectItem>
-                                    <SelectItem value="email">Email</SelectItem>
-                                    <SelectItem value="date">Date</SelectItem>
-                                    <SelectItem value="textarea">Textarea</SelectItem>
-                                    <SelectItem value="number">Number</SelectItem>
-                                    <SelectItem value="select">Select</SelectItem>
-                                    <SelectItem value="radio">Radio</SelectItem>
-                                    <SelectItem value="checkbox">Checkbox</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              <div className="grid gap-2">
-                                <label className="text-sm font-medium">Width</label>
-                                <Select
-                                  value={selectedField.width}
-                                  onValueChange={(value) =>
-                                    updateSelectedField((field) => ({
-                                      ...field,
-                                      width: value as BuilderField["width"],
-                                    }))
-                                  }
-                                >
-                                  <SelectTrigger className="w-full rounded-xl bg-background/75">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="full">Full width</SelectItem>
-                                    <SelectItem value="half">Half width</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-
-                            <div className="grid gap-2">
-                              <label className="text-sm font-medium">Help Text</label>
-                              <Input
-                                className="h-11 rounded-xl bg-background/75"
-                                value={selectedField.helpText}
-                                onChange={(event) =>
-                                  updateSelectedField((field) => ({
-                                    ...field,
-                                    helpText: event.target.value,
-                                  }))
-                                }
-                                placeholder="Optional short guidance"
-                              />
-                            </div>
-
-                            <div className="grid gap-2">
-                              <label className="text-sm font-medium">Placeholder</label>
-                              <Input
-                                className="h-11 rounded-xl bg-background/75"
-                                value={selectedField.placeholder}
-                                onChange={(event) =>
-                                  updateSelectedField((field) => ({
-                                    ...field,
-                                    placeholder: event.target.value,
-                                  }))
-                                }
-                                placeholder="Optional placeholder"
-                              />
-                            </div>
-
-                            <label className="flex items-center gap-3 rounded-[20px] border border-border/60 bg-muted/20 px-4 py-3 text-sm">
-                              <Checkbox
-                                checked={selectedField.required}
-                                onCheckedChange={(checked) =>
-                                  updateSelectedField((field) => ({
-                                    ...field,
-                                    required: Boolean(checked),
-                                  }))
-                                }
-                              />
-                              Required field
-                            </label>
-
-                            {selectedField.kind === "checkbox" ? (
-                              <p className="text-xs text-muted-foreground">
-                                For checkbox fields, the placeholder is used as the toggle label
-                                in the published form.
-                              </p>
-                            ) : null}
-                          </div>
-                        </ExpandableSection>
-                      </TabsContent>
-
-                      <TabsContent value="options" className="grid gap-4">
-                        <ExpandableSection
-                          title="Choice options"
-                          description="Only shown for select and radio fields. Keep the option list short and stable."
-                          defaultOpen
-                        >
-                          {selectedField.kind === "select" || selectedField.kind === "radio" ? (
-                            <div className="grid gap-2">
-                              <label className="text-sm font-medium">Options</label>
-                              <Input
-                                className="h-11 rounded-xl bg-background/75"
-                                value={selectedField.optionsText}
-                                onChange={(event) =>
-                                  updateSelectedField((field) => ({
-                                    ...field,
-                                    optionsText: event.target.value,
-                                  }))
-                                }
-                                placeholder="low, medium, high"
-                              />
-                              <p className="text-xs text-muted-foreground">
-                                Enter comma-separated options for the choice list.
-                              </p>
-                            </div>
-                          ) : (
-                            <EmptyState
-                              title="No option set needed"
-                              description="Switch this field to Select or Radio to manage fixed choices."
-                            />
-                          )}
-                        </ExpandableSection>
-                      </TabsContent>
-
-                      <TabsContent value="validation" className="grid gap-4">
-                        <ExpandableSection
-                          title="Validation rules"
-                          description="Use only the rules that help response quality. Too much friction can hurt completion."
-                          defaultOpen
-                        >
-                          {selectedField.kind === "text" ||
-                          selectedField.kind === "textarea" ||
-                          selectedField.kind === "email" ? (
-                            <div className="grid gap-4 sm:grid-cols-2">
-                              <div className="grid gap-2">
-                                <label className="text-sm font-medium">Min Length</label>
-                                <Input
-                                  className="h-11 rounded-xl bg-background/75"
-                                  inputMode="numeric"
-                                  value={selectedField.minLength}
-                                  onChange={(event) =>
-                                    updateSelectedField((field) => ({
-                                      ...field,
-                                      minLength: event.target.value,
-                                    }))
-                                  }
-                                  placeholder="Optional"
-                                />
-                              </div>
-                              <div className="grid gap-2">
-                                <label className="text-sm font-medium">Max Length</label>
-                                <Input
-                                  className="h-11 rounded-xl bg-background/75"
-                                  inputMode="numeric"
-                                  value={selectedField.maxLength}
-                                  onChange={(event) =>
-                                    updateSelectedField((field) => ({
-                                      ...field,
-                                      maxLength: event.target.value,
-                                    }))
-                                  }
-                                  placeholder="Optional"
-                                />
-                              </div>
-                              <div className="grid gap-2 sm:col-span-2">
-                                <label className="text-sm font-medium">Pattern</label>
-                                <Input
-                                  className="h-11 rounded-xl bg-background/75"
-                                  value={selectedField.pattern}
-                                  onChange={(event) =>
-                                    updateSelectedField((field) => ({
-                                      ...field,
-                                      pattern: event.target.value,
-                                    }))
-                                  }
-                                  placeholder={
-                                    selectedField.kind === "email"
-                                      ? "Optional regex override"
-                                      : "Optional regex pattern"
-                                  }
-                                />
-                              </div>
-                            </div>
-                          ) : selectedField.kind === "number" ? (
-                            <div className="grid gap-4 sm:grid-cols-2">
-                              <div className="grid gap-2">
-                                <label className="text-sm font-medium">Min Value</label>
-                                <Input
-                                  className="h-11 rounded-xl bg-background/75"
-                                  inputMode="decimal"
-                                  value={selectedField.minValue}
-                                  onChange={(event) =>
-                                    updateSelectedField((field) => ({
-                                      ...field,
-                                      minValue: event.target.value,
-                                    }))
-                                  }
-                                  placeholder="Optional"
-                                />
-                              </div>
-                              <div className="grid gap-2">
-                                <label className="text-sm font-medium">Max Value</label>
-                                <Input
-                                  className="h-11 rounded-xl bg-background/75"
-                                  inputMode="decimal"
-                                  value={selectedField.maxValue}
-                                  onChange={(event) =>
-                                    updateSelectedField((field) => ({
-                                      ...field,
-                                      maxValue: event.target.value,
-                                    }))
-                                  }
-                                  placeholder="Optional"
-                                />
-                              </div>
-                            </div>
-                          ) : (
-                            <EmptyState
-                              title="No extra rules for this field"
-                              description="This field type only uses required state right now."
-                            />
-                          )}
-                        </ExpandableSection>
-                      </TabsContent>
-                    </Tabs>
-                  </div>
-                ) : (
-                  <EmptyState
-                    title="No field selected"
-                    description="Select a field from the stack or add a new one."
-                  />
-                )}
+                  <ExpandableSection
+                    title="Designer migration note"
+                    description="Current forms are still persisted as the existing flat schema, then adapted into a section-first designer shape in the frontend."
+                    defaultOpen
+                  >
+                    <div className="grid gap-3 text-sm leading-6 text-muted-foreground">
+                      <p>The current designer creates one default section from the legacy flat field list.</p>
+                      <p>The next step is making sections persistent in saved schema, not only in the UI adapter.</p>
+                      <p>Once that lands, we can add real section creation, duplication, and layout controls end to end.</p>
+                    </div>
+                  </ExpandableSection>
+                </div>
               </div>
             </div>
           </TabsContent>

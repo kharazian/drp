@@ -304,6 +304,96 @@ def test_extended_field_types_are_supported(
     assert bad_submission.status_code == 422
 
 
+def test_section_based_schema_is_supported_end_to_end(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    payload = {
+        "title": "Sectioned Intake",
+        "schema": {
+            "version": 2,
+            "settings": {
+                "title": "Sectioned Intake",
+                "description": "Section-based form",
+                "submitLabel": "Send",
+            },
+            "sections": [
+                {
+                    "id": "requester_info",
+                    "title": "Requester Info",
+                    "description": "Basic contact details",
+                    "layout": {"columns": 2},
+                    "fields": [
+                        {
+                            "id": "requester_name",
+                            "label": "Requester Name",
+                            "type": "text",
+                            "required": True,
+                        },
+                        {
+                            "id": "requester_email",
+                            "label": "Requester Email",
+                            "type": "email",
+                            "required": True,
+                        },
+                    ],
+                },
+                {
+                    "id": "details",
+                    "title": "Details",
+                    "layout": {"columns": 1},
+                    "fields": [
+                        {
+                            "id": "priority",
+                            "label": "Priority",
+                            "type": "radio",
+                            "options": ["low", "high"],
+                            "required": True,
+                        }
+                    ],
+                },
+            ],
+        },
+    }
+
+    form_response = client.post(
+        f"{settings.API_V1_STR}/forms/",
+        headers=superuser_token_headers,
+        json=payload,
+    )
+    assert form_response.status_code == 200
+    form = form_response.json()
+    assert form["active_version"]["schema"]["version"] == 2
+    assert len(form["active_version"]["schema"]["sections"]) == 2
+
+    valid_submission = client.post(
+        f"{settings.API_V1_STR}/forms/{form['id']}/submissions",
+        headers=superuser_token_headers,
+        json={
+            "form_version_id": form["active_version"]["id"],
+            "data": {
+                "requester_name": "Jordan Lee",
+                "requester_email": "jordan@example.com",
+                "priority": "high",
+            },
+        },
+    )
+    assert valid_submission.status_code == 200
+
+    invalid_submission = client.post(
+        f"{settings.API_V1_STR}/forms/{form['id']}/submissions",
+        headers=superuser_token_headers,
+        json={
+            "form_version_id": form["active_version"]["id"],
+            "data": {
+                "requester_name": "Jordan Lee",
+                "requester_email": "bad-email",
+                "priority": "urgent",
+            },
+        },
+    )
+    assert invalid_submission.status_code == 422
+
+
 def test_delete_form(
     client: TestClient, superuser_token_headers: dict[str, str], db: Session
 ) -> None:

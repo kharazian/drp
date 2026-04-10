@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import Any
 from typing import Literal
 
+from pydantic import model_validator
 from pydantic import EmailStr
 from sqlalchemy import JSON, Column, DateTime
 from sqlmodel import Field, Relationship, SQLModel
@@ -136,8 +137,49 @@ class FormSchemaField(SQLModel):
     validation: FormFieldValidation | None = None
 
 
+class FormSchemaLayout(SQLModel):
+    columns: Literal[1, 2] = 2
+
+
+class FormSchemaSettings(SQLModel):
+    title: str | None = None
+    description: str | None = None
+    submitLabel: str | None = None
+
+
+class FormSchemaSection(SQLModel):
+    id: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    description: str | None = None
+    layout: FormSchemaLayout = Field(default_factory=FormSchemaLayout)
+    fields: list[FormSchemaField] = Field(default_factory=list)
+
+
 class FormSchema(SQLModel):
     fields: list[FormSchemaField] = Field(default_factory=list)
+    version: int | None = None
+    settings: FormSchemaSettings | None = None
+    sections: list[FormSchemaSection] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def ensure_flattenable(self) -> "FormSchema":
+        if not self.fields and not self.sections:
+            return self
+
+        if self.sections:
+            section_field_ids: set[str] = set()
+            for section in self.sections:
+                for field in section.fields:
+                    if field.id in section_field_ids:
+                        raise ValueError("Field IDs must be unique across sections")
+                    section_field_ids.add(field.id)
+
+        if self.fields:
+            field_ids = [field.id for field in self.fields]
+            if len(field_ids) != len(set(field_ids)):
+                raise ValueError("Field IDs must be unique")
+
+        return self
 
 
 class FormBase(SQLModel):
