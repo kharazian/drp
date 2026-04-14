@@ -6,6 +6,7 @@ import {
   Eye,
   History,
   Layers3,
+  MoreHorizontal,
   Plus,
   RefreshCcw,
   Save,
@@ -14,14 +15,19 @@ import {
 } from "lucide-react"
 import { type ReactNode, useEffect, useMemo, useState } from "react"
 
-import {
-  dashboardPanelClass,
-  dashboardPanelDenseClass,
-} from "@/components/Common/dashboard-surface"
+import { dashboardPanelClass } from "@/components/Common/dashboard-surface"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { CardContent } from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { Separator } from "@/components/ui/separator"
@@ -42,12 +48,12 @@ import { FormDesigner } from "./FormDesigner"
 import { RuntimeFormRenderer } from "./RuntimeFormRenderer"
 import {
   type BuilderField,
-  buildSchemaFromDesigner,
   builderFieldsFromDesigner,
   builderFieldsFromSchema,
-  designerDocumentFromSchema,
+  buildSchemaFromDesigner,
   cloneStarterDocument,
   type DesignerDocument,
+  designerDocumentFromSchema,
   validateDesignerDocument,
 } from "./schema"
 
@@ -71,7 +77,9 @@ function EmptyState({
   return (
     <div className="rounded-[26px] border border-dashed border-border/65 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--background)_94%,white),color-mix(in_oklab,var(--muted)_24%,transparent))] px-6 py-8 text-center">
       <p className="text-base font-semibold tracking-tight">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+        {description}
+      </p>
     </div>
   )
 }
@@ -95,7 +103,12 @@ function ErrorState({
       <AlertDescription>
         <p>{getErrorMessage(error)}</p>
         {onRetry ? (
-          <Button variant="outline" size="sm" className="mt-3" onClick={onRetry}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={onRetry}
+          >
             <RefreshCcw className="mr-2 h-4 w-4" />
             Retry
           </Button>
@@ -105,27 +118,13 @@ function ErrorState({
   )
 }
 
-function OverviewMetric({
-  label,
-  value,
-  hint,
-}: {
-  label: string
-  value: string
-  hint: string
-}) {
+function OverviewMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      className={cn(
-        dashboardPanelDenseClass,
-        "rounded-[24px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_94%,white),color-mix(in_oklab,var(--card)_84%,transparent))]",
-      )}
-    >
-      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+    <div className="flex min-w-[112px] items-center justify-between gap-3 rounded-xl border border-border/60 bg-background/78 px-3 py-2">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </p>
-      <p className="mt-3 text-3xl font-semibold tracking-tight">{value}</p>
-      <p className="mt-2 text-xs leading-5 text-muted-foreground">{hint}</p>
+      <p className="text-base font-semibold tracking-tight">{value}</p>
     </div>
   )
 }
@@ -173,7 +172,9 @@ function ExpandableSection({
       <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
         <div className="min-w-0">
           <p className="font-medium tracking-tight">{title}</p>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">{description}</p>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            {description}
+          </p>
         </div>
         <div className="rounded-full border border-border/60 bg-background/80 p-2 text-muted-foreground transition-transform group-open:rotate-180">
           <ChevronDown className="h-4 w-4" />
@@ -200,50 +201,46 @@ function BuilderSnapshot({
   hasUnsavedTitleChanges: boolean
 }) {
   return (
-    <div className="grid gap-3 rounded-[28px] border border-border/60 bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--primary)_10%,white),transparent_34%),linear-gradient(180deg,color-mix(in_oklab,var(--card)_95%,white),color-mix(in_oklab,var(--card)_84%,transparent))] p-5 shadow-[0_22px_46px_-38px_color-mix(in_oklab,var(--primary)_28%,transparent)] sm:p-6">
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="outline" className="rounded-full">
-          Workspace
-        </Badge>
-        {selectedForm?.active_version ? (
-          <Badge className="rounded-full">
-            Published v{selectedForm.active_version.version_number}
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-background/78 px-4 py-3">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className="rounded-full text-[10px]">
+            Workspace
           </Badge>
-        ) : (
-          <Badge variant="secondary" className="rounded-full">
-            New draft
-          </Badge>
-        )}
-        {selectedForm?.draft_version ? (
-          <Badge variant="secondary" className="rounded-full">
-            Draft v{selectedForm.draft_version.version_number}
-          </Badge>
-        ) : null}
-      </div>
-      <div>
-        <h2 className="text-[1.75rem] font-semibold tracking-tight sm:text-[2.1rem]">
+          {selectedForm?.active_version ? (
+            <Badge className="rounded-full text-[10px]">
+              Published v{selectedForm.active_version.version_number}
+            </Badge>
+          ) : (
+            <Badge variant="secondary" className="rounded-full text-[10px]">
+              New draft
+            </Badge>
+          )}
+          {selectedForm?.draft_version ? (
+            <Badge variant="secondary" className="rounded-full text-[10px]">
+              Draft v{selectedForm.draft_version.version_number}
+            </Badge>
+          ) : null}
+        </div>
+        <h2 className="mt-1 truncate text-lg font-semibold tracking-tight">
           {draftTitle || "New form draft"}
         </h2>
-        <p className="mt-2 max-w-3xl text-sm leading-7 text-muted-foreground">
-          Shape the draft, pressure-test it in preview, then publish only when the
-          live version is ready for real submissions.
-        </p>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap justify-end gap-2">
         {hasUnsavedTitleChanges ? (
-          <Badge variant="secondary" className="rounded-full">
+          <Badge variant="secondary" className="rounded-full text-[10px]">
             Title changed
           </Badge>
         ) : null}
         {hasUnsavedSchemaChanges ? (
-          <Badge variant="secondary" className="rounded-full">
+          <Badge variant="secondary" className="rounded-full text-[10px]">
             Schema changed
           </Badge>
         ) : null}
-        <Badge variant="outline" className="rounded-full">
+        <Badge variant="outline" className="rounded-full text-[10px]">
           {draftFieldsCount} field{draftFieldsCount === 1 ? "" : "s"}
         </Badge>
-        <Badge variant="outline" className="rounded-full">
+        <Badge variant="outline" className="rounded-full text-[10px]">
           {selectedFormId ? "Saved form" : "Unsaved form"}
         </Badge>
       </div>
@@ -270,7 +267,10 @@ type SchemaChange =
       changes: string[]
     }
 
-function describeFieldChanges(nextField: BuilderField, previousField: BuilderField): string[] {
+function describeFieldChanges(
+  nextField: BuilderField,
+  previousField: BuilderField,
+): string[] {
   const changes: string[] = []
 
   if (nextField.label !== previousField.label) {
@@ -289,29 +289,39 @@ function describeFieldChanges(nextField: BuilderField, previousField: BuilderFie
     changes.push(nextField.helpText ? "Help text updated" : "Help text removed")
   }
   if (nextField.placeholder !== previousField.placeholder) {
-    changes.push(nextField.placeholder ? "Placeholder updated" : "Placeholder removed")
+    changes.push(
+      nextField.placeholder ? "Placeholder updated" : "Placeholder removed",
+    )
   }
   if (nextField.optionsText !== previousField.optionsText) {
     changes.push("Choice options updated")
   }
   if (nextField.minLength !== previousField.minLength) {
     changes.push(
-      nextField.minLength ? `Min length set to ${nextField.minLength}` : "Min length removed",
+      nextField.minLength
+        ? `Min length set to ${nextField.minLength}`
+        : "Min length removed",
     )
   }
   if (nextField.maxLength !== previousField.maxLength) {
     changes.push(
-      nextField.maxLength ? `Max length set to ${nextField.maxLength}` : "Max length removed",
+      nextField.maxLength
+        ? `Max length set to ${nextField.maxLength}`
+        : "Max length removed",
     )
   }
   if (nextField.minValue !== previousField.minValue) {
     changes.push(
-      nextField.minValue ? `Min value set to ${nextField.minValue}` : "Min value removed",
+      nextField.minValue
+        ? `Min value set to ${nextField.minValue}`
+        : "Min value removed",
     )
   }
   if (nextField.maxValue !== previousField.maxValue) {
     changes.push(
-      nextField.maxValue ? `Max value set to ${nextField.maxValue}` : "Max value removed",
+      nextField.maxValue
+        ? `Max value set to ${nextField.maxValue}`
+        : "Max value removed",
     )
   }
   if (nextField.pattern !== previousField.pattern) {
@@ -326,7 +336,9 @@ function compareDraftToPublished(
   publishedFields: BuilderField[],
 ): SchemaChange[] {
   const publishedById = new Map(
-    publishedFields.map((field, index) => [field.id, { field, index }] as const),
+    publishedFields.map(
+      (field, index) => [field.id, { field, index }] as const,
+    ),
   )
   const draftIds = new Set(draftFields.map((field) => field.id))
   const changes: SchemaChange[] = []
@@ -340,7 +352,9 @@ function compareDraftToPublished(
 
     const fieldChanges = describeFieldChanges(field, previous.field)
     if (previous.index !== index) {
-      fieldChanges.push(`Moved from position ${previous.index + 1} to ${index + 1}`)
+      fieldChanges.push(
+        `Moved from position ${previous.index + 1} to ${index + 1}`,
+      )
     }
 
     if (fieldChanges.length) {
@@ -378,8 +392,9 @@ function DraftChangeList({
         <div className="rounded-[22px] border border-border/60 bg-background/65 px-4 py-4">
           <p className="font-medium tracking-tight">First published version</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            This form does not have a published baseline yet. Publishing will create the
-            first live version with {draftFields.length} field{draftFields.length === 1 ? "" : "s"}.
+            This form does not have a published baseline yet. Publishing will
+            create the first live version with {draftFields.length} field
+            {draftFields.length === 1 ? "" : "s"}.
           </p>
         </div>
       </div>
@@ -414,7 +429,9 @@ function DraftChangeList({
               {change.field.kind}
             </Badge>
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">{change.field.id}</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {change.field.id}
+          </p>
           {change.type === "added" ? (
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
               Added at position {change.index + 1}.
@@ -458,7 +475,9 @@ function HistoryList({ logs }: { logs: AuditLog[] }) {
           <div className="flex items-center justify-between gap-3">
             <p className="font-medium">Submission updated</p>
             <p className="text-xs text-muted-foreground">
-              {log.changed_at ? new Date(log.changed_at).toLocaleString() : "Unknown time"}
+              {log.changed_at
+                ? new Date(log.changed_at).toLocaleString()
+                : "Unknown time"}
             </p>
           </div>
           <pre className="mt-4 overflow-x-auto rounded-2xl bg-muted/35 p-4 text-xs leading-6">
@@ -480,7 +499,9 @@ function formatSubmissionPreviewValue(value: unknown): string {
   return String(value)
 }
 
-function buildSubmissionPreview(submission: { data: Record<string, unknown> }): string {
+function buildSubmissionPreview(submission: {
+  data: Record<string, unknown>
+}): string {
   const entries = Object.values(submission.data)
     .slice(0, 2)
     .map((value) => formatSubmissionPreviewValue(value))
@@ -497,14 +518,20 @@ export function FormWorkspace() {
   const queryClient = useQueryClient()
   const { showErrorToast, showSuccessToast } = useCustomToast()
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null)
-  const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null)
+  const [selectedSubmissionId, setSelectedSubmissionId] = useState<
+    string | null
+  >(null)
   const [submissionSearch, setSubmissionSearch] = useState("")
   const [draftDocument, setDraftDocument] = useState<DesignerDocument>(
     cloneStarterDocument(),
   )
   const [selectedFieldKey, setSelectedFieldKey] = useState<string | null>(null)
-  const [submissionDraft, setSubmissionDraft] = useState<Record<string, unknown>>({})
-  const [submissionErrors, setSubmissionErrors] = useState<Record<string, string>>({})
+  const [submissionDraft, setSubmissionDraft] = useState<
+    Record<string, unknown>
+  >({})
+  const [submissionErrors, setSubmissionErrors] = useState<
+    Record<string, string>
+  >({})
 
   const formsQuery = useQuery({
     queryKey: ["forms"],
@@ -526,7 +553,10 @@ export function FormWorkspace() {
   const historyQuery = useQuery({
     queryKey: ["forms", selectedFormId, "history", selectedSubmissionId],
     queryFn: () =>
-      formsApi.readHistory(selectedFormId as string, selectedSubmissionId as string),
+      formsApi.readHistory(
+        selectedFormId as string,
+        selectedSubmissionId as string,
+      ),
     enabled: Boolean(selectedFormId && selectedSubmissionId),
   })
 
@@ -565,7 +595,10 @@ export function FormWorkspace() {
       setSelectedFieldKey(null)
       return
     }
-    if (!selectedFieldKey || !draftFields.some((field) => field.key === selectedFieldKey)) {
+    if (
+      !selectedFieldKey ||
+      !draftFields.some((field) => field.key === selectedFieldKey)
+    ) {
       setSelectedFieldKey(draftFields[0]?.key ?? null)
     }
   }, [draftFields, selectedFieldKey])
@@ -580,8 +613,9 @@ export function FormWorkspace() {
     }
 
     const current =
-      submissions.find((submission) => submission.id === selectedSubmissionId) ??
-      submissions[0]
+      submissions.find(
+        (submission) => submission.id === selectedSubmissionId,
+      ) ?? submissions[0]
 
     if (current.id !== selectedSubmissionId) {
       setSelectedSubmissionId(current.id)
@@ -607,9 +641,12 @@ export function FormWorkspace() {
   )
   const publishedTitle = selectedForm?.title ?? ""
   const loadedSchema =
-    selectedForm?.draft_version?.schema ?? selectedForm?.active_version?.schema ?? null
+    selectedForm?.draft_version?.schema ??
+    selectedForm?.active_version?.schema ??
+    null
   const hasUnsavedSchemaChanges =
-    Boolean(selectedFormId) && JSON.stringify(draftSchema) !== JSON.stringify(loadedSchema)
+    Boolean(selectedFormId) &&
+    JSON.stringify(draftSchema) !== JSON.stringify(loadedSchema)
   const loadedTitle = selectedForm?.draft_title ?? selectedForm?.title ?? ""
   const hasUnsavedTitleChanges =
     Boolean(selectedFormId) && draftTitle.trim() !== loadedTitle
@@ -635,7 +672,9 @@ export function FormWorkspace() {
         submission.updated_at ?? "",
         ...Object.values(submission.data).map((value) => String(value ?? "")),
       ]
-      return searchableValues.some((value) => value.toLowerCase().includes(query))
+      return searchableValues.some((value) =>
+        value.toLowerCase().includes(query),
+      )
     })
   }, [submissionSearch, submissionsQuery.data])
 
@@ -655,11 +694,13 @@ export function FormWorkspace() {
       if (field.kind === "text" || field.kind === "textarea") {
         const textValue = String(value)
         if (field.minLength && textValue.length < Number(field.minLength)) {
-          nextErrors[field.id] = `${field.label} must be at least ${field.minLength} characters.`
+          nextErrors[field.id] =
+            `${field.label} must be at least ${field.minLength} characters.`
           continue
         }
         if (field.maxLength && textValue.length > Number(field.maxLength)) {
-          nextErrors[field.id] = `${field.label} must be at most ${field.maxLength} characters.`
+          nextErrors[field.id] =
+            `${field.label} must be at most ${field.maxLength} characters.`
           continue
         }
         if (field.pattern) {
@@ -669,7 +710,8 @@ export function FormWorkspace() {
               nextErrors[field.id] = `${field.label} is in an invalid format.`
             }
           } catch {
-            nextErrors[field.id] = `${field.label} has an invalid validation pattern.`
+            nextErrors[field.id] =
+              `${field.label} has an invalid validation pattern.`
           }
         }
       }
@@ -681,11 +723,13 @@ export function FormWorkspace() {
           continue
         }
         if (field.minLength && textValue.length < Number(field.minLength)) {
-          nextErrors[field.id] = `${field.label} must be at least ${field.minLength} characters.`
+          nextErrors[field.id] =
+            `${field.label} must be at least ${field.minLength} characters.`
           continue
         }
         if (field.maxLength && textValue.length > Number(field.maxLength)) {
-          nextErrors[field.id] = `${field.label} must be at most ${field.maxLength} characters.`
+          nextErrors[field.id] =
+            `${field.label} must be at most ${field.maxLength} characters.`
           continue
         }
       }
@@ -705,11 +749,13 @@ export function FormWorkspace() {
           continue
         }
         if (field.minValue && numericValue < Number(field.minValue)) {
-          nextErrors[field.id] = `${field.label} must be at least ${field.minValue}.`
+          nextErrors[field.id] =
+            `${field.label} must be at least ${field.minValue}.`
           continue
         }
         if (field.maxValue && numericValue > Number(field.maxValue)) {
-          nextErrors[field.id] = `${field.label} must be at most ${field.maxValue}.`
+          nextErrors[field.id] =
+            `${field.label} must be at most ${field.maxValue}.`
           continue
         }
       }
@@ -726,7 +772,8 @@ export function FormWorkspace() {
           .map((option) => option.trim())
           .filter(Boolean)
         if (!options.includes(String(value))) {
-          nextErrors[field.id] = `${field.label} must match one of the available options.`
+          nextErrors[field.id] =
+            `${field.label} must match one of the available options.`
         }
       }
 
@@ -775,7 +822,9 @@ export function FormWorkspace() {
   const publishFormMutation = useMutation({
     mutationFn: (formId: string) => formsApi.publishForm(formId),
     onSuccess: (form) => {
-      showSuccessToast(`Published version ${form.active_version?.version_number ?? "latest"}`)
+      showSuccessToast(
+        `Published version ${form.active_version?.version_number ?? "latest"}`,
+      )
       queryClient.invalidateQueries({ queryKey: ["forms"] })
       queryClient.invalidateQueries({ queryKey: ["forms", form.id] })
     },
@@ -801,7 +850,8 @@ export function FormWorkspace() {
       formId: string
       versionId: string
       data: Record<string, unknown>
-    }) => formsApi.createSubmission(formId, { form_version_id: versionId, data }),
+    }) =>
+      formsApi.createSubmission(formId, { form_version_id: versionId, data }),
     onSuccess: (submission) => {
       showSuccessToast("Submission saved")
       setSelectedSubmissionId(submission.id)
@@ -931,98 +981,127 @@ export function FormWorkspace() {
   }
 
   return (
-    <CardContent className="grid gap-6 bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--primary)_7%,white),transparent_28%),linear-gradient(180deg,color-mix(in_oklab,var(--background)_98%,white),color-mix(in_oklab,var(--muted)_14%,transparent))] p-4 sm:gap-8 sm:p-6 xl:grid-cols-[310px_minmax(0,1fr)] xl:p-8">
-      <aside className="grid gap-5 self-start xl:sticky xl:top-6">
-        <div className="rounded-[32px] border border-border/60 bg-[radial-gradient(circle_at_top_left,color-mix(in_oklab,var(--primary)_16%,white),transparent_38%),linear-gradient(180deg,color-mix(in_oklab,var(--card)_95%,white),color-mix(in_oklab,var(--card)_82%,transparent))] p-6 shadow-[0_24px_48px_-36px_color-mix(in_oklab,var(--primary)_42%,transparent)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/80">
-            Form Library
-          </p>
-          <h2 className="mt-3 text-[2rem] font-semibold tracking-tight">Builder workspace</h2>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            Keep your form catalog on the left, then use the main canvas to shape
-            drafts, preview the experience, and manage published responses.
-          </p>
-          <div className="mt-6 grid gap-2.5">
-            <Button
-              variant="outline"
-              className="h-11 justify-start rounded-xl bg-background/75"
-              onClick={resetDraft}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              New Blank Form
-            </Button>
-            <Button
-              variant="outline"
-              className="h-11 justify-start rounded-xl bg-background/75"
-              onClick={() => formsQuery.refetch()}
-            >
-              <RefreshCcw className="mr-2 h-4 w-4" />
-              Refresh Library
-            </Button>
-            <Button
-              variant="outline"
-              className="h-11 justify-start rounded-xl bg-background/75 text-destructive hover:text-destructive"
-              disabled={!selectedFormId || deleteFormMutation.isPending}
-              onClick={() => {
-                if (selectedFormId) {
-                  deleteFormMutation.mutate(selectedFormId)
-                }
-              }}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete Selected
-            </Button>
-          </div>
-        </div>
-
-        {formsQuery.isError ? (
-          <ErrorState
-            title="Could not load forms"
-            error={formsQuery.error}
-            onRetry={() => formsQuery.refetch()}
-          />
-        ) : null}
-
-        {!formsQuery.isLoading && !formsQuery.data?.data.length ? (
-          <EmptyState
-            title="No forms yet"
-            description="Create a blank form and start adding fields."
-          />
-        ) : null}
-
-        <div className="grid gap-3">
-          {(formsQuery.data?.data || []).map((form) => (
-            <button
-              key={form.id}
-              type="button"
-              onClick={() => setSelectedFormId(form.id)}
-              className={cn(
-                "rounded-[24px] border px-4 py-4 text-left transition-all duration-200",
-                selectedFormId === form.id
-                  ? "border-primary/70 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_9%,white),color-mix(in_oklab,var(--card)_88%,transparent))] shadow-[0_20px_36px_-28px_color-mix(in_oklab,var(--primary)_40%,transparent)]"
-                  : "border-border/60 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_92%,white),color-mix(in_oklab,var(--card)_84%,transparent))] hover:border-border hover:bg-muted/25",
-              )}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-medium tracking-tight">{form.title}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {form.updated_at
-                      ? new Date(form.updated_at).toLocaleString()
-                      : "Recently updated"}
-                  </p>
-                </div>
-                {selectedFormId === form.id ? (
-                  <Badge className="rounded-full px-3">Active</Badge>
-                ) : null}
-              </div>
-            </button>
-          ))}
-        </div>
-      </aside>
-
+    <CardContent className="grid gap-6 bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--primary)_7%,white),transparent_28%),linear-gradient(180deg,color-mix(in_oklab,var(--background)_98%,white),color-mix(in_oklab,var(--muted)_14%,transparent))] p-4 sm:gap-8 sm:p-6 xl:p-8">
       <div className="grid gap-6 sm:gap-8">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)]">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-border/60 bg-background/82 px-4 py-3 shadow-[0_18px_38px_-34px_color-mix(in_oklab,var(--foreground)_24%,transparent)]">
+          <button
+            type="button"
+            onClick={() => {
+              if (selectedFormId) {
+                setSelectedFormId(selectedFormId)
+              } else {
+                resetDraft()
+              }
+            }}
+            className="min-w-0 text-left"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/80">
+              Main Form
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <h2 className="truncate text-lg font-semibold tracking-tight">
+                {draftTitle || selectedForm?.title || "Untitled draft"}
+              </h2>
+              <Badge variant="outline" className="rounded-full">
+                {selectedFormId ? "Saved" : "Draft"}
+              </Badge>
+              <Badge variant="secondary" className="rounded-full">
+                {draftFields.length} field{draftFields.length === 1 ? "" : "s"}
+              </Badge>
+              <Badge variant="outline" className="rounded-full">
+                {selectedForm?.draft_version
+                  ? `Draft v${selectedForm.draft_version.version_number}`
+                  : "Unpublished"}
+              </Badge>
+            </div>
+          </button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 rounded-full px-3"
+                aria-label="Open form workspace menu"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 rounded-2xl p-2">
+              <DropdownMenuLabel className="px-2 py-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                Actions
+              </DropdownMenuLabel>
+              <DropdownMenuItem className="rounded-lg" onSelect={resetDraft}>
+                <Plus className="h-4 w-4" />
+                New Blank Form
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="rounded-lg"
+                onSelect={() => formsQuery.refetch()}
+              >
+                <RefreshCcw className="h-4 w-4" />
+                Refresh Library
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                className="rounded-lg"
+                disabled={!selectedFormId || deleteFormMutation.isPending}
+                onSelect={() => {
+                  if (selectedFormId) {
+                    deleteFormMutation.mutate(selectedFormId)
+                  }
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete Selected
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="flex items-center justify-between px-2 py-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                Library
+                <Badge variant="outline" className="rounded-full text-[10px]">
+                  {formsQuery.data?.count ?? 0}
+                </Badge>
+              </DropdownMenuLabel>
+              {formsQuery.isError ? (
+                <DropdownMenuItem
+                  className="rounded-lg text-destructive"
+                  onSelect={() => formsQuery.refetch()}
+                >
+                  <RefreshCcw className="h-4 w-4" />
+                  Retry loading forms
+                </DropdownMenuItem>
+              ) : null}
+              {!formsQuery.isLoading && !formsQuery.data?.data.length ? (
+                <DropdownMenuItem disabled className="rounded-lg">
+                  No forms yet
+                </DropdownMenuItem>
+              ) : null}
+              {(formsQuery.data?.data || []).map((form) => (
+                <DropdownMenuItem
+                  key={form.id}
+                  className="items-start rounded-lg py-2"
+                  onSelect={() => setSelectedFormId(form.id)}
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium tracking-tight">
+                      {form.title}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {form.updated_at
+                        ? new Date(form.updated_at).toLocaleString()
+                        : "Recently updated"}
+                    </p>
+                  </div>
+                  {selectedFormId === form.id ? (
+                    <Badge className="rounded-full px-2.5">Active</Badge>
+                  ) : null}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto]">
           <BuilderSnapshot
             selectedFormId={selectedFormId}
             draftTitle={draftTitle}
@@ -1031,21 +1110,18 @@ export function FormWorkspace() {
             hasUnsavedSchemaChanges={hasUnsavedSchemaChanges}
             hasUnsavedTitleChanges={hasUnsavedTitleChanges}
           />
-          <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+          <div className="grid gap-2 sm:grid-cols-3 xl:min-w-[420px]">
             <OverviewMetric
               label="Forms"
               value={String(formsQuery.data?.count ?? 0)}
-              hint="All reusable form entries in this workspace."
             />
             <OverviewMetric
               label="Draft Fields"
               value={String(draftFields.length)}
-              hint="Structure currently loaded into the builder."
             />
             <OverviewMetric
               label="Submissions"
               value={String(submissionsQuery.data?.count ?? 0)}
-              hint="Saved responses attached to the active version."
             />
           </div>
         </div>
@@ -1088,8 +1164,8 @@ export function FormWorkspace() {
               <div className="grid gap-6">
                 <SectionIntro
                   eyebrow="Designer"
-                  title="V2 builder foundation"
-                  description="This first pass shifts the builder toward a real designer: structure panel, live canvas, and adaptive inspector, while still saving through the current backend schema."
+                  title="Form builder studio"
+                  description="Use the field library, drag-and-drop canvas, and live properties panel to shape the draft before saving or publishing."
                 />
 
                 <FormDesigner
@@ -1102,7 +1178,7 @@ export function FormWorkspace() {
                 <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]">
                   <ExpandableSection
                     title="Draft and publish controls"
-                    description="The designer now sits in front of the same draft and publish workflow, so we can evolve the UI without breaking versioning."
+                    description="Save the current draft, then publish it when the structure and copy are ready for real responses."
                     defaultOpen
                   >
                     <div className="grid gap-5">
@@ -1110,13 +1186,15 @@ export function FormWorkspace() {
                         <p>
                           Published version ID:
                           <span className="ml-2 font-mono text-xs text-foreground">
-                            {selectedForm?.active_version?.id ?? "Not created yet"}
+                            {selectedForm?.active_version?.id ??
+                              "Not created yet"}
                           </span>
                         </p>
                         <p>
                           Draft version ID:
                           <span className="ml-2 font-mono text-xs text-foreground">
-                            {selectedForm?.draft_version?.id ?? "No draft saved"}
+                            {selectedForm?.draft_version?.id ??
+                              "No draft saved"}
                           </span>
                         </p>
                         <p>
@@ -1129,7 +1207,10 @@ export function FormWorkspace() {
                       <div className="flex flex-wrap gap-3">
                         <LoadingButton
                           onClick={handleSaveDraft}
-                          loading={createFormMutation.isPending || updateFormMutation.isPending}
+                          loading={
+                            createFormMutation.isPending ||
+                            updateFormMutation.isPending
+                          }
                           className="min-w-36 rounded-xl shadow-sm"
                         >
                           <Save className="mr-2 h-4 w-4" />
@@ -1154,14 +1235,23 @@ export function FormWorkspace() {
                   </ExpandableSection>
 
                   <ExpandableSection
-                    title="Designer migration note"
-                    description="Current forms are still persisted as the existing flat schema, then adapted into a section-first designer shape in the frontend."
+                    title="Builder guidance"
+                    description="A few practical notes for keeping the form easy to edit and easy to complete."
                     defaultOpen
                   >
                     <div className="grid gap-3 text-sm leading-6 text-muted-foreground">
-                      <p>The current designer creates one default section from the legacy flat field list.</p>
-                      <p>The next step is making sections persistent in saved schema, not only in the UI adapter.</p>
-                      <p>Once that lands, we can add real section creation, duplication, and layout controls end to end.</p>
+                      <p>
+                        Keep related fields grouped inside short sections so the
+                        canvas stays readable.
+                      </p>
+                      <p>
+                        Use compact-width fields for pairs like dates, emails,
+                        and small numbers.
+                      </p>
+                      <p>
+                        Switch to preview mode often to check the responsive
+                        3-column, 2-column, and mobile layouts.
+                      </p>
                     </div>
                   </ExpandableSection>
                 </div>
@@ -1169,7 +1259,10 @@ export function FormWorkspace() {
             </div>
           </TabsContent>
 
-          <TabsContent value="preview" className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.8fr)]">
+          <TabsContent
+            value="preview"
+            className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.8fr)]"
+          >
             <div
               className={cn(
                 dashboardPanelClass,
@@ -1191,10 +1284,15 @@ export function FormWorkspace() {
                     {draftTitle || "Untitled form"}
                   </h4>
                   <p className="text-sm leading-6 text-muted-foreground">
-                    Review the unpublished structure before saving or publishing it.
+                    Review the unpublished structure before saving or publishing
+                    it.
                   </p>
                 </div>
-                <RuntimeFormRenderer fields={draftFields} values={submissionDraft} readOnly />
+                <RuntimeFormRenderer
+                  fields={draftFields}
+                  values={submissionDraft}
+                  readOnly
+                />
               </div>
             </div>
 
@@ -1211,9 +1309,18 @@ export function FormWorkspace() {
                   description="Use this pass to decide whether the draft feels calm, legible, and ready to publish."
                 />
                 <div className="mt-5 grid gap-3 text-sm text-muted-foreground">
-                  <p>Use half-width fields for compact pairs like names, dates, and small numeric inputs.</p>
-                  <p>Keep labels short and keep help text focused on what the user needs right now.</p>
-                  <p>Prefer select or radio when the answer set should stay controlled over time.</p>
+                  <p>
+                    Use half-width fields for compact pairs like names, dates,
+                    and small numeric inputs.
+                  </p>
+                  <p>
+                    Keep labels short and keep help text focused on what the
+                    user needs right now.
+                  </p>
+                  <p>
+                    Prefer select or radio when the answer set should stay
+                    controlled over time.
+                  </p>
                 </div>
               </div>
 
@@ -1265,7 +1372,10 @@ export function FormWorkspace() {
             </div>
           </TabsContent>
 
-          <TabsContent value="submissions" className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(400px,0.95fr)]">
+          <TabsContent
+            value="submissions"
+            className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(400px,0.95fr)]"
+          >
             <div className="grid gap-6">
               <div
                 className={cn(
@@ -1305,7 +1415,10 @@ export function FormWorkspace() {
                     values={submissionDraft}
                     errors={submissionErrors}
                     onChange={(fieldId, value) => {
-                      setSubmissionDraft((current) => ({ ...current, [fieldId]: value }))
+                      setSubmissionDraft((current) => ({
+                        ...current,
+                        [fieldId]: value,
+                      }))
                       setSubmissionErrors((current) => {
                         const next = { ...current }
                         delete next[fieldId]
@@ -1362,7 +1475,9 @@ export function FormWorkspace() {
                       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         value={submissionSearch}
-                        onChange={(event) => setSubmissionSearch(event.target.value)}
+                        onChange={(event) =>
+                          setSubmissionSearch(event.target.value)
+                        }
                         placeholder="Search by ID, value, or timestamp"
                         className="h-11 rounded-xl bg-background/75 pl-10"
                       />
@@ -1380,16 +1495,22 @@ export function FormWorkspace() {
                                 ? "border-primary/70 bg-primary/8 shadow-[0_18px_34px_-30px_color-mix(in_oklab,var(--primary)_30%,transparent)]"
                                 : "border-border/60 bg-background/70",
                             )}
-                            onClick={() => setSelectedSubmissionId(submission.id)}
+                            onClick={() =>
+                              setSelectedSubmissionId(submission.id)
+                            }
                           >
                             <div className="flex flex-wrap items-center gap-2">
                               <Badge variant="outline" className="rounded-full">
                                 {submission.id.slice(0, 8)}
                               </Badge>
-                              <Badge variant="secondary" className="rounded-full">
+                              <Badge
+                                variant="secondary"
+                                className="rounded-full"
+                              >
                                 v
                                 {selectedForm?.versions.find(
-                                  (version) => version.id === submission.form_version_id,
+                                  (version) =>
+                                    version.id === submission.form_version_id,
                                 )?.version_number ?? "?"}
                               </Badge>
                             </div>
@@ -1398,7 +1519,9 @@ export function FormWorkspace() {
                             </p>
                             <p className="mt-3 text-xs text-muted-foreground">
                               {submission.updated_at
-                                ? new Date(submission.updated_at).toLocaleString()
+                                ? new Date(
+                                    submission.updated_at,
+                                  ).toLocaleString()
                                 : "Unknown"}
                             </p>
                           </button>
@@ -1430,15 +1553,21 @@ export function FormWorkspace() {
                                   selectedSubmissionId === submission.id &&
                                     "bg-primary/8 shadow-[inset_3px_0_0_0_var(--primary)]",
                                 )}
-                                onClick={() => setSelectedSubmissionId(submission.id)}
+                                onClick={() =>
+                                  setSelectedSubmissionId(submission.id)
+                                }
                               >
                                 <TableCell className="whitespace-normal">
                                   <div className="space-y-1">
-                                    <p className="font-medium">{submission.id.slice(0, 8)}</p>
+                                    <p className="font-medium">
+                                      {submission.id.slice(0, 8)}
+                                    </p>
                                     <p className="text-xs text-muted-foreground">
                                       v
                                       {selectedForm?.versions.find(
-                                        (version) => version.id === submission.form_version_id,
+                                        (version) =>
+                                          version.id ===
+                                          submission.form_version_id,
                                       )?.version_number ?? "?"}
                                     </p>
                                   </div>
@@ -1448,7 +1577,9 @@ export function FormWorkspace() {
                                 </TableCell>
                                 <TableCell className="whitespace-normal text-sm">
                                   {submission.updated_at
-                                    ? new Date(submission.updated_at).toLocaleString()
+                                    ? new Date(
+                                        submission.updated_at,
+                                      ).toLocaleString()
                                     : "Unknown"}
                                 </TableCell>
                               </TableRow>
@@ -1499,12 +1630,16 @@ export function FormWorkspace() {
                           v{selectedSubmissionVersion?.version_number ?? "?"}
                         </Badge>
                       </div>
-                      <p className="font-mono text-xs text-foreground">{selectedSubmission.id}</p>
+                      <p className="font-mono text-xs text-foreground">
+                        {selectedSubmission.id}
+                      </p>
                       <p>
                         Created:
                         <span className="ml-2 text-foreground">
                           {selectedSubmission.created_at
-                            ? new Date(selectedSubmission.created_at).toLocaleString()
+                            ? new Date(
+                                selectedSubmission.created_at,
+                              ).toLocaleString()
                             : "Unknown"}
                         </span>
                       </p>
@@ -1512,7 +1647,9 @@ export function FormWorkspace() {
                         Updated:
                         <span className="ml-2 text-foreground">
                           {selectedSubmission.updated_at
-                            ? new Date(selectedSubmission.updated_at).toLocaleString()
+                            ? new Date(
+                                selectedSubmission.updated_at,
+                              ).toLocaleString()
                             : "Unknown"}
                         </span>
                       </p>

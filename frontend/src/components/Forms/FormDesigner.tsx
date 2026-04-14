@@ -1,13 +1,40 @@
 import {
-  ArrowDown,
-  ArrowUp,
-  Layers3,
-  Plus,
-  Settings2,
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  PointerSensor,
+  useDraggable,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
+import {
+  CalendarDays,
+  CheckSquare,
+  CircleDot,
+  GripVertical,
+  LayoutPanelTop,
+  ListChecks,
+  Mail,
+  Rows3,
   Sparkles,
   Trash2,
+  Type,
+  WholeWord,
 } from "lucide-react"
-import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from "react"
+import {
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -25,10 +52,9 @@ import { cn } from "@/lib/utils"
 import { RuntimeFormRenderer } from "./RuntimeFormRenderer"
 import {
   type BuilderField,
-  type DesignerDocument,
-  createEmptyField,
-  createEmptySection,
   builderFieldsFromDesigner,
+  createEmptyField,
+  type DesignerDocument,
 } from "./schema"
 
 type DesignerSelection =
@@ -36,17 +62,224 @@ type DesignerSelection =
   | { type: "section"; sectionId: string }
   | { type: "field"; sectionId: string; fieldKey: string }
 
-function EmptyPanel({
-  title,
-  description,
-}: {
-  title: string
-  description: string
-}) {
+type RailTab = "elements" | "structure" | "properties"
+
+type PaletteField = {
+  kind: BuilderField["kind"]
+  label: string
+  icon: typeof Type
+}
+
+const paletteFields: PaletteField[] = [
+  { kind: "text", label: "Text", icon: Type },
+  { kind: "textarea", label: "Textarea", icon: Rows3 },
+  { kind: "email", label: "Email", icon: Mail },
+  { kind: "number", label: "Number", icon: WholeWord },
+  { kind: "date", label: "Date", icon: CalendarDays },
+  { kind: "select", label: "Select", icon: ListChecks },
+  { kind: "radio", label: "Radio", icon: CircleDot },
+  { kind: "checkbox", label: "Checkbox", icon: CheckSquare },
+]
+
+const paletteFieldByKind = new Map(
+  paletteFields.map((item) => [item.kind, item] as const),
+)
+
+function paletteDragId(kind: BuilderField["kind"]) {
+  return `palette:${kind}`
+}
+
+function sectionDragId(sectionId: string) {
+  return `section:${sectionId}`
+}
+
+function fieldDragId(fieldKey: string) {
+  return `field:${fieldKey}`
+}
+
+function parseDragId(
+  id: string,
+): { type: "palette" | "section" | "field"; value: string } | null {
+  if (id.startsWith("palette:")) {
+    return { type: "palette", value: id.slice("palette:".length) }
+  }
+  if (id.startsWith("section:")) {
+    return { type: "section", value: id.slice("section:".length) }
+  }
+  if (id.startsWith("field:")) {
+    return { type: "field", value: id.slice("field:".length) }
+  }
+  return null
+}
+
+function createFieldTemplate(
+  kind: BuilderField["kind"],
+  fieldIndex: number,
+  existingIds: string[],
+) {
+  const base = createEmptyField(fieldIndex, { existingIds })
+
+  switch (kind) {
+    case "text":
+      return {
+        ...base,
+        kind,
+        label: "Text Field",
+        placeholder: "Enter text",
+        width: "half" as const,
+      }
+    case "textarea":
+      return {
+        ...base,
+        kind,
+        label: "Long Text",
+        placeholder: "Enter details",
+        width: "full" as const,
+      }
+    case "email":
+      return {
+        ...base,
+        kind,
+        label: "Email",
+        placeholder: "name@company.com",
+        width: "half" as const,
+      }
+    case "number":
+      return {
+        ...base,
+        kind,
+        label: "Number",
+        placeholder: "0",
+        width: "half" as const,
+      }
+    case "date":
+      return {
+        ...base,
+        kind,
+        label: "Date",
+        width: "half" as const,
+      }
+    case "select":
+      return {
+        ...base,
+        kind,
+        label: "Select",
+        placeholder: "Choose an option",
+        optionsText: "Option A, Option B, Option C",
+        width: "half" as const,
+      }
+    case "radio":
+      return {
+        ...base,
+        kind,
+        label: "Radio Group",
+        optionsText: "Option A, Option B, Option C",
+        width: "full" as const,
+      }
+    case "checkbox":
+      return {
+        ...base,
+        kind,
+        label: "Checkbox",
+        placeholder: "I agree",
+        width: "full" as const,
+      }
+  }
+}
+
+function PaletteButton({ item }: { item: PaletteField }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: paletteDragId(item.kind),
+    })
+  const Icon = item.icon
+
   return (
-    <div className="rounded-[24px] border border-dashed border-border/60 bg-background/55 px-5 py-8 text-center">
-      <p className="font-medium tracking-tight">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
+    <button
+      ref={setNodeRef}
+      type="button"
+      style={{ transform: CSS.Translate.toString(transform) }}
+      className={cn(
+        "flex items-center gap-3 rounded-lg border border-border/60 bg-background px-3 py-2 text-left transition-colors",
+        isDragging
+          ? "border-primary/60 bg-primary/5 shadow-md"
+          : "hover:border-primary/35 hover:bg-muted/20",
+      )}
+      {...listeners}
+      {...attributes}
+    >
+      <div className="rounded-md border border-border/60 bg-muted/20 p-1.5 text-primary">
+        <Icon className="h-4 w-4" />
+      </div>
+      <span className="min-w-0 truncate text-sm font-medium">{item.label}</span>
+    </button>
+  )
+}
+
+function SortableSection({
+  id,
+  children,
+}: {
+  id: string
+  children: (dragHandle: {
+    attributes: ReturnType<typeof useSortable>["attributes"]
+    listeners: ReturnType<typeof useSortable>["listeners"]
+    isDragging: boolean
+  }) => ReactNode
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      className={cn(isDragging && "z-10")}
+    >
+      {children({ attributes, listeners, isDragging })}
+    </div>
+  )
+}
+
+function SortableField({
+  id,
+  children,
+}: {
+  id: string
+  children: (dragHandle: {
+    attributes: ReturnType<typeof useSortable>["attributes"]
+    listeners: ReturnType<typeof useSortable>["listeners"]
+    isDragging: boolean
+  }) => ReactNode
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      className={cn(isDragging && "z-10")}
+    >
+      {children({ attributes, listeners, isDragging })}
     </div>
   )
 }
@@ -62,20 +295,33 @@ export function FormDesigner({
   selectedFieldKey: string | null
   setSelectedFieldKey: (value: string | null) => void
 }) {
-  const [selection, setSelection] = useState<DesignerSelection>({ type: "form" })
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+  )
+
+  const [selection, setSelection] = useState<DesignerSelection>({
+    type: "form",
+  })
+  const [railTab, setRailTab] = useState<RailTab>("elements")
+  const [mode, setMode] = useState<"design" | "preview">("design")
 
   const sections = document.sections
+  const allFields = useMemo(
+    () => builderFieldsFromDesigner(document),
+    [document],
+  )
   const selectedSection =
     selection.type === "section" || selection.type === "field"
-      ? sections.find((section) => section.id === selection.sectionId) ?? null
+      ? (sections.find((section) => section.id === selection.sectionId) ?? null)
       : null
   const selectedField =
     selection.type === "field"
-      ? selectedSection?.fields.find((field) => field.key === selection.fieldKey) ?? null
+      ? (selectedSection?.fields.find(
+          (field) => field.key === selection.fieldKey,
+        ) ?? null)
       : null
-
-  const allFields = useMemo(() => builderFieldsFromDesigner(document), [document])
-
   useEffect(() => {
     if (!sections.length) {
       setSelection({ type: "form" })
@@ -101,12 +347,16 @@ export function FormDesigner({
     }
   }, [sections, selection, setSelectedFieldKey])
 
-  const updateDocument = (updater: (current: DesignerDocument) => DesignerDocument) => {
+  const updateDocument = (
+    updater: (current: DesignerDocument) => DesignerDocument,
+  ) => {
     setDocument((current) => updater(current))
   }
 
   const updateSelectedSection = (
-    updater: (section: DesignerDocument["sections"][number]) => DesignerDocument["sections"][number],
+    updater: (
+      section: DesignerDocument["sections"][number],
+    ) => DesignerDocument["sections"][number],
   ) => {
     if (!(selection.type === "section" || selection.type === "field")) {
       return
@@ -120,7 +370,9 @@ export function FormDesigner({
     }))
   }
 
-  const updateSelectedField = (updater: (field: BuilderField) => BuilderField) => {
+  const updateSelectedField = (
+    updater: (field: BuilderField) => BuilderField,
+  ) => {
     if (selection.type !== "field") {
       return
     }
@@ -143,75 +395,46 @@ export function FormDesigner({
   const selectForm = () => {
     setSelection({ type: "form" })
     setSelectedFieldKey(null)
+    setRailTab("properties")
   }
 
   const selectSection = (sectionId: string) => {
     setSelection({ type: "section", sectionId })
     setSelectedFieldKey(null)
+    setRailTab("properties")
   }
 
   const selectField = (sectionId: string, fieldKey: string) => {
     setSelection({ type: "field", sectionId, fieldKey })
     setSelectedFieldKey(fieldKey)
+    setRailTab("properties")
   }
 
-  const appendSection = () => {
-    updateDocument((current) => {
-      const nextSection = createEmptySection(current.sections.length)
-      setSelection({ type: "section", sectionId: nextSection.id })
-      setSelectedFieldKey(null)
-      return { ...current, sections: [...current.sections, nextSection] }
-    })
-  }
-
-  const appendFieldToSection = (sectionId: string) => {
-    updateDocument((current) => ({
-      ...current,
-      sections: current.sections.map((section) => {
-        if (section.id !== sectionId) {
-          return section
-        }
-        const nextField = createEmptyField(builderFieldsFromDesigner(current).length)
-        setSelection({ type: "field", sectionId, fieldKey: nextField.key })
-        setSelectedFieldKey(nextField.key)
-        return {
-          ...section,
-          fields: [...section.fields, nextField],
-        }
-      }),
-    }))
-  }
-
-  const moveSection = (sectionId: string, direction: -1 | 1) => {
-    updateDocument((current) => {
-      const index = current.sections.findIndex((section) => section.id === sectionId)
-      const nextIndex = index + direction
-      if (index < 0 || nextIndex < 0 || nextIndex >= current.sections.length) {
-        return current
+  const findFieldLocation = (fieldKey: string) => {
+    for (const section of sections) {
+      const index = section.fields.findIndex((field) => field.key === fieldKey)
+      if (index >= 0) {
+        return { sectionId: section.id, index }
       }
-      const nextSections = [...current.sections]
-      const [moved] = nextSections.splice(index, 1)
-      nextSections.splice(nextIndex, 0, moved)
-      return { ...current, sections: nextSections }
-    })
+    }
+    return null
   }
 
-  const removeSection = (sectionId: string) => {
-    updateDocument((current) => {
-      if (current.sections.length === 1) {
-        return current
-      }
-      const nextSections = current.sections.filter((section) => section.id !== sectionId)
-      setSelection({ type: "form" })
-      setSelectedFieldKey(null)
-      return { ...current, sections: nextSections }
-    })
+  const createFieldOfKind = (
+    kind: BuilderField["kind"],
+    current: DesignerDocument,
+  ) => {
+    const currentFields = builderFieldsFromDesigner(current)
+    return createFieldTemplate(
+      kind,
+      currentFields.length,
+      currentFields.map((field) => field.id),
+    )
   }
 
-  const moveFieldWithinSection = (
+  const appendFieldToSection = (
     sectionId: string,
-    fieldKey: string,
-    direction: -1 | 1,
+    kind: BuilderField["kind"] = "text",
   ) => {
     updateDocument((current) => ({
       ...current,
@@ -219,14 +442,32 @@ export function FormDesigner({
         if (section.id !== sectionId) {
           return section
         }
-        const index = section.fields.findIndex((field) => field.key === fieldKey)
-        const nextIndex = index + direction
-        if (index < 0 || nextIndex < 0 || nextIndex >= section.fields.length) {
+        const nextField = createFieldOfKind(kind, current)
+        setSelection({ type: "field", sectionId, fieldKey: nextField.key })
+        setSelectedFieldKey(nextField.key)
+        setRailTab("properties")
+        return { ...section, fields: [...section.fields, nextField] }
+      }),
+    }))
+  }
+
+  const insertFieldIntoSection = (
+    sectionId: string,
+    index: number,
+    kind: BuilderField["kind"] = "text",
+  ) => {
+    updateDocument((current) => ({
+      ...current,
+      sections: current.sections.map((section) => {
+        if (section.id !== sectionId) {
           return section
         }
+        const nextField = createFieldOfKind(kind, current)
         const nextFields = [...section.fields]
-        const [moved] = nextFields.splice(index, 1)
-        nextFields.splice(nextIndex, 0, moved)
+        nextFields.splice(index, 0, nextField)
+        setSelection({ type: "field", sectionId, fieldKey: nextField.key })
+        setSelectedFieldKey(nextField.key)
+        setRailTab("properties")
         return { ...section, fields: nextFields }
       }),
     }))
@@ -255,597 +496,897 @@ export function FormDesigner({
         ...current,
         sections: strippedSections.map((section) =>
           section.id === targetSectionId
-            ? { ...section, fields: [...section.fields, movingField as BuilderField] }
+            ? {
+                ...section,
+                fields: [...section.fields, movingField as BuilderField],
+              }
             : section,
         ),
       }
     })
   }
 
-  const removeSelectedField = () => {
-    if (selection.type !== "field") {
-      return
-    }
+  const removeSection = (sectionId: string) => {
+    updateDocument((current) => {
+      if (current.sections.length === 1) {
+        return current
+      }
+      const nextSections = current.sections.filter(
+        (section) => section.id !== sectionId,
+      )
+      setSelection({ type: "form" })
+      setSelectedFieldKey(null)
+      return { ...current, sections: nextSections }
+    })
+  }
 
+  const removeField = (sectionId: string, fieldKey: string) => {
     updateDocument((current) => ({
       ...current,
       sections: current.sections.map((section) =>
-        section.id !== selection.sectionId
+        section.id !== sectionId
           ? section
           : {
               ...section,
-              fields: section.fields.filter((field) => field.key !== selection.fieldKey),
+              fields: section.fields.filter((field) => field.key !== fieldKey),
             },
       ),
     }))
-    setSelection({ type: "section", sectionId: selection.sectionId })
+    setSelection({ type: "section", sectionId })
     setSelectedFieldKey(null)
   }
 
-  return (
-    <div className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)_380px]">
-      <div className="grid gap-4 self-start rounded-[30px] border border-border/60 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_95%,white),color-mix(in_oklab,var(--card)_84%,transparent))] p-5">
-        <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/80">
-            Structure
-          </p>
-          <h4 className="text-lg font-semibold tracking-tight">Form outline</h4>
-          <p className="text-sm leading-6 text-muted-foreground">
-            Sections are now first-class builder objects. Add, rename, reorder, and
-            distribute fields across them here.
+  const handleCanvasDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) {
+      return
+    }
+
+    const activeDrag = parseDragId(String(active.id))
+    const overDrag = parseDragId(String(over.id))
+    if (!activeDrag || !overDrag) {
+      return
+    }
+
+    if (activeDrag.type === "palette") {
+      const kind = activeDrag.value as BuilderField["kind"]
+      if (overDrag.type === "section") {
+        appendFieldToSection(overDrag.value, kind)
+        return
+      }
+      if (overDrag.type === "field") {
+        const target = findFieldLocation(overDrag.value)
+        if (target) {
+          insertFieldIntoSection(target.sectionId, target.index, kind)
+        }
+      }
+      return
+    }
+
+    if (activeDrag.type === "section" && overDrag.type === "section") {
+      updateDocument((current) => {
+        const fromIndex = current.sections.findIndex(
+          (section) => section.id === activeDrag.value,
+        )
+        const toIndex = current.sections.findIndex(
+          (section) => section.id === overDrag.value,
+        )
+        if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) {
+          return current
+        }
+        const nextSections = [...current.sections]
+        const [moved] = nextSections.splice(fromIndex, 1)
+        nextSections.splice(toIndex, 0, moved)
+        return { ...current, sections: nextSections }
+      })
+      return
+    }
+
+    if (activeDrag.type === "field") {
+      if (overDrag.type === "section") {
+        moveFieldToSection(activeDrag.value, overDrag.value)
+        setSelection({
+          type: "field",
+          sectionId: overDrag.value,
+          fieldKey: activeDrag.value,
+        })
+        setSelectedFieldKey(activeDrag.value)
+        setRailTab("properties")
+        return
+      }
+
+      const target = findFieldLocation(overDrag.value)
+      if (!target) {
+        return
+      }
+
+      updateDocument((current) => {
+        let movingField: BuilderField | null = null
+        const withoutActive = current.sections.map((section) => {
+          const found = section.fields.find(
+            (field) => field.key === activeDrag.value,
+          )
+          if (!found) {
+            return section
+          }
+          movingField = found
+          return {
+            ...section,
+            fields: section.fields.filter(
+              (field) => field.key !== activeDrag.value,
+            ),
+          }
+        })
+
+        if (!movingField) {
+          return current
+        }
+        const movedField = movingField
+
+        return {
+          ...current,
+          sections: withoutActive.map((section) => {
+            if (section.id !== target.sectionId) {
+              return section
+            }
+            const targetIndex = section.fields.findIndex(
+              (field) => field.key === overDrag.value,
+            )
+            const nextFields = [...section.fields]
+            nextFields.splice(
+              targetIndex < 0 ? nextFields.length : targetIndex,
+              0,
+              movedField,
+            )
+            return { ...section, fields: nextFields }
+          }),
+        }
+      })
+
+      setSelection({
+        type: "field",
+        sectionId: target.sectionId,
+        fieldKey: activeDrag.value,
+      })
+      setSelectedFieldKey(activeDrag.value)
+      setRailTab("properties")
+    }
+  }
+
+  const selectedPalette = selectedField
+    ? paletteFieldByKind.get(selectedField.kind)
+    : null
+  const formTitleInputId = "designer-form-title"
+  const formDescriptionInputId = "designer-form-description"
+  const sectionTitleInputId = `designer-section-title-${selectedSection?.id ?? "current"}`
+  const sectionDescriptionInputId = `designer-section-description-${selectedSection?.id ?? "current"}`
+  const sectionLayoutInputId = `designer-section-layout-${selectedSection?.id ?? "current"}`
+  const fieldNameInputId = `designer-field-name-${selectedField?.key ?? "current"}`
+  const fieldIdInputId = `designer-field-id-${selectedField?.key ?? "current"}`
+  const fieldTypeInputId = `designer-field-type-${selectedField?.key ?? "current"}`
+  const fieldPlaceholderInputId = `designer-field-placeholder-${selectedField?.key ?? "current"}`
+  const fieldOptionsInputId = `designer-field-options-${selectedField?.key ?? "current"}`
+  const fieldRequiredInputId = `designer-field-required-${selectedField?.key ?? "current"}`
+  const fieldHelpTextInputId = `designer-field-help-${selectedField?.key ?? "current"}`
+  const fieldWidthInputId = `designer-field-width-${selectedField?.key ?? "current"}`
+  const fieldSectionInputId = `designer-field-section-${selectedField?.key ?? "current"}`
+  const propertiesPanel = (
+    <div className="grid gap-3">
+      <div className="rounded-lg border border-border/60 bg-muted/15 px-3 py-3">
+        <div className="flex items-center gap-2">
+          {selectedPalette && (
+            <div className="rounded-md border border-border/60 bg-background p-1.5 text-primary">
+              <selectedPalette.icon className="h-4 w-4" />
+            </div>
+          )}
+          <p className="text-sm font-medium tracking-tight">
+            {selection.type === "form"
+              ? document.settings.title || "Untitled form"
+              : selection.type === "section"
+                ? selectedSection?.title || "Untitled section"
+                : selectedField?.label || "Untitled field"}
           </p>
         </div>
+      </div>
 
-        <button
-          type="button"
-          onClick={selectForm}
-          className={cn(
-            "rounded-[22px] border px-4 py-4 text-left transition-all",
-            selection.type === "form"
-              ? "border-primary/70 bg-primary/8"
-              : "border-border/60 bg-background/65",
-          )}
-        >
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="rounded-full">
-              Form
-            </Badge>
-            <p className="font-medium tracking-tight">
-              {document.settings.title || "Untitled form"}
-            </p>
+      {selection.type === "form" ? (
+        <div className="grid gap-3">
+          <div className="grid gap-2">
+            <label htmlFor={formTitleInputId} className="text-sm font-medium">
+              Form title
+            </label>
+            <Input
+              id={formTitleInputId}
+              className="h-10 rounded-md bg-background"
+              value={document.settings.title}
+              onChange={(event) =>
+                updateDocument((current) => ({
+                  ...current,
+                  settings: {
+                    ...current.settings,
+                    title: event.target.value,
+                  },
+                }))
+              }
+            />
           </div>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {sections.length} section{sections.length === 1 ? "" : "s"} and {allFields.length} field
-            {allFields.length === 1 ? "" : "s"} in this draft.
-          </p>
-        </button>
-
-        <div className="grid gap-3 rounded-[24px] border border-border/60 bg-background/55 p-3">
-          {sections.map((section, sectionIndex) => (
-            <div
-              key={section.id}
-              className="grid gap-3 rounded-[22px] border border-border/60 bg-background/70 p-3"
+          <div className="grid gap-2">
+            <label
+              htmlFor={formDescriptionInputId}
+              className="text-sm font-medium"
             >
-              <button
-                type="button"
-                onClick={() => selectSection(section.id)}
-                className={cn(
-                  "rounded-[18px] border px-4 py-4 text-left transition-all",
-                  selection.type === "section" && selection.sectionId === section.id
-                    ? "border-primary/70 bg-primary/8"
-                    : "border-border/60 bg-background/65",
-                )}
+              Description
+            </label>
+            <Input
+              id={formDescriptionInputId}
+              className="h-10 rounded-md bg-background"
+              value={document.settings.description}
+              onChange={(event) =>
+                updateDocument((current) => ({
+                  ...current,
+                  settings: {
+                    ...current.settings,
+                    description: event.target.value,
+                  },
+                }))
+              }
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {selection.type === "section" && selectedSection ? (
+        <div className="grid gap-3">
+          <div className="grid gap-2">
+            <label
+              htmlFor={sectionTitleInputId}
+              className="text-sm font-medium"
+            >
+              Section title
+            </label>
+            <Input
+              id={sectionTitleInputId}
+              className="h-10 rounded-md bg-background"
+              value={selectedSection.title}
+              onChange={(event) =>
+                updateSelectedSection((section) => ({
+                  ...section,
+                  title: event.target.value,
+                }))
+              }
+            />
+          </div>
+          <div className="grid gap-2">
+            <label
+              htmlFor={sectionDescriptionInputId}
+              className="text-sm font-medium"
+            >
+              Description
+            </label>
+            <Input
+              id={sectionDescriptionInputId}
+              className="h-10 rounded-md bg-background"
+              value={selectedSection.description}
+              onChange={(event) =>
+                updateSelectedSection((section) => ({
+                  ...section,
+                  description: event.target.value,
+                }))
+              }
+            />
+          </div>
+          <div className="grid gap-2">
+            <label
+              htmlFor={sectionLayoutInputId}
+              className="text-sm font-medium"
+            >
+              Layout
+            </label>
+            <Select
+              value={String(selectedSection.columns)}
+              onValueChange={(value) =>
+                updateSelectedSection((section) => ({
+                  ...section,
+                  columns: value === "1" ? 1 : 2,
+                }))
+              }
+            >
+              <SelectTrigger
+                id={sectionLayoutInputId}
+                className="w-full rounded-md bg-background"
               >
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="rounded-full">
-                    Section {sectionIndex + 1}
-                  </Badge>
-                  <p className="font-medium tracking-tight">{section.title}</p>
-                </div>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {section.description || "No section description yet."}
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Single column</SelectItem>
+                <SelectItem value="2">Two columns</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      ) : null}
+
+      {selection.type === "field" && selectedField ? (
+        <div className="grid gap-3">
+          <div className="grid gap-2">
+            <label htmlFor={fieldNameInputId} className="text-sm font-medium">
+              Field name
+            </label>
+            <Input
+              id={fieldNameInputId}
+              className="h-10 rounded-md bg-background"
+              value={selectedField.label}
+              onChange={(event) =>
+                updateSelectedField((field) => ({
+                  ...field,
+                  label: event.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <label htmlFor={fieldIdInputId} className="text-sm font-medium">
+              Field ID
+            </label>
+            <Input
+              id={fieldIdInputId}
+              className="h-10 rounded-md bg-background"
+              value={selectedField.id}
+              onChange={(event) =>
+                updateSelectedField((field) => ({
+                  ...field,
+                  id: event.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <label htmlFor={fieldTypeInputId} className="text-sm font-medium">
+              Type
+            </label>
+            <Select
+              value={selectedField.kind}
+              onValueChange={(value) =>
+                updateSelectedField((field) => ({
+                  ...field,
+                  kind: value as BuilderField["kind"],
+                }))
+              }
+            >
+              <SelectTrigger
+                id={fieldTypeInputId}
+                className="w-full rounded-md bg-background"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {paletteFields.map((item) => (
+                  <SelectItem key={item.kind} value={item.kind}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <label
+              htmlFor={fieldPlaceholderInputId}
+              className="text-sm font-medium"
+            >
+              Placeholder
+            </label>
+            <Input
+              id={fieldPlaceholderInputId}
+              className="h-10 rounded-md bg-background"
+              value={selectedField.placeholder}
+              onChange={(event) =>
+                updateSelectedField((field) => ({
+                  ...field,
+                  placeholder: event.target.value,
+                }))
+              }
+            />
+          </div>
+
+          {(selectedField.kind === "select" ||
+            selectedField.kind === "radio") && (
+            <div className="grid gap-2">
+              <label
+                htmlFor={fieldOptionsInputId}
+                className="text-sm font-medium"
+              >
+                Options
+              </label>
+              <Input
+                id={fieldOptionsInputId}
+                className="h-10 rounded-md bg-background"
+                value={selectedField.optionsText}
+                onChange={(event) =>
+                  updateSelectedField((field) => ({
+                    ...field,
+                    optionsText: event.target.value,
+                  }))
+                }
+              />
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 rounded-md border border-border/60 bg-background px-3 py-2.5">
+            <Checkbox
+              id={fieldRequiredInputId}
+              checked={selectedField.required}
+              onCheckedChange={(checked) =>
+                updateSelectedField((field) => ({
+                  ...field,
+                  required: Boolean(checked),
+                }))
+              }
+            />
+            <label htmlFor={fieldRequiredInputId} className="text-sm">
+              Required
+            </label>
+          </div>
+
+          <div className="grid gap-2">
+            <label
+              htmlFor={fieldHelpTextInputId}
+              className="text-sm font-medium"
+            >
+              Help text
+            </label>
+            <Input
+              id={fieldHelpTextInputId}
+              className="h-10 rounded-md bg-background"
+              value={selectedField.helpText}
+              onChange={(event) =>
+                updateSelectedField((field) => ({
+                  ...field,
+                  helpText: event.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <label htmlFor={fieldWidthInputId} className="text-sm font-medium">
+              Width
+            </label>
+            <Select
+              value={selectedField.width}
+              onValueChange={(value) =>
+                updateSelectedField((field) => ({
+                  ...field,
+                  width: value as BuilderField["width"],
+                }))
+              }
+            >
+              <SelectTrigger
+                id={fieldWidthInputId}
+                className="w-full rounded-md bg-background"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="half">Compact width</SelectItem>
+                <SelectItem value="full">Full width</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <label
+              htmlFor={fieldSectionInputId}
+              className="text-sm font-medium"
+            >
+              Move to section
+            </label>
+            <Select
+              value={selection.sectionId}
+              onValueChange={(value) => {
+                moveFieldToSection(selection.fieldKey, value)
+                setSelection({
+                  type: "field",
+                  sectionId: value,
+                  fieldKey: selection.fieldKey,
+                })
+              }}
+            >
+              <SelectTrigger
+                id={fieldSectionInputId}
+                className="w-full rounded-md bg-background"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {sections.map((section) => (
+                  <SelectItem key={section.id} value={section.id}>
+                    {section.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Button
+            variant="outline"
+            className="rounded-md"
+            onClick={() => removeField(selection.sectionId, selection.fieldKey)}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete field
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  )
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleCanvasDragEnd}
+    >
+      <div className="grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)]">
+        <aside className="self-start xl:sticky xl:top-6">
+          <Tabs
+            value={railTab}
+            onValueChange={(value) => setRailTab(value as RailTab)}
+            className="rounded-xl border border-border/60 bg-background"
+          >
+            <div className="border-b border-border/60 p-2">
+              <TabsList className="grid h-8 w-full grid-cols-3 rounded-lg bg-muted/30 p-1">
+                <TabsTrigger value="elements" className="text-xs">
+                  Fields
+                </TabsTrigger>
+                <TabsTrigger value="structure" className="text-xs">
+                  Tree
+                </TabsTrigger>
+                <TabsTrigger value="properties" className="text-xs">
+                  Props
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="elements" className="m-0 p-2">
+              <div className="mb-2 px-1">
+                <p className="text-[11px] text-muted-foreground">
+                  Drag fields into the form.
                 </p>
-              </button>
-
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl"
-                  disabled={sectionIndex === 0}
-                  onClick={() => moveSection(section.id, -1)}
-                >
-                  <ArrowUp className="mr-2 h-4 w-4" />
-                  Up
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl"
-                  disabled={sectionIndex === sections.length - 1}
-                  onClick={() => moveSection(section.id, 1)}
-                >
-                  <ArrowDown className="mr-2 h-4 w-4" />
-                  Down
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl"
-                  disabled={sections.length === 1}
-                  onClick={() => removeSection(section.id)}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </Button>
               </div>
-
               <div className="grid gap-2">
-                {section.fields.map((field, fieldIndex) => (
+                {paletteFields.map((item) => (
+                  <PaletteButton key={item.kind} item={item} />
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="structure" className="m-0 p-2">
+              <div className="mb-2 flex items-center justify-between px-1">
+                <p className="text-[11px] text-muted-foreground">
+                  Form outline
+                </p>
+                <Badge variant="outline" className="rounded-full text-[10px]">
+                  {sections.length}
+                </Badge>
+              </div>
+              <div className="grid gap-1.5">
+                <button
+                  type="button"
+                  onClick={selectForm}
+                  className={cn(
+                    "rounded-md px-2.5 py-2 text-left text-xs transition-colors",
+                    selection.type === "form"
+                      ? "bg-primary/10 text-foreground"
+                      : "text-muted-foreground hover:bg-muted/30 hover:text-foreground",
+                  )}
+                >
+                  Main form
+                </button>
+                {sections.map((section, index) => (
                   <button
-                    key={field.key}
+                    key={section.id}
                     type="button"
-                    onClick={() => selectField(section.id, field.key)}
+                    onClick={() => selectSection(section.id)}
                     className={cn(
-                      "rounded-[18px] border px-3 py-3 text-left transition-all",
-                      selectedFieldKey === field.key
-                        ? "border-primary/70 bg-primary/8"
-                        : "border-border/60 bg-background/70",
+                      "flex items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-xs transition-colors",
+                      selectedSection?.id === section.id
+                        ? "bg-primary/10 text-foreground"
+                        : "text-muted-foreground hover:bg-muted/30 hover:text-foreground",
                     )}
                   >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="outline" className="rounded-full">
-                        {fieldIndex + 1}
-                      </Badge>
-                      <p className="font-medium tracking-tight">{field.label}</p>
-                      <Badge variant="secondary" className="rounded-full uppercase">
-                        {field.kind}
-                      </Badge>
-                    </div>
-                    <p className="mt-2 text-xs text-muted-foreground">{field.id}</p>
+                    <span className="truncate">
+                      {index + 1}. {section.title}
+                    </span>
+                    <span>{section.fields.length}</span>
                   </button>
                 ))}
               </div>
+            </TabsContent>
 
-              <Button
-                variant="outline"
-                className="rounded-xl bg-background/80"
-                onClick={() => appendFieldToSection(section.id)}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Field To Section
-              </Button>
-            </div>
-          ))}
-
-          <Button variant="outline" className="rounded-xl bg-background/80" onClick={appendSection}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Section
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid gap-4 rounded-[30px] border border-border/60 bg-[radial-gradient(circle_at_top_left,color-mix(in_oklab,var(--primary)_10%,white),transparent_30%),linear-gradient(180deg,color-mix(in_oklab,var(--card)_95%,white),color-mix(in_oklab,var(--card)_84%,transparent))] p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="space-y-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/80">
-              Canvas
-            </p>
-            <h4 className="text-lg font-semibold tracking-tight">Live design surface</h4>
-            <p className="text-sm leading-6 text-muted-foreground">
-              Each section now renders separately in the canvas, which makes the
-              designer behave more like the product you want to build.
-            </p>
-          </div>
-          <Badge variant="outline" className="rounded-full">
-            {sections.length} sections
-          </Badge>
-        </div>
-
-        <div className="rounded-[28px] border border-border/60 bg-background/70 p-5">
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-              Form
-            </p>
-            <h3 className="text-2xl font-semibold tracking-tight">
-              {document.settings.title || "Untitled form"}
-            </h3>
-            <p className="text-sm leading-6 text-muted-foreground">
-              Designer canvas with real saved sections.
-            </p>
-          </div>
-
-          <div className="mt-6 grid gap-5">
-            {sections.map((section) => (
-              <div
-                key={section.id}
-                className={cn(
-                  "rounded-[24px] border p-5 transition-all",
-                  selectedSection?.id === section.id
-                    ? "border-primary/70 bg-primary/6"
-                    : "border-border/60 bg-[linear-gradient(180deg,color-mix(in_oklab,white_86%,transparent),color-mix(in_oklab,var(--background)_90%,transparent))]",
-                )}
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <button type="button" className="text-left" onClick={() => selectSection(section.id)}>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/80">
-                      Section
-                    </p>
-                    <p className="mt-2 text-lg font-semibold tracking-tight">{section.title}</p>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                      {section.description || "No section description yet."}
-                    </p>
-                  </button>
-                  <Button
-                    variant="outline"
-                    className="rounded-xl bg-background/80"
-                    onClick={() => appendFieldToSection(section.id)}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Field
-                  </Button>
-                </div>
-
-                <div className={cn("mt-5 grid gap-3", section.columns === 2 ? "sm:grid-cols-2" : "grid-cols-1")}>
-                  {section.fields.length ? (
-                    section.fields.map((field, index) => (
-                      <div
-                        key={field.key}
-                        className={cn(
-                          "grid gap-3 rounded-[22px] border p-4 text-left transition-all",
-                          field.width === "full" && section.columns === 2 ? "sm:col-span-2" : "",
-                          selectedFieldKey === field.key
-                            ? "border-primary/70 bg-primary/8 shadow-[0_18px_34px_-28px_color-mix(in_oklab,var(--primary)_30%,transparent)]"
-                            : "border-border/60 bg-background/80",
-                        )}
-                      >
-                        <button type="button" className="text-left" onClick={() => selectField(section.id, field.key)}>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="outline" className="rounded-full">
-                              {index + 1}
-                            </Badge>
-                            <p className="font-medium tracking-tight">{field.label}</p>
-                            <Badge variant="secondary" className="rounded-full uppercase">
-                              {field.kind}
-                            </Badge>
-                            {field.required ? (
-                              <Badge variant="outline" className="rounded-full">
-                                Required
-                              </Badge>
-                            ) : null}
-                          </div>
-                          <p className="mt-2 text-xs text-muted-foreground">{field.id}</p>
-                          {field.helpText ? (
-                            <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                              {field.helpText}
-                            </p>
-                          ) : null}
-                        </button>
-
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="rounded-xl"
-                            disabled={index === 0}
-                            onClick={() => moveFieldWithinSection(section.id, field.key, -1)}
-                          >
-                            <ArrowUp className="mr-2 h-4 w-4" />
-                            Up
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="rounded-xl"
-                            disabled={index === section.fields.length - 1}
-                            onClick={() => moveFieldWithinSection(section.id, field.key, 1)}
-                          >
-                            <ArrowDown className="mr-2 h-4 w-4" />
-                            Down
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <EmptyPanel
-                      title="Section is empty"
-                      description="Add fields here so this section becomes part of the live form flow."
-                    />
-                  )}
-                </div>
+            <TabsContent value="properties" className="m-0 p-2">
+              <div className="mb-2 px-1">
+                <p className="text-[11px] text-muted-foreground">
+                  {selection.type === "form"
+                    ? "Global form settings"
+                    : selection.type === "section"
+                      ? "Section settings"
+                      : "Field settings"}
+                </p>
               </div>
-            ))}
-          </div>
+              {propertiesPanel}
+            </TabsContent>
+          </Tabs>
+        </aside>
 
-          <div className="mt-6 rounded-[24px] border border-dashed border-border/60 bg-muted/15 p-5">
-            <p className="text-sm font-medium tracking-tight">Runtime snapshot</p>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              The runtime view still uses the same field renderer, but now across all
-              saved sections instead of one adapted stack.
-            </p>
-            <div className="mt-5">
-              <RuntimeFormRenderer fields={allFields} values={{}} readOnly />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-4 self-start rounded-[30px] border border-border/60 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_96%,white),color-mix(in_oklab,var(--card)_86%,transparent))] p-5">
-        <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/80">
-            Inspector
-          </p>
-          <h4 className="text-lg font-semibold tracking-tight">Selected item</h4>
-          <p className="text-sm leading-6 text-muted-foreground">
-            The right panel now edits real form, section, and field entities.
-          </p>
-        </div>
-
-        {selection.type === "form" ? (
-          <div className="grid gap-4">
-            <Tabs defaultValue="general" className="grid gap-4">
-              <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-[20px] border border-border/55 bg-background/72 p-1.5">
-                <TabsTrigger value="general">
-                  <Settings2 className="h-4 w-4" />
-                  General
-                </TabsTrigger>
-                <TabsTrigger value="future">
-                  <Sparkles className="h-4 w-4" />
-                  Future
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="general" className="grid gap-4">
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Form Title</label>
-                  <Input
-                    className="h-11 rounded-xl bg-background/75"
-                    value={document.settings.title}
-                    onChange={(event) =>
-                      updateDocument((current) => ({
-                        ...current,
-                        settings: { ...current.settings, title: event.target.value },
-                      }))
-                    }
-                    placeholder="Operations Request"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Description</label>
-                  <Input
-                    className="h-11 rounded-xl bg-background/75"
-                    value={document.settings.description}
-                    onChange={(event) =>
-                      updateDocument((current) => ({
-                        ...current,
-                        settings: { ...current.settings, description: event.target.value },
-                      }))
-                    }
-                    placeholder="Optional form description"
-                  />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="future" className="grid gap-4">
-                <EmptyPanel
-                  title="Next: form-level settings"
-                  description="Submit labels, section rules, and higher-order form behavior can build on this real document model."
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
-        ) : null}
-
-        {selection.type === "section" && selectedSection ? (
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">Section Title</label>
-              <Input
-                value={selectedSection.title}
-                className="h-11 rounded-xl bg-background/75"
-                onChange={(event) =>
-                  updateSelectedSection((section) => ({ ...section, title: event.target.value }))
-                }
-              />
+        <main className="rounded-2xl border border-border/60 bg-card shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold tracking-tight">
+                {document.settings.title || "Untitled form"}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Standard form page canvas with drag-and-drop editing
+              </p>
             </div>
 
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">Section Description</label>
-              <Input
-                value={selectedSection.description}
-                className="h-11 rounded-xl bg-background/75"
-                onChange={(event) =>
-                  updateSelectedSection((section) => ({
-                    ...section,
-                    description: event.target.value,
-                  }))
-                }
-                placeholder="Optional section description"
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">Columns</label>
-              <Select
-                value={String(selectedSection.columns)}
+            <div className="flex flex-wrap items-center gap-2">
+              <Tabs
+                value={mode}
                 onValueChange={(value) =>
-                  updateSelectedSection((section) => ({
-                    ...section,
-                    columns: value === "1" ? 1 : 2,
-                  }))
+                  setMode(value as "design" | "preview")
                 }
               >
-                <SelectTrigger className="w-full rounded-xl bg-background/75">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1 column</SelectItem>
-                  <SelectItem value="2">2 columns</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        ) : null}
-
-        {selection.type === "field" ? (
-          selectedField ? (
-            <div className="grid gap-4">
-              <Tabs defaultValue="general" className="grid gap-4">
-                <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-[20px] border border-border/55 bg-background/72 p-1.5">
-                  <TabsTrigger value="general">
-                    <Settings2 className="h-4 w-4" />
-                    General
+                <TabsList className="h-8 rounded-md border border-border/60 bg-background p-1">
+                  <TabsTrigger value="design" className="text-xs">
+                    <LayoutPanelTop className="h-4 w-4" />
+                    Design
                   </TabsTrigger>
-                  <TabsTrigger value="validation">
+                  <TabsTrigger value="preview" className="text-xs">
                     <Sparkles className="h-4 w-4" />
-                    Validation
-                  </TabsTrigger>
-                  <TabsTrigger value="layout">
-                    <Layers3 className="h-4 w-4" />
-                    Layout
+                    Preview
                   </TabsTrigger>
                 </TabsList>
-
-                <TabsContent value="general" className="grid gap-4">
-                  <div className="grid gap-2">
-                    <label className="text-sm font-medium">Label</label>
-                    <Input
-                      className="h-11 rounded-xl bg-background/75"
-                      value={selectedField.label}
-                      onChange={(event) =>
-                        updateSelectedField((field) => ({
-                          ...field,
-                          label: event.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <label className="text-sm font-medium">ID</label>
-                    <Input
-                      className="h-11 rounded-xl bg-background/75"
-                      value={selectedField.id}
-                      onChange={(event) =>
-                        updateSelectedField((field) => ({
-                          ...field,
-                          id: event.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <label className="text-sm font-medium">Type</label>
-                    <Select
-                      value={selectedField.kind}
-                      onValueChange={(value) =>
-                        updateSelectedField((field) => ({
-                          ...field,
-                          kind: value as BuilderField["kind"],
-                        }))
-                      }
-                    >
-                      <SelectTrigger className="w-full rounded-xl bg-background/75">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="text">Text</SelectItem>
-                        <SelectItem value="email">Email</SelectItem>
-                        <SelectItem value="date">Date</SelectItem>
-                        <SelectItem value="textarea">Textarea</SelectItem>
-                        <SelectItem value="number">Number</SelectItem>
-                        <SelectItem value="select">Select</SelectItem>
-                        <SelectItem value="radio">Radio</SelectItem>
-                        <SelectItem value="checkbox">Checkbox</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <label className="text-sm font-medium">Move To Section</label>
-                    <Select
-                      value={selection.sectionId}
-                      onValueChange={(value) => {
-                        moveFieldToSection(selection.fieldKey, value)
-                        setSelection({ type: "field", sectionId: value, fieldKey: selection.fieldKey })
-                      }}
-                    >
-                      <SelectTrigger className="w-full rounded-xl bg-background/75">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sections.map((section) => (
-                          <SelectItem key={section.id} value={section.id}>
-                            {section.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="validation" className="grid gap-4">
-                  <label className="flex items-center gap-3 rounded-[20px] border border-border/60 bg-muted/20 px-4 py-3 text-sm">
-                    <Checkbox
-                      checked={selectedField.required}
-                      onCheckedChange={(checked) =>
-                        updateSelectedField((field) => ({
-                          ...field,
-                          required: Boolean(checked),
-                        }))
-                      }
-                    />
-                    Required field
-                  </label>
-                  <div className="grid gap-2">
-                    <label className="text-sm font-medium">Help Text</label>
-                    <Input
-                      className="h-11 rounded-xl bg-background/75"
-                      value={selectedField.helpText}
-                      onChange={(event) =>
-                        updateSelectedField((field) => ({
-                          ...field,
-                          helpText: event.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="layout" className="grid gap-4">
-                  <div className="grid gap-2">
-                    <label className="text-sm font-medium">Width</label>
-                    <Select
-                      value={selectedField.width}
-                      onValueChange={(value) =>
-                        updateSelectedField((field) => ({
-                          ...field,
-                          width: value as BuilderField["width"],
-                        }))
-                      }
-                    >
-                      <SelectTrigger className="w-full rounded-xl bg-background/75">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="full">Full width</SelectItem>
-                        <SelectItem value="half">Half width</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button variant="outline" className="rounded-xl" onClick={removeSelectedField}>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete Field
-                  </Button>
-                </TabsContent>
               </Tabs>
             </div>
+          </div>
+
+          {mode === "design" ? (
+            <div className="bg-muted/[0.12] p-4 sm:p-6">
+              <div className="mx-auto max-w-4xl rounded-[20px] border border-border/60 bg-background shadow-[0_1px_3px_0_color-mix(in_oklab,var(--foreground)_10%,transparent)]">
+                <div className="border-b border-border/60 px-5 py-5">
+                  <button
+                    type="button"
+                    onClick={selectForm}
+                    className={cn(
+                      "block text-left",
+                      selection.type === "form" && "text-primary",
+                    )}
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                      Form
+                    </p>
+                    <h3 className="mt-2 text-2xl font-semibold tracking-tight">
+                      {document.settings.title || "Untitled form"}
+                    </h3>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                      {document.settings.description ||
+                        "Select the form, a section, or a field to edit settings in the Props tab."}
+                    </p>
+                  </button>
+                </div>
+
+                <SortableContext
+                  items={sections.map((section) => sectionDragId(section.id))}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="grid gap-5 p-5">
+                    {sections.map((section, sectionIndex) => (
+                      <SortableSection
+                        key={section.id}
+                        id={sectionDragId(section.id)}
+                      >
+                        {({ attributes, listeners, isDragging }) => (
+                          <div
+                            className={cn(
+                              "rounded-2xl border border-border/60 bg-background transition-all",
+                              selectedSection?.id === section.id &&
+                                "border-primary/60 shadow-[0_0_0_1px_color-mix(in_oklab,var(--primary)_20%,transparent)]",
+                              isDragging && "shadow-lg",
+                            )}
+                          >
+                            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border/60 px-4 py-3">
+                              <div className="flex items-start gap-3">
+                                <button
+                                  type="button"
+                                  className="rounded-md border border-border/60 bg-muted/20 p-1.5 text-muted-foreground"
+                                  {...attributes}
+                                  {...listeners}
+                                  aria-label={`Drag ${section.title}`}
+                                >
+                                  <GripVertical className="h-4 w-4" />
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="text-left"
+                                  onClick={() => selectSection(section.id)}
+                                >
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <Badge
+                                      variant="outline"
+                                      className="rounded-full"
+                                    >
+                                      Section {sectionIndex + 1}
+                                    </Badge>
+                                    <Badge
+                                      variant="secondary"
+                                      className="rounded-full"
+                                    >
+                                      {section.fields.length} field
+                                      {section.fields.length === 1 ? "" : "s"}
+                                    </Badge>
+                                  </div>
+                                  <p className="mt-2 text-base font-semibold tracking-tight">
+                                    {section.title}
+                                  </p>
+                                  <p className="mt-1 text-sm text-muted-foreground">
+                                    {section.description ||
+                                      "No section description yet."}
+                                  </p>
+                                </button>
+                              </div>
+
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 rounded-md px-2 text-destructive hover:text-destructive"
+                                disabled={sections.length === 1}
+                                onClick={() => removeSection(section.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+
+                            <SortableContext
+                              items={section.fields.map((field) =>
+                                fieldDragId(field.key),
+                              )}
+                              strategy={verticalListSortingStrategy}
+                            >
+                              <div className="grid gap-3 px-4 py-4">
+                                {section.fields.length ? (
+                                  section.fields.map((field) => {
+                                    const paletteItem = paletteFieldByKind.get(
+                                      field.kind,
+                                    )
+                                    const FieldIcon = paletteItem?.icon ?? Type
+
+                                    return (
+                                      <SortableField
+                                        key={field.key}
+                                        id={fieldDragId(field.key)}
+                                      >
+                                        {({
+                                          attributes: fieldAttributes,
+                                          listeners: fieldListeners,
+                                          isDragging: isFieldDragging,
+                                        }) => (
+                                          <div className="grid gap-3">
+                                            <div
+                                              className={cn(
+                                                "flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 bg-background px-3 py-3 transition-all",
+                                                selectedFieldKey ===
+                                                  field.key &&
+                                                  "border-primary/60 shadow-[0_0_0_1px_color-mix(in_oklab,var(--primary)_20%,transparent)]",
+                                                isFieldDragging && "shadow-lg",
+                                              )}
+                                            >
+                                              <div className="flex min-w-0 items-center gap-3">
+                                                <button
+                                                  type="button"
+                                                  className="rounded-md border border-border/60 bg-muted/20 p-1.5 text-muted-foreground"
+                                                  {...fieldAttributes}
+                                                  {...fieldListeners}
+                                                  aria-label={`Drag ${field.label}`}
+                                                >
+                                                  <GripVertical className="h-4 w-4" />
+                                                </button>
+                                                <div className="rounded-md border border-border/60 bg-muted/20 p-1.5 text-primary">
+                                                  <FieldIcon className="h-4 w-4" />
+                                                </div>
+                                                <button
+                                                  type="button"
+                                                  className="min-w-0 text-left"
+                                                  onClick={() =>
+                                                    selectField(
+                                                      section.id,
+                                                      field.key,
+                                                    )
+                                                  }
+                                                >
+                                                  <p className="truncate text-sm font-medium tracking-tight">
+                                                    {field.label}
+                                                  </p>
+                                                  <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                                                    <span>{field.id}</span>
+                                                    <span>•</span>
+                                                    <span className="capitalize">
+                                                      {field.kind}
+                                                    </span>
+                                                    {field.required ? (
+                                                      <>
+                                                        <span>•</span>
+                                                        <span>Required</span>
+                                                      </>
+                                                    ) : null}
+                                                  </div>
+                                                </button>
+                                              </div>
+
+                                              <div className="flex flex-wrap gap-1">
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  className="h-7 rounded-md px-2 text-destructive hover:text-destructive"
+                                                  onClick={() =>
+                                                    removeField(
+                                                      section.id,
+                                                      field.key,
+                                                    )
+                                                  }
+                                                >
+                                                  <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </SortableField>
+                                    )
+                                  })
+                                ) : (
+                                  <div className="rounded-xl border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted-foreground">
+                                    Drop fields here
+                                  </div>
+                                )}
+                              </div>
+                            </SortableContext>
+                          </div>
+                        )}
+                      </SortableSection>
+                    ))}
+                  </div>
+                </SortableContext>
+              </div>
+            </div>
           ) : (
-            <EmptyPanel
-              title="Field no longer selected"
-              description="Choose a field from the structure panel or canvas."
-            />
-          )
-        ) : null}
+            <div className="bg-muted/[0.12] p-4 sm:p-6">
+              <div className="mx-auto max-w-4xl rounded-[20px] border border-border/60 bg-background p-5 shadow-[0_1px_3px_0_color-mix(in_oklab,var(--foreground)_10%,transparent)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                  Preview
+                </p>
+                <h3 className="mt-2 text-xl font-semibold tracking-tight">
+                  {document.settings.title || "Untitled form"}
+                </h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Large screens render 3 columns, medium screens render 2, and
+                  mobile stacks to 1.
+                </p>
+                <div className="mt-6">
+                  <RuntimeFormRenderer
+                    fields={allFields}
+                    values={{}}
+                    readOnly
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
       </div>
-    </div>
+    </DndContext>
   )
 }

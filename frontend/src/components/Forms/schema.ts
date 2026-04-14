@@ -1,4 +1,8 @@
-import type { JsonSchema, JsonSchemaField, JsonSchemaSection } from "@/lib/forms-api"
+import type {
+  JsonSchema,
+  JsonSchemaField,
+  JsonSchemaSection,
+} from "@/lib/forms-api"
 
 export type FieldKind =
   | "text"
@@ -46,6 +50,18 @@ export type DesignerDocument = {
 }
 
 type BuilderFieldSeed = Omit<BuilderField, "key">
+
+type EmptyFieldOptions = {
+  baseId?: string
+  existingIds?: Iterable<string>
+  label?: string
+}
+
+type EmptySectionOptions = {
+  baseId?: string
+  existingIds?: Iterable<string>
+  title?: string
+}
 
 const starterBuilderFieldSeeds: BuilderFieldSeed[] = [
   {
@@ -95,11 +111,49 @@ function withFieldKey(field: BuilderFieldSeed): BuilderField {
   }
 }
 
-export function createEmptyField(index: number): BuilderField {
+function createUniqueId(baseId: string, existingIds?: Iterable<string>) {
+  const normalizedBaseId = baseId.trim() || "field"
+  const seen = new Set(existingIds ?? [])
+
+  if (!seen.has(normalizedBaseId)) {
+    return normalizedBaseId
+  }
+
+  let suffix = 2
+  while (seen.has(`${normalizedBaseId}_${suffix}`)) {
+    suffix += 1
+  }
+
+  return `${normalizedBaseId}_${suffix}`
+}
+
+function createUniqueSectionId(baseId: string, existingIds?: Iterable<string>) {
+  const normalizedBaseId = baseId.trim() || "section"
+  const seen = new Set(existingIds ?? [])
+
+  if (!seen.has(normalizedBaseId)) {
+    return normalizedBaseId
+  }
+
+  let suffix = 2
+  while (seen.has(`${normalizedBaseId}_${suffix}`)) {
+    suffix += 1
+  }
+
+  return `${normalizedBaseId}_${suffix}`
+}
+
+export function createEmptyField(
+  index: number,
+  options?: EmptyFieldOptions,
+): BuilderField {
   return withFieldKey({
-    id: `field_${index + 1}`,
+    id: createUniqueId(
+      options?.baseId ?? `field_${index + 1}`,
+      options?.existingIds,
+    ),
     kind: "text",
-    label: "New Field",
+    label: options?.label ?? "New Field",
     helpText: "",
     placeholder: "",
     required: false,
@@ -113,10 +167,16 @@ export function createEmptyField(index: number): BuilderField {
   })
 }
 
-export function createEmptySection(index: number): DesignerSection {
+export function createEmptySection(
+  index: number,
+  options?: EmptySectionOptions,
+): DesignerSection {
   return {
-    id: `section_${index + 1}`,
-    title: `Section ${index + 1}`,
+    id: createUniqueSectionId(
+      options?.baseId ?? `section_${index + 1}`,
+      options?.existingIds,
+    ),
+    title: options?.title ?? `Section ${index + 1}`,
     description: "",
     columns: 2,
     fields: [],
@@ -216,7 +276,8 @@ export function buildSchemaFromFields(fields: BuilderField[]): JsonSchema {
 export function builderFieldsFromSchema(
   schema?: JsonSchema | null,
 ): BuilderField[] {
-  const rawFields = schema?.sections?.flatMap((section) => section.fields) ?? schema?.fields
+  const rawFields =
+    schema?.sections?.flatMap((section) => section.fields) ?? schema?.fields
 
   if (!rawFields?.length) {
     return cloneStarterFields()
@@ -231,11 +292,15 @@ export function designerDocumentFromBuilder(
 ): DesignerDocument {
   const document = cloneStarterDocument(title)
   document.sections[0].fields = fields
-  document.sections[0].description = "Current draft fields from the existing flat schema."
+  document.sections[0].description =
+    "Current draft fields from the existing flat schema."
   return document
 }
 
-function sectionFromJsonSchemaSection(section: JsonSchemaSection, index: number): DesignerSection {
+function sectionFromJsonSchemaSection(
+  section: JsonSchemaSection,
+  index: number,
+): DesignerSection {
   return {
     id: section.id || createSectionKey(),
     title: section.title || `Section ${index + 1}`,
@@ -255,7 +320,9 @@ export function builderStateFromDesigner(document: DesignerDocument): {
   }
 }
 
-export function builderFieldsFromDesigner(document: DesignerDocument): BuilderField[] {
+export function builderFieldsFromDesigner(
+  document: DesignerDocument,
+): BuilderField[] {
   return document.sections.flatMap((section) => section.fields)
 }
 
@@ -278,7 +345,9 @@ export function designerDocumentFromSchema(
   return designerDocumentFromBuilder(title, builderFieldsFromSchema(schema))
 }
 
-export function buildSchemaFromDesigner(document: DesignerDocument): JsonSchema {
+export function buildSchemaFromDesigner(
+  document: DesignerDocument,
+): JsonSchema {
   return {
     version: 2,
     settings: {
@@ -370,7 +439,9 @@ export function validateBuilderDraft(
   return null
 }
 
-export function validateDesignerDocument(document: DesignerDocument): string | null {
+export function validateDesignerDocument(
+  document: DesignerDocument,
+): string | null {
   if (!document.settings.title.trim()) {
     return "Form title is required."
   }

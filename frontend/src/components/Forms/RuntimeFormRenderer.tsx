@@ -52,13 +52,20 @@ export function RuntimeFormRenderer({
   readOnly?: boolean
   layout?: "auto" | "single"
 }) {
-  const gridClass = layout === "single" ? "grid gap-3" : "grid gap-4 sm:grid-cols-2"
+  const gridClass =
+    layout === "single"
+      ? "grid gap-3"
+      : "grid gap-4 md:grid-cols-2 xl:grid-cols-3"
 
   return (
     <div className={gridClass}>
       {fields.map((field) => {
         const widthClass =
-          layout === "single" ? "" : field.width === "full" ? "sm:col-span-2" : ""
+          layout === "single"
+            ? ""
+            : field.width === "full"
+              ? "md:col-span-2 xl:col-span-3"
+              : ""
 
         if (readOnly) {
           return (
@@ -85,7 +92,9 @@ export function RuntimeFormRenderer({
                 ) : null}
               </div>
               {field.helpText ? (
-                <p className="mt-2 text-xs text-muted-foreground">{field.helpText}</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {field.helpText}
+                </p>
               ) : null}
               <p className="mt-3 break-words rounded-xl bg-background/70 px-3 py-2 text-sm leading-6 shadow-[inset_0_1px_0_0_color-mix(in_oklab,white_65%,transparent)]">
                 {formatReadOnlyValue(field, values[field.id])}
@@ -98,7 +107,9 @@ export function RuntimeFormRenderer({
           <div key={field.key} className={`grid gap-2 ${widthClass}`}>
             <label htmlFor={field.id} className="text-sm font-medium">
               {field.label}
-              {field.required ? <span className="ml-1 text-primary">*</span> : null}
+              {field.required ? (
+                <span className="ml-1 text-primary">*</span>
+              ) : null}
             </label>
             {field.helpText ? (
               <p className="text-xs text-muted-foreground">{field.helpText}</p>
@@ -109,8 +120,12 @@ export function RuntimeFormRenderer({
                 value={String(values[field.id] ?? "")}
                 placeholder={field.placeholder}
                 required={field.required}
-                minLength={field.minLength ? Number(field.minLength) : undefined}
-                maxLength={field.maxLength ? Number(field.maxLength) : undefined}
+                minLength={
+                  field.minLength ? Number(field.minLength) : undefined
+                }
+                maxLength={
+                  field.maxLength ? Number(field.maxLength) : undefined
+                }
                 onChange={(event) => onChange?.(field.id, event.target.value)}
               />
             ) : null}
@@ -122,8 +137,12 @@ export function RuntimeFormRenderer({
                 value={String(values[field.id] ?? "")}
                 placeholder={field.placeholder}
                 required={field.required}
-                minLength={field.minLength ? Number(field.minLength) : undefined}
-                maxLength={field.maxLength ? Number(field.maxLength) : undefined}
+                minLength={
+                  field.minLength ? Number(field.minLength) : undefined
+                }
+                maxLength={
+                  field.maxLength ? Number(field.maxLength) : undefined
+                }
                 pattern={field.pattern || undefined}
                 onChange={(event) => onChange?.(field.id, event.target.value)}
               />
@@ -136,8 +155,12 @@ export function RuntimeFormRenderer({
                 value={String(values[field.id] ?? "")}
                 placeholder={field.placeholder}
                 required={field.required}
-                minLength={field.minLength ? Number(field.minLength) : undefined}
-                maxLength={field.maxLength ? Number(field.maxLength) : undefined}
+                minLength={
+                  field.minLength ? Number(field.minLength) : undefined
+                }
+                maxLength={
+                  field.maxLength ? Number(field.maxLength) : undefined
+                }
                 pattern={field.pattern || undefined}
                 onChange={(event) => onChange?.(field.id, event.target.value)}
               />
@@ -178,7 +201,9 @@ export function RuntimeFormRenderer({
                 onValueChange={(value) => onChange?.(field.id, value)}
               >
                 <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
-                  <SelectValue placeholder={field.placeholder || "Choose an option"} />
+                  <SelectValue
+                    placeholder={field.placeholder || "Choose an option"}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {field.optionsText
@@ -217,18 +242,23 @@ export function RuntimeFormRenderer({
               </div>
             ) : null}
             {field.kind === "checkbox" ? (
-              <label className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/80 px-4 py-3 text-sm">
+              <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/80 px-4 py-3 text-sm">
                 <Checkbox
+                  id={field.key}
                   checked={Boolean(values[field.id] ?? false)}
-                  onCheckedChange={(checked) => onChange?.(field.id, Boolean(checked))}
+                  onCheckedChange={(checked) =>
+                    onChange?.(field.id, Boolean(checked))
+                  }
                 />
-                <span className="min-w-0 break-words">
+                <label htmlFor={field.key} className="min-w-0 break-words">
                   {field.placeholder || field.label}
-                </span>
-              </label>
+                </label>
+              </div>
             ) : null}
             {errors?.[field.id] ? (
-              <p className="text-xs font-medium text-destructive">{errors[field.id]}</p>
+              <p className="text-xs font-medium text-destructive">
+                {errors[field.id]}
+              </p>
             ) : null}
           </div>
         )
