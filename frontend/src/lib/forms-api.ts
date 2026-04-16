@@ -1,12 +1,31 @@
+export type JsonSchemaFieldWidth = "full" | "half" | "third" | "quarter"
+export type JsonSchemaFieldStylePreset =
+  | "plain"
+  | "rounded"
+  | "shadow"
+  | "accent"
+export type JsonSchemaSectionColumns = 1 | 2 | 3 | 4
+
 export type JsonSchemaField = {
   id: string
   label: string
-  type: "text" | "textarea" | "number" | "select" | "email" | "date" | "checkbox" | "radio"
+  type:
+    | "text"
+    | "textarea"
+    | "number"
+    | "select"
+    | "email"
+    | "date"
+    | "checkbox"
+    | "radio"
   options?: string[]
+  default_value?: string
   placeholder?: string
   help_text?: string
   required?: boolean
-  width?: "full" | "half"
+  width?: JsonSchemaFieldWidth
+  custom_classes?: string
+  style_preset?: JsonSchemaFieldStylePreset
   validation?: {
     min_length?: number
     max_length?: number
@@ -21,7 +40,7 @@ export type JsonSchemaSection = {
   title: string
   description?: string
   layout?: {
-    columns?: 1 | 2
+    columns?: JsonSchemaSectionColumns
   }
   fields: JsonSchemaField[]
 }
@@ -174,11 +193,18 @@ export const formsApi = {
       body: JSON.stringify(payload),
     })
   },
-  updateSubmission(formId: string, submissionId: string, data: Record<string, unknown>) {
-    return apiRequest<Submission>(`/forms/${formId}/submissions/${submissionId}`, {
-      method: "PUT",
-      body: JSON.stringify({ data }),
-    })
+  updateSubmission(
+    formId: string,
+    submissionId: string,
+    data: Record<string, unknown>,
+  ) {
+    return apiRequest<Submission>(
+      `/forms/${formId}/submissions/${submissionId}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ data }),
+      },
+    )
   },
   readHistory(formId: string, submissionId: string) {
     return apiRequest<AuditLogsResponse>(

@@ -1,7 +1,10 @@
 import type {
   JsonSchema,
   JsonSchemaField,
+  JsonSchemaFieldStylePreset,
+  JsonSchemaFieldWidth,
   JsonSchemaSection,
+  JsonSchemaSectionColumns,
 } from "@/lib/forms-api"
 
 export type FieldKind =
@@ -19,10 +22,13 @@ export type BuilderField = {
   id: string
   kind: FieldKind
   label: string
+  defaultValue: string
   helpText: string
   placeholder: string
   required: boolean
-  width: "full" | "half"
+  width: JsonSchemaFieldWidth
+  customClasses: string
+  stylePreset: JsonSchemaFieldStylePreset
   optionsText: string
   minLength: string
   maxLength: string
@@ -35,7 +41,7 @@ export type DesignerSection = {
   id: string
   title: string
   description: string
-  columns: 1 | 2
+  columns: JsonSchemaSectionColumns
   fields: BuilderField[]
 }
 
@@ -68,10 +74,13 @@ const starterBuilderFieldSeeds: BuilderFieldSeed[] = [
     id: "requester_name",
     kind: "text",
     label: "Requester Name",
+    defaultValue: "",
     helpText: "",
     placeholder: "Jordan Lee",
     required: true,
     width: "half",
+    customClasses: "",
+    stylePreset: "plain",
     optionsText: "",
     minLength: "",
     maxLength: "",
@@ -83,10 +92,13 @@ const starterBuilderFieldSeeds: BuilderFieldSeed[] = [
     id: "request_details",
     kind: "textarea",
     label: "Request Details",
+    defaultValue: "",
     helpText: "",
     placeholder: "Describe the request",
     required: true,
     width: "full",
+    customClasses: "",
+    stylePreset: "plain",
     optionsText: "",
     minLength: "",
     maxLength: "",
@@ -154,10 +166,13 @@ export function createEmptyField(
     ),
     kind: "text",
     label: options?.label ?? "New Field",
+    defaultValue: "",
     helpText: "",
     placeholder: "",
     required: false,
     width: "full",
+    customClasses: "",
+    stylePreset: "plain",
     optionsText: "",
     minLength: "",
     maxLength: "",
@@ -206,9 +221,12 @@ function toJsonSchemaField(field: BuilderField): JsonSchemaField {
     label: field.label.trim(),
     type: field.kind,
     placeholder: field.placeholder.trim() || undefined,
+    default_value: field.defaultValue.trim() || undefined,
     help_text: field.helpText.trim() || undefined,
     required: field.required,
     width: field.width,
+    custom_classes: field.customClasses.trim() || undefined,
+    style_preset: field.stylePreset === "plain" ? undefined : field.stylePreset,
   }
 
   const validation: NonNullable<JsonSchemaField["validation"]> = {}
@@ -250,10 +268,13 @@ function fromJsonSchemaField(field: JsonSchemaField): BuilderField {
         ? field.type
         : normalizeKind(field.type),
     label: field.label,
+    defaultValue: field.default_value ?? "",
     helpText: field.help_text ?? "",
     placeholder: field.placeholder ?? "",
     required: field.required ?? false,
     width: field.width ?? "full",
+    customClasses: field.custom_classes ?? "",
+    stylePreset: field.style_preset ?? "plain",
     optionsText: field.options?.join(", ") ?? "",
     minLength: field.validation?.min_length?.toString() ?? "",
     maxLength: field.validation?.max_length?.toString() ?? "",
@@ -305,7 +326,13 @@ function sectionFromJsonSchemaSection(
     id: section.id || createSectionKey(),
     title: section.title || `Section ${index + 1}`,
     description: section.description ?? "",
-    columns: section.layout?.columns === 1 ? 1 : 2,
+    columns:
+      section.layout?.columns === 1 ||
+      section.layout?.columns === 2 ||
+      section.layout?.columns === 3 ||
+      section.layout?.columns === 4
+        ? section.layout.columns
+        : 2,
     fields: section.fields.map(fromJsonSchemaField),
   }
 }

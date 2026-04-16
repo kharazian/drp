@@ -9,7 +9,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { cn } from "@/lib/utils"
 import type { BuilderField } from "./schema"
+
+type PreviewDevice = "mobile" | "tablet" | "desktop"
 
 function Textarea(props: ComponentProps<"textarea">) {
   return (
@@ -37,6 +40,48 @@ function formatReadOnlyValue(field: BuilderField, value: unknown): string {
   return String(value)
 }
 
+function getFieldWidthClass(
+  field: BuilderField,
+  layout: "auto" | "single",
+  previewDevice?: PreviewDevice,
+) {
+  if (layout === "single") {
+    return ""
+  }
+
+  if (previewDevice === "mobile") {
+    return "col-span-12"
+  }
+
+  if (previewDevice === "tablet") {
+    return field.width === "full" ? "col-span-12" : "col-span-6"
+  }
+
+  switch (field.width) {
+    case "full":
+      return "col-span-12"
+    case "half":
+      return "col-span-12 md:col-span-6"
+    case "third":
+      return "col-span-12 md:col-span-6 xl:col-span-4"
+    case "quarter":
+      return "col-span-12 md:col-span-6 xl:col-span-3"
+  }
+}
+
+function getPresetClass(field: BuilderField) {
+  switch (field.stylePreset) {
+    case "rounded":
+      return "rounded-[28px]"
+    case "shadow":
+      return "shadow-[0_18px_36px_-30px_color-mix(in_oklab,var(--foreground)_28%,transparent)]"
+    case "accent":
+      return "border-primary/45 bg-primary/5"
+    case "plain":
+      return ""
+  }
+}
+
 export function RuntimeFormRenderer({
   fields,
   values,
@@ -44,6 +89,7 @@ export function RuntimeFormRenderer({
   errors,
   readOnly = false,
   layout = "auto",
+  previewDevice,
 }: {
   fields: BuilderField[]
   values: Record<string, unknown>
@@ -51,29 +97,34 @@ export function RuntimeFormRenderer({
   errors?: Record<string, string>
   readOnly?: boolean
   layout?: "auto" | "single"
+  previewDevice?: PreviewDevice
 }) {
   const gridClass =
     layout === "single"
       ? "grid gap-3"
-      : "grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+      : previewDevice === "mobile"
+        ? "grid grid-cols-12 gap-4"
+        : previewDevice === "tablet"
+          ? "grid grid-cols-12 gap-4"
+          : "grid grid-cols-12 gap-4"
 
   return (
     <div className={gridClass}>
       {fields.map((field) => {
-        const widthClass =
-          layout === "single"
-            ? ""
-            : field.width === "full"
-              ? "md:col-span-2 xl:col-span-3"
-              : ""
+        const widthClass = getFieldWidthClass(field, layout, previewDevice)
+        const surfaceClass = cn(getPresetClass(field), field.customClasses)
+        const value = values[field.id] ?? field.defaultValue
 
         if (readOnly) {
           return (
             <div
               key={field.key}
-              className={`rounded-2xl border border-border/60 bg-muted/35 p-4 ${widthClass} ${
-                layout === "single" ? "bg-background/65 p-5" : ""
-              }`}
+              className={cn(
+                "rounded-2xl border border-border/60 bg-muted/35 p-4",
+                widthClass,
+                surfaceClass,
+                layout === "single" && "bg-background/65 p-5",
+              )}
             >
               <div className="flex flex-wrap items-center gap-2">
                 <p
@@ -97,14 +148,17 @@ export function RuntimeFormRenderer({
                 </p>
               ) : null}
               <p className="mt-3 break-words rounded-xl bg-background/70 px-3 py-2 text-sm leading-6 shadow-[inset_0_1px_0_0_color-mix(in_oklab,white_65%,transparent)]">
-                {formatReadOnlyValue(field, values[field.id])}
+                {formatReadOnlyValue(field, value)}
               </p>
             </div>
           )
         }
 
         return (
-          <div key={field.key} className={`grid gap-2 ${widthClass}`}>
+          <div
+            key={field.key}
+            className={cn("grid gap-2", widthClass, surfaceClass)}
+          >
             <label htmlFor={field.id} className="text-sm font-medium">
               {field.label}
               {field.required ? (
@@ -117,7 +171,7 @@ export function RuntimeFormRenderer({
             {field.kind === "textarea" ? (
               <Textarea
                 id={field.id}
-                value={String(values[field.id] ?? "")}
+                value={String(value ?? "")}
                 placeholder={field.placeholder}
                 required={field.required}
                 minLength={
@@ -134,7 +188,7 @@ export function RuntimeFormRenderer({
                 type="text"
                 id={field.id}
                 className="h-11 rounded-2xl bg-background/80"
-                value={String(values[field.id] ?? "")}
+                value={String(value ?? "")}
                 placeholder={field.placeholder}
                 required={field.required}
                 minLength={
@@ -152,7 +206,7 @@ export function RuntimeFormRenderer({
                 type="email"
                 id={field.id}
                 className="h-11 rounded-2xl bg-background/80"
-                value={String(values[field.id] ?? "")}
+                value={String(value ?? "")}
                 placeholder={field.placeholder}
                 required={field.required}
                 minLength={
@@ -170,7 +224,7 @@ export function RuntimeFormRenderer({
                 id={field.id}
                 type="date"
                 className="h-11 rounded-2xl bg-background/80"
-                value={String(values[field.id] ?? "")}
+                value={String(value ?? "")}
                 required={field.required}
                 onChange={(event) => onChange?.(field.id, event.target.value)}
               />
@@ -180,7 +234,7 @@ export function RuntimeFormRenderer({
                 id={field.id}
                 type="number"
                 className="h-11 rounded-2xl bg-background/80"
-                value={String(values[field.id] ?? "")}
+                value={String(value ?? "")}
                 placeholder={field.placeholder}
                 required={field.required}
                 min={field.minValue ? Number(field.minValue) : undefined}
@@ -193,11 +247,7 @@ export function RuntimeFormRenderer({
             ) : null}
             {field.kind === "select" ? (
               <Select
-                value={
-                  typeof values[field.id] === "string"
-                    ? String(values[field.id])
-                    : undefined
-                }
+                value={typeof value === "string" ? String(value) : undefined}
                 onValueChange={(value) => onChange?.(field.id, value)}
               >
                 <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
@@ -233,7 +283,7 @@ export function RuntimeFormRenderer({
                         type="radio"
                         name={field.id}
                         value={option}
-                        checked={String(values[field.id] ?? "") === option}
+                        checked={String(value ?? "") === option}
                         onChange={() => onChange?.(field.id, option)}
                       />
                       <span>{option}</span>
@@ -245,7 +295,7 @@ export function RuntimeFormRenderer({
               <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/80 px-4 py-3 text-sm">
                 <Checkbox
                   id={field.key}
-                  checked={Boolean(values[field.id] ?? false)}
+                  checked={Boolean(value ?? false)}
                   onCheckedChange={(checked) =>
                     onChange?.(field.id, Boolean(checked))
                   }

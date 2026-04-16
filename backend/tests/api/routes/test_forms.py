@@ -321,19 +321,24 @@ def test_section_based_schema_is_supported_end_to_end(
                     "id": "requester_info",
                     "title": "Requester Info",
                     "description": "Basic contact details",
-                    "layout": {"columns": 2},
+                    "layout": {"columns": 4},
                     "fields": [
                         {
                             "id": "requester_name",
                             "label": "Requester Name",
                             "type": "text",
                             "required": True,
+                            "width": "quarter",
+                            "custom_classes": "rounded-xl border-primary/40",
+                            "style_preset": "accent",
                         },
                         {
                             "id": "requester_email",
                             "label": "Requester Email",
                             "type": "email",
                             "required": True,
+                            "default_value": "ops@example.com",
+                            "width": "third",
                         },
                     ],
                 },
@@ -364,6 +369,15 @@ def test_section_based_schema_is_supported_end_to_end(
     form = form_response.json()
     assert form["active_version"]["schema"]["version"] == 2
     assert len(form["active_version"]["schema"]["sections"]) == 2
+    requester_section = form["active_version"]["schema"]["sections"][0]
+    assert requester_section["layout"]["columns"] == 4
+    assert requester_section["fields"][0]["width"] == "quarter"
+    assert requester_section["fields"][0]["style_preset"] == "accent"
+    assert (
+        requester_section["fields"][0]["custom_classes"]
+        == "rounded-xl border-primary/40"
+    )
+    assert requester_section["fields"][1]["default_value"] == "ops@example.com"
 
     valid_submission = client.post(
         f"{settings.API_V1_STR}/forms/{form['id']}/submissions",

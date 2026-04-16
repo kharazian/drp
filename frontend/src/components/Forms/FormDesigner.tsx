@@ -8,6 +8,7 @@ import {
   useSensors,
 } from "@dnd-kit/core"
 import {
+  rectSortingStrategy,
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
@@ -17,12 +18,16 @@ import {
   CalendarDays,
   CheckSquare,
   CircleDot,
+  Copy,
   GripVertical,
   LayoutPanelTop,
   ListChecks,
   Mail,
+  Monitor,
   Rows3,
+  Smartphone,
   Sparkles,
+  Tablet,
   Trash2,
   Type,
   WholeWord,
@@ -63,6 +68,7 @@ type DesignerSelection =
   | { type: "field"; sectionId: string; fieldKey: string }
 
 type RailTab = "elements" | "structure" | "properties"
+type PreviewDevice = "mobile" | "tablet" | "desktop"
 
 type PaletteField = {
   kind: BuilderField["kind"]
@@ -84,6 +90,64 @@ const paletteFields: PaletteField[] = [
 const paletteFieldByKind = new Map(
   paletteFields.map((item) => [item.kind, item] as const),
 )
+
+const deviceOptions: Array<{
+  value: PreviewDevice
+  label: string
+  icon: typeof Monitor
+}> = [
+  { value: "mobile", label: "Mobile", icon: Smartphone },
+  { value: "tablet", label: "Tablet", icon: Tablet },
+  { value: "desktop", label: "Desktop", icon: Monitor },
+]
+
+function getDeviceCanvasClass(device: PreviewDevice) {
+  switch (device) {
+    case "mobile":
+      return "max-w-sm"
+    case "tablet":
+      return "max-w-2xl"
+    case "desktop":
+      return "max-w-6xl"
+  }
+}
+
+function getDesignerWidthClass(
+  width: BuilderField["width"],
+  device: PreviewDevice,
+) {
+  if (device === "mobile") {
+    return "col-span-12"
+  }
+
+  if (device === "tablet") {
+    return width === "full" ? "col-span-12" : "col-span-6"
+  }
+
+  switch (width) {
+    case "full":
+      return "col-span-12"
+    case "half":
+      return "col-span-6"
+    case "third":
+      return "col-span-4"
+    case "quarter":
+      return "col-span-3"
+  }
+}
+
+function getFieldStyleClass(field: BuilderField) {
+  switch (field.stylePreset) {
+    case "rounded":
+      return "rounded-[22px]"
+    case "shadow":
+      return "shadow-[0_18px_36px_-30px_color-mix(in_oklab,var(--foreground)_28%,transparent)]"
+    case "accent":
+      return "border-primary/45 bg-primary/5"
+    case "plain":
+      return ""
+  }
+}
 
 function paletteDragId(kind: BuilderField["kind"]) {
   return `palette:${kind}`
@@ -252,9 +316,11 @@ function SortableSection({
 
 function SortableField({
   id,
+  className,
   children,
 }: {
   id: string
+  className?: string
   children: (dragHandle: {
     attributes: ReturnType<typeof useSortable>["attributes"]
     listeners: ReturnType<typeof useSortable>["listeners"]
@@ -277,7 +343,7 @@ function SortableField({
         transform: CSS.Transform.toString(transform),
         transition,
       }}
-      className={cn(isDragging && "z-10")}
+      className={cn(className, isDragging && "z-10")}
     >
       {children({ attributes, listeners, isDragging })}
     </div>
@@ -306,6 +372,7 @@ export function FormDesigner({
   })
   const [railTab, setRailTab] = useState<RailTab>("elements")
   const [mode, setMode] = useState<"design" | "preview">("design")
+  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>("desktop")
 
   const sections = document.sections
   const allFields = useMemo(
@@ -536,6 +603,48 @@ export function FormDesigner({
     setSelectedFieldKey(null)
   }
 
+  const duplicateField = (sectionId: string, fieldKey: string) => {
+    updateDocument((current) => ({
+      ...current,
+      sections: current.sections.map((section) => {
+        if (section.id !== sectionId) {
+          return section
+        }
+        const index = section.fields.findIndex(
+          (field) => field.key === fieldKey,
+        )
+        if (index < 0) {
+          return section
+        }
+
+        const original = section.fields[index]
+        const existingIds = builderFieldsFromDesigner(current).map(
+          (field) => field.id,
+        )
+        const duplicateSeed = createEmptyField(
+          builderFieldsFromDesigner(current).length,
+          {
+            baseId: `${original.id}_copy`,
+            existingIds,
+            label: `${original.label} Copy`,
+          },
+        )
+        const duplicate = {
+          ...original,
+          key: duplicateSeed.key,
+          id: duplicateSeed.id,
+          label: duplicateSeed.label,
+        }
+        const nextFields = [...section.fields]
+        nextFields.splice(index + 1, 0, duplicate)
+        setSelection({ type: "field", sectionId, fieldKey: duplicate.key })
+        setSelectedFieldKey(duplicate.key)
+        setRailTab("properties")
+        return { ...section, fields: nextFields }
+      }),
+    }))
+  }
+
   const handleCanvasDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     if (!over || active.id === over.id) {
@@ -664,12 +773,18 @@ export function FormDesigner({
   const fieldNameInputId = `designer-field-name-${selectedField?.key ?? "current"}`
   const fieldIdInputId = `designer-field-id-${selectedField?.key ?? "current"}`
   const fieldTypeInputId = `designer-field-type-${selectedField?.key ?? "current"}`
+  const fieldDefaultInputId = `designer-field-default-${selectedField?.key ?? "current"}`
   const fieldPlaceholderInputId = `designer-field-placeholder-${selectedField?.key ?? "current"}`
   const fieldOptionsInputId = `designer-field-options-${selectedField?.key ?? "current"}`
   const fieldRequiredInputId = `designer-field-required-${selectedField?.key ?? "current"}`
   const fieldHelpTextInputId = `designer-field-help-${selectedField?.key ?? "current"}`
+  const fieldMinLengthInputId = `designer-field-min-length-${selectedField?.key ?? "current"}`
+  const fieldMaxLengthInputId = `designer-field-max-length-${selectedField?.key ?? "current"}`
+  const fieldPatternInputId = `designer-field-pattern-${selectedField?.key ?? "current"}`
   const fieldWidthInputId = `designer-field-width-${selectedField?.key ?? "current"}`
   const fieldSectionInputId = `designer-field-section-${selectedField?.key ?? "current"}`
+  const fieldStylePresetInputId = `designer-field-style-${selectedField?.key ?? "current"}`
+  const fieldCustomClassesInputId = `designer-field-classes-${selectedField?.key ?? "current"}`
   const propertiesPanel = (
     <div className="grid gap-3">
       <div className="rounded-lg border border-border/60 bg-muted/15 px-3 py-3">
@@ -787,7 +902,9 @@ export function FormDesigner({
               onValueChange={(value) =>
                 updateSelectedSection((section) => ({
                   ...section,
-                  columns: value === "1" ? 1 : 2,
+                  columns: Number(
+                    value,
+                  ) as DesignerDocument["sections"][number]["columns"],
                 }))
               }
             >
@@ -800,6 +917,8 @@ export function FormDesigner({
               <SelectContent>
                 <SelectItem value="1">Single column</SelectItem>
                 <SelectItem value="2">Two columns</SelectItem>
+                <SelectItem value="3">Three columns</SelectItem>
+                <SelectItem value="4">Four columns</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -808,6 +927,11 @@ export function FormDesigner({
 
       {selection.type === "field" && selectedField ? (
         <div className="grid gap-3">
+          <div className="rounded-md border border-border/60 bg-muted/10 px-3 py-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              Content
+            </p>
+          </div>
           <div className="grid gap-2">
             <label htmlFor={fieldNameInputId} className="text-sm font-medium">
               Field name
@@ -891,6 +1015,26 @@ export function FormDesigner({
             />
           </div>
 
+          <div className="grid gap-2">
+            <label
+              htmlFor={fieldDefaultInputId}
+              className="text-sm font-medium"
+            >
+              Default value
+            </label>
+            <Input
+              id={fieldDefaultInputId}
+              className="h-10 rounded-md bg-background"
+              value={selectedField.defaultValue}
+              onChange={(event) =>
+                updateSelectedField((field) => ({
+                  ...field,
+                  defaultValue: event.target.value,
+                }))
+              }
+            />
+          </div>
+
           {(selectedField.kind === "select" ||
             selectedField.kind === "radio") && (
             <div className="grid gap-2">
@@ -913,6 +1057,12 @@ export function FormDesigner({
               />
             </div>
           )}
+
+          <div className="rounded-md border border-border/60 bg-muted/10 px-3 py-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              Validation
+            </p>
+          </div>
 
           <div className="flex items-center gap-3 rounded-md border border-border/60 bg-background px-3 py-2.5">
             <Checkbox
@@ -950,9 +1100,76 @@ export function FormDesigner({
             />
           </div>
 
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-2">
+              <label
+                htmlFor={fieldMinLengthInputId}
+                className="text-sm font-medium"
+              >
+                Min length
+              </label>
+              <Input
+                id={fieldMinLengthInputId}
+                className="h-10 rounded-md bg-background"
+                value={selectedField.minLength}
+                onChange={(event) =>
+                  updateSelectedField((field) => ({
+                    ...field,
+                    minLength: event.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="grid gap-2">
+              <label
+                htmlFor={fieldMaxLengthInputId}
+                className="text-sm font-medium"
+              >
+                Max length
+              </label>
+              <Input
+                id={fieldMaxLengthInputId}
+                className="h-10 rounded-md bg-background"
+                value={selectedField.maxLength}
+                onChange={(event) =>
+                  updateSelectedField((field) => ({
+                    ...field,
+                    maxLength: event.target.value,
+                  }))
+                }
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <label
+              htmlFor={fieldPatternInputId}
+              className="text-sm font-medium"
+            >
+              Regex pattern
+            </label>
+            <Input
+              id={fieldPatternInputId}
+              className="h-10 rounded-md bg-background"
+              value={selectedField.pattern}
+              onChange={(event) =>
+                updateSelectedField((field) => ({
+                  ...field,
+                  pattern: event.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div className="rounded-md border border-border/60 bg-muted/10 px-3 py-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              Styling
+            </p>
+          </div>
+
           <div className="grid gap-2">
             <label htmlFor={fieldWidthInputId} className="text-sm font-medium">
-              Width
+              Desktop width
             </label>
             <Select
               value={selectedField.width}
@@ -970,10 +1187,64 @@ export function FormDesigner({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="half">Compact width</SelectItem>
                 <SelectItem value="full">Full width</SelectItem>
+                <SelectItem value="half">1/2 width</SelectItem>
+                <SelectItem value="third">1/3 width</SelectItem>
+                <SelectItem value="quarter">1/4 width</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <label
+              htmlFor={fieldStylePresetInputId}
+              className="text-sm font-medium"
+            >
+              Style preset
+            </label>
+            <Select
+              value={selectedField.stylePreset}
+              onValueChange={(value) =>
+                updateSelectedField((field) => ({
+                  ...field,
+                  stylePreset: value as BuilderField["stylePreset"],
+                }))
+              }
+            >
+              <SelectTrigger
+                id={fieldStylePresetInputId}
+                className="w-full rounded-md bg-background"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="plain">Plain</SelectItem>
+                <SelectItem value="rounded">Rounded</SelectItem>
+                <SelectItem value="shadow">Shadow</SelectItem>
+                <SelectItem value="accent">Accent border</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <label
+              htmlFor={fieldCustomClassesInputId}
+              className="text-sm font-medium"
+            >
+              Custom classes
+            </label>
+            <Input
+              id={fieldCustomClassesInputId}
+              className="h-10 rounded-md bg-background"
+              value={selectedField.customClasses}
+              placeholder="rounded-xl border-primary/40"
+              onChange={(event) =>
+                updateSelectedField((field) => ({
+                  ...field,
+                  customClasses: event.target.value,
+                }))
+              }
+            />
           </div>
 
           <div className="grid gap-2">
@@ -1034,7 +1305,7 @@ export function FormDesigner({
           <Tabs
             value={railTab}
             onValueChange={(value) => setRailTab(value as RailTab)}
-            className="rounded-xl border border-border/60 bg-background"
+            className="max-h-[calc(100vh-8rem)] overflow-hidden rounded-xl border border-border/60 bg-background"
           >
             <div className="border-b border-border/60 p-2">
               <TabsList className="grid h-8 w-full grid-cols-3 rounded-lg bg-muted/30 p-1">
@@ -1050,7 +1321,10 @@ export function FormDesigner({
               </TabsList>
             </div>
 
-            <TabsContent value="elements" className="m-0 p-2">
+            <TabsContent
+              value="elements"
+              className="m-0 max-h-[calc(100vh-12rem)] overflow-y-auto p-2"
+            >
               <div className="mb-2 px-1">
                 <p className="text-[11px] text-muted-foreground">
                   Drag fields into the form.
@@ -1063,7 +1337,10 @@ export function FormDesigner({
               </div>
             </TabsContent>
 
-            <TabsContent value="structure" className="m-0 p-2">
+            <TabsContent
+              value="structure"
+              className="m-0 max-h-[calc(100vh-12rem)] overflow-y-auto p-2"
+            >
               <div className="mb-2 flex items-center justify-between px-1">
                 <p className="text-[11px] text-muted-foreground">
                   Form outline
@@ -1106,7 +1383,10 @@ export function FormDesigner({
               </div>
             </TabsContent>
 
-            <TabsContent value="properties" className="m-0 p-2">
+            <TabsContent
+              value="properties"
+              className="m-0 max-h-[calc(100vh-12rem)] overflow-y-auto p-2"
+            >
               <div className="mb-2 px-1">
                 <p className="text-[11px] text-muted-foreground">
                   {selection.type === "form"
@@ -1128,11 +1408,32 @@ export function FormDesigner({
                 {document.settings.title || "Untitled form"}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Standard form page canvas with drag-and-drop editing
+                Responsive canvas with drag-and-drop field placement
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center rounded-md border border-border/60 bg-background p-1">
+                {deviceOptions.map((device) => {
+                  const Icon = device.icon
+                  return (
+                    <Button
+                      key={device.value}
+                      type="button"
+                      variant={
+                        previewDevice === device.value ? "secondary" : "ghost"
+                      }
+                      size="sm"
+                      className="h-7 rounded px-2"
+                      onClick={() => setPreviewDevice(device.value)}
+                      aria-label={`Preview ${device.label}`}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </Button>
+                  )
+                })}
+              </div>
+
               <Tabs
                 value={mode}
                 onValueChange={(value) =>
@@ -1155,7 +1456,12 @@ export function FormDesigner({
 
           {mode === "design" ? (
             <div className="bg-muted/[0.12] p-4 sm:p-6">
-              <div className="mx-auto max-w-4xl rounded-[20px] border border-border/60 bg-background shadow-[0_1px_3px_0_color-mix(in_oklab,var(--foreground)_10%,transparent)]">
+              <div
+                className={cn(
+                  "mx-auto rounded-[20px] border border-border/60 bg-background shadow-[0_1px_3px_0_color-mix(in_oklab,var(--foreground)_10%,transparent)] transition-[max-width]",
+                  getDeviceCanvasClass(previewDevice),
+                )}
+              >
                 <div className="border-b border-border/60 px-5 py-5">
                   <button
                     type="button"
@@ -1228,6 +1534,13 @@ export function FormDesigner({
                                       {section.fields.length} field
                                       {section.fields.length === 1 ? "" : "s"}
                                     </Badge>
+                                    <Badge
+                                      variant="outline"
+                                      className="rounded-full"
+                                    >
+                                      {section.columns} col
+                                      {section.columns === 1 ? "" : "s"}
+                                    </Badge>
                                   </div>
                                   <p className="mt-2 text-base font-semibold tracking-tight">
                                     {section.title}
@@ -1254,9 +1567,16 @@ export function FormDesigner({
                               items={section.fields.map((field) =>
                                 fieldDragId(field.key),
                               )}
-                              strategy={verticalListSortingStrategy}
+                              strategy={rectSortingStrategy}
                             >
-                              <div className="grid gap-3 px-4 py-4">
+                              <div
+                                className="grid grid-cols-12 gap-3 px-4 py-4"
+                                style={{
+                                  backgroundImage:
+                                    "linear-gradient(to right, color-mix(in oklab, var(--border) 40%, transparent) 1px, transparent 1px)",
+                                  backgroundSize: "calc(100% / 12) 100%",
+                                }}
+                              >
                                 {section.fields.length ? (
                                   section.fields.map((field) => {
                                     const paletteItem = paletteFieldByKind.get(
@@ -1268,6 +1588,12 @@ export function FormDesigner({
                                       <SortableField
                                         key={field.key}
                                         id={fieldDragId(field.key)}
+                                        className={cn(
+                                          getDesignerWidthClass(
+                                            field.width,
+                                            previewDevice,
+                                          ),
+                                        )}
                                       >
                                         {({
                                           attributes: fieldAttributes,
@@ -1277,7 +1603,9 @@ export function FormDesigner({
                                           <div className="grid gap-3">
                                             <div
                                               className={cn(
-                                                "flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 bg-background px-3 py-3 transition-all",
+                                                "group flex h-full flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 bg-background px-3 py-3 transition-all",
+                                                getFieldStyleClass(field),
+                                                field.customClasses,
                                                 selectedFieldKey ===
                                                   field.key &&
                                                   "border-primary/60 shadow-[0_0_0_1px_color-mix(in_oklab,var(--primary)_20%,transparent)]",
@@ -1322,6 +1650,25 @@ export function FormDesigner({
                                                         <span>Required</span>
                                                       </>
                                                     ) : null}
+                                                    {field.width === "full" ? (
+                                                      <>
+                                                        <span>•</span>
+                                                        <span>Full</span>
+                                                      </>
+                                                    ) : null}
+                                                    {field.width === "third" ? (
+                                                      <>
+                                                        <span>•</span>
+                                                        <span>1/3</span>
+                                                      </>
+                                                    ) : null}
+                                                    {field.width ===
+                                                    "quarter" ? (
+                                                      <>
+                                                        <span>•</span>
+                                                        <span>1/4</span>
+                                                      </>
+                                                    ) : null}
                                                   </div>
                                                 </button>
                                               </div>
@@ -1330,7 +1677,20 @@ export function FormDesigner({
                                                 <Button
                                                   variant="ghost"
                                                   size="sm"
-                                                  className="h-7 rounded-md px-2 text-destructive hover:text-destructive"
+                                                  className="h-7 rounded-md px-2 opacity-0 transition-opacity group-hover:opacity-100"
+                                                  onClick={() =>
+                                                    duplicateField(
+                                                      section.id,
+                                                      field.key,
+                                                    )
+                                                  }
+                                                >
+                                                  <Copy className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  className="h-7 rounded-md px-2 text-destructive opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
                                                   onClick={() =>
                                                     removeField(
                                                       section.id,
@@ -1348,8 +1708,8 @@ export function FormDesigner({
                                     )
                                   })
                                 ) : (
-                                  <div className="rounded-xl border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted-foreground">
-                                    Drop fields here
+                                  <div className="col-span-12 rounded-xl border border-dashed border-border/70 bg-muted/10 px-4 py-8 text-center text-sm text-muted-foreground">
+                                    Empty Section: Drag fields here
                                   </div>
                                 )}
                               </div>
@@ -1364,7 +1724,12 @@ export function FormDesigner({
             </div>
           ) : (
             <div className="bg-muted/[0.12] p-4 sm:p-6">
-              <div className="mx-auto max-w-4xl rounded-[20px] border border-border/60 bg-background p-5 shadow-[0_1px_3px_0_color-mix(in_oklab,var(--foreground)_10%,transparent)]">
+              <div
+                className={cn(
+                  "mx-auto rounded-[20px] border border-border/60 bg-background p-5 shadow-[0_1px_3px_0_color-mix(in_oklab,var(--foreground)_10%,transparent)] transition-[max-width]",
+                  getDeviceCanvasClass(previewDevice),
+                )}
+              >
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                   Preview
                 </p>
@@ -1380,6 +1745,7 @@ export function FormDesigner({
                     fields={allFields}
                     values={{}}
                     readOnly
+                    previewDevice={previewDevice}
                   />
                 </div>
               </div>
