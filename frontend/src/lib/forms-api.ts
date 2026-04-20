@@ -1,10 +1,22 @@
-export type JsonSchemaFieldWidth = "full" | "half" | "third" | "quarter"
+export type JsonSchemaGridColumn =
+  | 1
+  | 2
+  | 3
+  | 4
+  | 5
+  | 6
+  | 7
+  | 8
+  | 9
+  | 10
+  | 11
+  | 12
 export type JsonSchemaFieldStylePreset =
   | "plain"
   | "rounded"
   | "shadow"
   | "accent"
-export type JsonSchemaSectionColumns = 1 | 2 | 3 | 4
+export type JsonSchemaSectionColumns = 12
 
 export type JsonSchemaField = {
   id: string
@@ -20,10 +32,11 @@ export type JsonSchemaField = {
     | "radio"
   options?: string[]
   default_value?: string
+  start_column?: JsonSchemaGridColumn
+  span?: JsonSchemaGridColumn
   placeholder?: string
   help_text?: string
   required?: boolean
-  width?: JsonSchemaFieldWidth
   custom_classes?: string
   style_preset?: JsonSchemaFieldStylePreset
   validation?: {

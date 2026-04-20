@@ -54,6 +54,7 @@ import {
   cloneStarterDocument,
   type DesignerDocument,
   designerDocumentFromSchema,
+  designerSectionsFromSchema,
   validateDesignerDocument,
 } from "./schema"
 
@@ -282,8 +283,11 @@ function describeFieldChanges(
   if (nextField.required !== previousField.required) {
     changes.push(nextField.required ? "Marked required" : "Made optional")
   }
-  if (nextField.width !== previousField.width) {
-    changes.push(`Width changed to ${nextField.width}`)
+  if (nextField.span !== previousField.span) {
+    changes.push(`Span changed to ${nextField.span}`)
+  }
+  if (nextField.startColumn !== previousField.startColumn) {
+    changes.push(`Start column changed to ${nextField.startColumn}`)
   }
   if (nextField.helpText !== previousField.helpText) {
     changes.push(nextField.helpText ? "Help text updated" : "Help text removed")
@@ -639,6 +643,10 @@ export function FormWorkspace() {
     () => builderFieldsFromSchema(selectedForm?.active_version?.schema),
     [selectedForm?.active_version?.schema],
   )
+  const publishedSections = useMemo(
+    () => designerSectionsFromSchema(selectedForm?.active_version?.schema),
+    [selectedForm?.active_version?.schema],
+  )
   const publishedTitle = selectedForm?.title ?? ""
   const loadedSchema =
     selectedForm?.draft_version?.schema ??
@@ -653,8 +661,8 @@ export function FormWorkspace() {
   const selectedSubmissionVersion = selectedForm?.versions.find(
     (version) => version.id === selectedSubmission?.form_version_id,
   )
-  const selectedSubmissionFields = useMemo(
-    () => builderFieldsFromSchema(selectedSubmissionVersion?.schema),
+  const selectedSubmissionSections = useMemo(
+    () => designerSectionsFromSchema(selectedSubmissionVersion?.schema),
     [selectedSubmissionVersion?.schema],
   )
   const filteredSubmissions = useMemo(() => {
@@ -1289,7 +1297,7 @@ export function FormWorkspace() {
                   </p>
                 </div>
                 <RuntimeFormRenderer
-                  fields={draftFields}
+                  sections={draftDocument.sections}
                   values={submissionDraft}
                   readOnly
                 />
@@ -1411,7 +1419,7 @@ export function FormWorkspace() {
                 </ExpandableSection>
                 <div className="mt-5">
                   <RuntimeFormRenderer
-                    fields={publishedFields}
+                    sections={publishedSections}
                     values={submissionDraft}
                     errors={submissionErrors}
                     onChange={(fieldId, value) => {
@@ -1662,7 +1670,7 @@ export function FormWorkspace() {
                     defaultOpen
                   >
                     <RuntimeFormRenderer
-                      fields={selectedSubmissionFields}
+                      sections={selectedSubmissionSections}
                       values={selectedSubmission.data}
                       readOnly
                       layout="single"

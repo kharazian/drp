@@ -100,7 +100,10 @@ function SortableFieldCard({
 
       <div className="mt-4 flex flex-wrap gap-2 text-xs">
         <Badge variant="secondary" className="rounded-full px-3 py-1 font-normal">
-          {field.width === "full" ? "Full width" : "Half width"}
+          Span {field.span}
+        </Badge>
+        <Badge variant="secondary" className="rounded-full px-3 py-1 font-normal">
+          Start {field.startColumn}
         </Badge>
         {field.helpText ? (
           <Badge variant="secondary" className="rounded-full px-3 py-1 font-normal">

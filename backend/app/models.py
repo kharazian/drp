@@ -114,7 +114,7 @@ class ItemsPublic(SQLModel):
 
 JsonValue = dict[str, Any] | list[Any] | str | int | float | bool | None
 FormFieldType = Literal["text", "textarea", "number", "select", "email", "date", "checkbox", "radio"]
-FormFieldWidth = Literal["full", "half", "third", "quarter"]
+GridColumn = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 FormFieldStylePreset = Literal["plain", "rounded", "shadow", "accent"]
 
 
@@ -131,10 +131,11 @@ class FormSchemaField(SQLModel):
     label: str = Field(min_length=1)
     type: FormFieldType
     default_value: str | None = None
+    start_column: GridColumn = 1
+    span: GridColumn = 12
     placeholder: str | None = None
     help_text: str | None = None
     required: bool = False
-    width: FormFieldWidth = "full"
     custom_classes: str | None = None
     style_preset: FormFieldStylePreset = "plain"
     options: list[str] = Field(default_factory=list)
@@ -142,7 +143,7 @@ class FormSchemaField(SQLModel):
 
 
 class FormSchemaLayout(SQLModel):
-    columns: Literal[1, 2, 3, 4] = 2
+    columns: Literal[12] = 12
 
 
 class FormSchemaSettings(SQLModel):

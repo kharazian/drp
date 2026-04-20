@@ -1,8 +1,8 @@
 import type {
   JsonSchema,
   JsonSchemaField,
+  JsonSchemaGridColumn,
   JsonSchemaFieldStylePreset,
-  JsonSchemaFieldWidth,
   JsonSchemaSection,
   JsonSchemaSectionColumns,
 } from "@/lib/forms-api"
@@ -23,10 +23,11 @@ export type BuilderField = {
   kind: FieldKind
   label: string
   defaultValue: string
+  startColumn: JsonSchemaGridColumn
+  span: JsonSchemaGridColumn
   helpText: string
   placeholder: string
   required: boolean
-  width: JsonSchemaFieldWidth
   customClasses: string
   stylePreset: JsonSchemaFieldStylePreset
   optionsText: string
@@ -75,10 +76,11 @@ const starterBuilderFieldSeeds: BuilderFieldSeed[] = [
     kind: "text",
     label: "Requester Name",
     defaultValue: "",
+    startColumn: 1,
+    span: 6,
     helpText: "",
     placeholder: "Jordan Lee",
     required: true,
-    width: "half",
     customClasses: "",
     stylePreset: "plain",
     optionsText: "",
@@ -93,10 +95,11 @@ const starterBuilderFieldSeeds: BuilderFieldSeed[] = [
     kind: "textarea",
     label: "Request Details",
     defaultValue: "",
+    startColumn: 1,
+    span: 12,
     helpText: "",
     placeholder: "Describe the request",
     required: true,
-    width: "full",
     customClasses: "",
     stylePreset: "plain",
     optionsText: "",
@@ -167,10 +170,11 @@ export function createEmptyField(
     kind: "text",
     label: options?.label ?? "New Field",
     defaultValue: "",
+    startColumn: 1,
+    span: 12,
     helpText: "",
     placeholder: "",
     required: false,
-    width: "full",
     customClasses: "",
     stylePreset: "plain",
     optionsText: "",
@@ -193,7 +197,7 @@ export function createEmptySection(
     ),
     title: options?.title ?? `Section ${index + 1}`,
     description: "",
-    columns: 2,
+    columns: 12,
     fields: [],
   }
 }
@@ -222,9 +226,10 @@ function toJsonSchemaField(field: BuilderField): JsonSchemaField {
     type: field.kind,
     placeholder: field.placeholder.trim() || undefined,
     default_value: field.defaultValue.trim() || undefined,
+    start_column: field.startColumn,
+    span: field.span,
     help_text: field.helpText.trim() || undefined,
     required: field.required,
-    width: field.width,
     custom_classes: field.customClasses.trim() || undefined,
     style_preset: field.stylePreset === "plain" ? undefined : field.stylePreset,
   }
@@ -260,6 +265,12 @@ function toJsonSchemaField(field: BuilderField): JsonSchemaField {
 }
 
 function fromJsonSchemaField(field: JsonSchemaField): BuilderField {
+  const legacyWidth = (
+    field as JsonSchemaField & {
+      width?: "full" | "half" | "third" | "quarter"
+    }
+  ).width
+
   return {
     key: createFieldKey(),
     id: field.id,
@@ -269,10 +280,19 @@ function fromJsonSchemaField(field: JsonSchemaField): BuilderField {
         : normalizeKind(field.type),
     label: field.label,
     defaultValue: field.default_value ?? "",
+    startColumn: field.start_column ?? 1,
+    span:
+      field.span ??
+      (legacyWidth === "half"
+        ? 6
+        : legacyWidth === "third"
+          ? 4
+          : legacyWidth === "quarter"
+            ? 3
+            : 12),
     helpText: field.help_text ?? "",
     placeholder: field.placeholder ?? "",
     required: field.required ?? false,
-    width: field.width ?? "full",
     customClasses: field.custom_classes ?? "",
     stylePreset: field.style_preset ?? "plain",
     optionsText: field.options?.join(", ") ?? "",
@@ -326,13 +346,7 @@ function sectionFromJsonSchemaSection(
     id: section.id || createSectionKey(),
     title: section.title || `Section ${index + 1}`,
     description: section.description ?? "",
-    columns:
-      section.layout?.columns === 1 ||
-      section.layout?.columns === 2 ||
-      section.layout?.columns === 3 ||
-      section.layout?.columns === 4
-        ? section.layout.columns
-        : 2,
+    columns: 12,
     fields: section.fields.map(fromJsonSchemaField),
   }
 }
@@ -370,6 +384,24 @@ export function designerDocumentFromSchema(
   }
 
   return designerDocumentFromBuilder(title, builderFieldsFromSchema(schema))
+}
+
+export function designerSectionsFromSchema(
+  schema?: JsonSchema | null,
+): DesignerSection[] {
+  if (schema?.sections?.length) {
+    return schema.sections.map(sectionFromJsonSchemaSection)
+  }
+
+  return [
+    {
+      id: createSectionKey(),
+      title: "",
+      description: "",
+      columns: 12,
+      fields: builderFieldsFromSchema(schema),
+    },
+  ]
 }
 
 export function buildSchemaFromDesigner(
@@ -460,6 +492,12 @@ export function validateBuilderDraft(
       Number(field.minValue) > Number(field.maxValue)
     ) {
       return `Field "${fieldLabel}" has a minimum value greater than its maximum value.`
+    }
+    if (field.span < 1 || field.span > 12) {
+      return `Field "${fieldLabel}" must span between 1 and 12 columns.`
+    }
+    if (field.startColumn < 1 || field.startColumn > 12) {
+      return `Field "${fieldLabel}" must start between columns 1 and 12.`
     }
   }
 

@@ -321,14 +321,15 @@ def test_section_based_schema_is_supported_end_to_end(
                     "id": "requester_info",
                     "title": "Requester Info",
                     "description": "Basic contact details",
-                    "layout": {"columns": 4},
+                    "layout": {"columns": 12},
                     "fields": [
                         {
                             "id": "requester_name",
                             "label": "Requester Name",
                             "type": "text",
                             "required": True,
-                            "width": "quarter",
+                            "span": 3,
+                            "start_column": 1,
                             "custom_classes": "rounded-xl border-primary/40",
                             "style_preset": "accent",
                         },
@@ -338,14 +339,15 @@ def test_section_based_schema_is_supported_end_to_end(
                             "type": "email",
                             "required": True,
                             "default_value": "ops@example.com",
-                            "width": "third",
+                            "span": 4,
+                            "start_column": 5,
                         },
                     ],
                 },
                 {
                     "id": "details",
                     "title": "Details",
-                    "layout": {"columns": 1},
+                    "layout": {"columns": 12},
                     "fields": [
                         {
                             "id": "priority",
@@ -370,14 +372,17 @@ def test_section_based_schema_is_supported_end_to_end(
     assert form["active_version"]["schema"]["version"] == 2
     assert len(form["active_version"]["schema"]["sections"]) == 2
     requester_section = form["active_version"]["schema"]["sections"][0]
-    assert requester_section["layout"]["columns"] == 4
-    assert requester_section["fields"][0]["width"] == "quarter"
+    assert requester_section["layout"]["columns"] == 12
+    assert requester_section["fields"][0]["span"] == 3
+    assert requester_section["fields"][0]["start_column"] == 1
     assert requester_section["fields"][0]["style_preset"] == "accent"
     assert (
         requester_section["fields"][0]["custom_classes"]
         == "rounded-xl border-primary/40"
     )
     assert requester_section["fields"][1]["default_value"] == "ops@example.com"
+    assert requester_section["fields"][1]["span"] == 4
+    assert requester_section["fields"][1]["start_column"] == 5
 
     valid_submission = client.post(
         f"{settings.API_V1_STR}/forms/{form['id']}/submissions",
