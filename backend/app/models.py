@@ -141,6 +141,12 @@ class FormSchemaField(SQLModel):
     options: list[str] = Field(default_factory=list)
     validation: FormFieldValidation | None = None
 
+    @model_validator(mode="after")
+    def validate_grid_position(self) -> "FormSchemaField":
+        if self.start_column + self.span - 1 > 12:
+            raise ValueError("Field placement extends past column 12")
+        return self
+
 
 class FormSchemaLayout(SQLModel):
     columns: Literal[12] = 12

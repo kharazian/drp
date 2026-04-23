@@ -499,6 +499,9 @@ export function validateBuilderDraft(
     if (field.startColumn < 1 || field.startColumn > 12) {
       return `Field "${fieldLabel}" must start between columns 1 and 12.`
     }
+    if (field.startColumn + field.span - 1 > 12) {
+      return `Field "${fieldLabel}" extends past column 12.`
+    }
   }
 
   return null

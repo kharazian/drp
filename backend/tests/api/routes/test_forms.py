@@ -413,6 +413,41 @@ def test_section_based_schema_is_supported_end_to_end(
     assert invalid_submission.status_code == 422
 
 
+def test_section_field_layout_rejects_out_of_bounds_grid_placement(
+    client: TestClient, superuser_token_headers: dict[str, str]
+) -> None:
+    payload = {
+        "title": "Invalid Grid Placement",
+        "schema": {
+            "version": 2,
+            "sections": [
+                {
+                    "id": "main",
+                    "title": "Main",
+                    "layout": {"columns": 12},
+                    "fields": [
+                        {
+                            "id": "overflowing_field",
+                            "label": "Overflowing Field",
+                            "type": "text",
+                            "start_column": 11,
+                            "span": 4,
+                        }
+                    ],
+                }
+            ],
+        },
+    }
+
+    response = client.post(
+        f"{settings.API_V1_STR}/forms/",
+        headers=superuser_token_headers,
+        json=payload,
+    )
+
+    assert response.status_code == 422
+
+
 def test_delete_form(
     client: TestClient, superuser_token_headers: dict[str, str], db: Session
 ) -> None:

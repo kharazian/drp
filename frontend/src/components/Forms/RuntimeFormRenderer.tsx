@@ -74,10 +74,15 @@ function getFieldSpan(
 function getFieldStartColumn(
   field: BuilderField,
   sectionColumns: DesignerSection["columns"],
+  layout: "auto" | "single",
   previewDevice?: PreviewDevice,
 ) {
+  if (layout === "single") {
+    return 1
+  }
+
   const columns = getEffectiveColumns(sectionColumns, previewDevice)
-  const span = getFieldSpan(field, sectionColumns, "auto", previewDevice)
+  const span = getFieldSpan(field, sectionColumns, layout, previewDevice)
   const maxStart = Math.max(1, columns - span + 1)
 
   return Math.min(Math.max(1, field.startColumn), maxStart)
@@ -86,15 +91,30 @@ function getFieldStartColumn(
 function buildSectionLayoutPlan(
   fields: BuilderField[],
   sectionColumns: DesignerSection["columns"],
+  layout: "auto" | "single",
   previewDevice?: PreviewDevice,
 ) {
+  if (layout === "single") {
+    return fields.map((field, index) => ({
+      field,
+      row: index + 1,
+      span: 1,
+      start: 1,
+    }))
+  }
+
   const columns = getEffectiveColumns(sectionColumns, previewDevice)
   let currentRow = 1
   let nextColumn = 1
 
   return fields.map((field) => {
-    const span = getFieldSpan(field, sectionColumns, "auto", previewDevice)
-    const start = getFieldStartColumn(field, sectionColumns, previewDevice)
+    const span = getFieldSpan(field, sectionColumns, layout, previewDevice)
+    const start = getFieldStartColumn(
+      field,
+      sectionColumns,
+      layout,
+      previewDevice,
+    )
 
     if (start < nextColumn || start + span - 1 > columns) {
       currentRow += 1
@@ -412,6 +432,7 @@ export function RuntimeFormRenderer({
             {buildSectionLayoutPlan(
               section.fields,
               section.columns,
+              layout,
               previewDevice,
             ).map(({ field, row, span, start }) => {
               const value = values[field.id] ?? field.defaultValue
