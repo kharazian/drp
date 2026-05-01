@@ -6,6 +6,7 @@ import {
   ChartColumn,
   ContactRound,
   CreditCard,
+  Eye,
   FolderKanban,
   FormInput,
   Home,
@@ -91,6 +92,10 @@ const baseSections: SidebarNavSection[] = [
         title: "Forms",
         description: "Versioned builders and history",
         path: "/forms",
+        children: [
+          { icon: FormInput, title: "Builder", path: "/forms" },
+          { icon: Eye, title: "Library", path: "/forms-library" },
+        ],
       },
       {
         icon: FolderKanban,

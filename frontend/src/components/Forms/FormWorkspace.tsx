@@ -58,6 +58,8 @@ import {
   validateDesignerDocument,
 } from "./schema"
 
+type WorkspaceTab = "builder" | "preview" | "submissions" | "history"
+
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) {
     return error.message
@@ -518,10 +520,19 @@ function buildSubmissionPreview(submission: {
   return entries.join(" • ")
 }
 
-export function FormWorkspace() {
+export function FormWorkspace({
+  initialSelectedFormId = null,
+  initialTab = "builder",
+  startNewDraft = false,
+}: {
+  initialSelectedFormId?: string | null
+  initialTab?: WorkspaceTab
+  startNewDraft?: boolean
+}) {
   const queryClient = useQueryClient()
   const { showErrorToast, showSuccessToast } = useCustomToast()
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>(initialTab)
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<
     string | null
   >(null)
@@ -541,6 +552,22 @@ export function FormWorkspace() {
     queryKey: ["forms"],
     queryFn: formsApi.readForms,
   })
+
+  useEffect(() => {
+    setActiveTab(initialTab)
+  }, [initialTab])
+
+  useEffect(() => {
+    if (startNewDraft) {
+      resetDraft()
+      setActiveTab("builder")
+      return
+    }
+
+    if (initialSelectedFormId) {
+      setSelectedFormId(initialSelectedFormId)
+    }
+  }, [initialSelectedFormId, startNewDraft])
 
   const formDetailQuery = useQuery({
     queryKey: ["forms", selectedFormId],
@@ -1142,7 +1169,11 @@ export function FormWorkspace() {
           />
         ) : null}
 
-        <Tabs defaultValue="builder" className="grid gap-6">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as WorkspaceTab)}
+          className="grid gap-6"
+        >
           <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-[24px] border border-border/60 bg-background/72 p-1.5 shadow-[0_18px_34px_-28px_color-mix(in_oklab,var(--foreground)_24%,transparent)]">
             <TabsTrigger value="builder">
               <Layers3 className="h-4 w-4" />

@@ -24,6 +24,7 @@ import { Route as LayoutKanbanRouteImport } from './routes/_layout/kanban'
 import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
 import { Route as LayoutInvoicesRouteImport } from './routes/_layout/invoices'
 import { Route as LayoutHelpSupportRouteImport } from './routes/_layout/help-support'
+import { Route as LayoutFormsLibraryRouteImport } from './routes/_layout/forms-library'
 import { Route as LayoutFormsRouteImport } from './routes/_layout/forms'
 import { Route as LayoutFilesRouteImport } from './routes/_layout/files'
 import { Route as LayoutCustomersRouteImport } from './routes/_layout/customers'
@@ -108,6 +109,11 @@ const LayoutHelpSupportRoute = LayoutHelpSupportRouteImport.update({
   path: '/help-support',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutFormsLibraryRoute = LayoutFormsLibraryRouteImport.update({
+  id: '/forms-library',
+  path: '/forms-library',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutFormsRoute = LayoutFormsRouteImport.update({
   id: '/forms',
   path: '/forms',
@@ -169,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/customers': typeof LayoutCustomersRoute
   '/files': typeof LayoutFilesRoute
   '/forms': typeof LayoutFormsRoute
+  '/forms-library': typeof LayoutFormsLibraryRoute
   '/help-support': typeof LayoutHelpSupportRoute
   '/invoices': typeof LayoutInvoicesRoute
   '/items': typeof LayoutItemsRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/customers': typeof LayoutCustomersRoute
   '/files': typeof LayoutFilesRoute
   '/forms': typeof LayoutFormsRoute
+  '/forms-library': typeof LayoutFormsLibraryRoute
   '/help-support': typeof LayoutHelpSupportRoute
   '/invoices': typeof LayoutInvoicesRoute
   '/items': typeof LayoutItemsRoute
@@ -220,6 +228,7 @@ export interface FileRoutesById {
   '/_layout/customers': typeof LayoutCustomersRoute
   '/_layout/files': typeof LayoutFilesRoute
   '/_layout/forms': typeof LayoutFormsRoute
+  '/_layout/forms-library': typeof LayoutFormsLibraryRoute
   '/_layout/help-support': typeof LayoutHelpSupportRoute
   '/_layout/invoices': typeof LayoutInvoicesRoute
   '/_layout/items': typeof LayoutItemsRoute
@@ -248,6 +257,7 @@ export interface FileRouteTypes {
     | '/customers'
     | '/files'
     | '/forms'
+    | '/forms-library'
     | '/help-support'
     | '/invoices'
     | '/items'
@@ -272,6 +282,7 @@ export interface FileRouteTypes {
     | '/customers'
     | '/files'
     | '/forms'
+    | '/forms-library'
     | '/help-support'
     | '/invoices'
     | '/items'
@@ -298,6 +309,7 @@ export interface FileRouteTypes {
     | '/_layout/customers'
     | '/_layout/files'
     | '/_layout/forms'
+    | '/_layout/forms-library'
     | '/_layout/help-support'
     | '/_layout/invoices'
     | '/_layout/items'
@@ -425,6 +437,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutHelpSupportRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/forms-library': {
+      id: '/_layout/forms-library'
+      path: '/forms-library'
+      fullPath: '/forms-library'
+      preLoaderRoute: typeof LayoutFormsLibraryRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/forms': {
       id: '/_layout/forms'
       path: '/forms'
@@ -501,6 +520,7 @@ interface LayoutRouteChildren {
   LayoutCustomersRoute: typeof LayoutCustomersRoute
   LayoutFilesRoute: typeof LayoutFilesRoute
   LayoutFormsRoute: typeof LayoutFormsRoute
+  LayoutFormsLibraryRoute: typeof LayoutFormsLibraryRoute
   LayoutHelpSupportRoute: typeof LayoutHelpSupportRoute
   LayoutInvoicesRoute: typeof LayoutInvoicesRoute
   LayoutItemsRoute: typeof LayoutItemsRoute
@@ -523,6 +543,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutCustomersRoute: LayoutCustomersRoute,
   LayoutFilesRoute: LayoutFilesRoute,
   LayoutFormsRoute: LayoutFormsRoute,
+  LayoutFormsLibraryRoute: LayoutFormsLibraryRoute,
   LayoutHelpSupportRoute: LayoutHelpSupportRoute,
   LayoutInvoicesRoute: LayoutInvoicesRoute,
   LayoutItemsRoute: LayoutItemsRoute,
